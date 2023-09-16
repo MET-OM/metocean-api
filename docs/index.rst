@@ -32,12 +32,6 @@ Installing **metocean-api**
   $ conda env create -f environment.yml
   $ conda activate metocean-api
   $ pip install --no-deps -e .
-  
-To update the enviroment using a new environment.yml, run:
-
-.. code-block:: bash
-
-   $ conda env update --file environment.yml --prune
 
 Creating a TimeSeries-object
 =====================================
