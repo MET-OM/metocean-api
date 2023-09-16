@@ -1,0 +1,88 @@
+.. metocean-api documentation master file, created by
+   sphinx-quickstart on Thu Sep 14 10:18:36 2023.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to metocean-api's documentation!
+=====================================
+
+**metocean-api** is a Python package for metocean analysis of NORA3 (wind and wave) hindcast.
+
+The package contains functions that:
+  * create time series and save in csv-format
+  * generate statistics (tables, diagrams etc)
+
+Installing **metocean-api**
+=============================================
+1. Install anaconda3 or miniconda3
+2. Clone metocean-api:
+
+.. code-block:: bash
+
+   $ git clone https://github.com/MET-OM/metocean-api.git
+   $ cd metocean-api/
+
+3. Create environment with the required dependencies and install metocean-api
+
+.. code-block:: bash
+
+  $ conda config --add channels conda-forge
+  $ conda env create -f environment.yml
+  $ conda activate metocean-api
+  $ pip install --no-deps -e .
+  
+To update the enviroment using a new environment.yml, run:
+
+.. code-block:: bash
+
+   $ conda env update --file environment.yml --prune
+
+Creating a TimeSeries-object
+=====================================
+This section document the **ts-module**. The ts-object is initialized with the following command:
+
+.. code-block:: python
+
+   from metocean-api import ts
+   ts = ts.TimeSeries(lon=1.320, lat=53.324,
+                      start_time='1989-01-01', end_time='2022-12-31' , 
+                      product='NORA3_wind_wave') 
+
+Several options for **product** are available:
+
+.. code-block:: bash
+  
+  # For combined wind and wave NORA3 data: product='NORA3_wind_wave'
+  # For wind NORA3 data (Nordic Seas): product='NORA3_wind_sub'
+  # For wave NORA3 data (Nordic Seas): product='NORA3_wave_sub'
+  # For wave NORA3 data (Panarctic): product='NORA3_wave'
+  # For coastal wave NORA3 data: product='NORAC_wave'
+
+Import data from server to **ts-object** and save it as csv:
+
+.. code-block:: python
+
+   ts.import_ts(save_csv=True)
+
+Data is saved in:
+
+.. code-block:: python
+
+   print(ts.datafile)  
+   'NORA3_wind_wave_lon1.32_lat53.324_19890101_20221231.csv' 
+
+To import data from a local csv-file to **ts-object**:
+
+.. code-block:: python
+
+   ts.load_ts(local_file=ts.datafile)  
+   print(ts.data)
+
+.. image:: ts.data.png
+  :width: 800
+
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
