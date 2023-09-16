@@ -9,8 +9,10 @@ Welcome to metocean-api's documentation!
 **metocean-api** is a Python tool to extract time series of metocean data from global/regional/coastal hindcasts/reananalysis.
 
 The package contains functions to extract time series to csv-format from:
-  * NORA3 hindcast (wind and wave)
+  * `NORA3`_ hindcast dataset 
   * ...
+
+.. _NORA3: https://marine.met.no/node/19
 
 Installing **metocean-api**
 =============================================
