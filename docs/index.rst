@@ -6,11 +6,11 @@
 Welcome to metocean-api's documentation!
 =====================================
 
-**metocean-api** is a Python package for metocean analysis of NORA3 (wind and wave) hindcast.
+**metocean-api** is a Python tool to extract time series of metocean data from global/regional/coastal hindcasts/reananalysis.
 
-The package contains functions that:
-  * create time series and save in csv-format
-  * generate statistics (tables, diagrams etc)
+The package contains functions to extract time series to csv-format from:
+  * NORA3 hindcast (wind and wave)
+  * ...
 
 Installing **metocean-api**
 =============================================
@@ -39,7 +39,7 @@ To update the enviroment using a new environment.yml, run:
 
 Creating a TimeSeries-object
 =====================================
-This section document the **ts-module**. The ts-object is initialized with the following command:
+This section documents the **ts-module**. The ts-object is initialized with the following command:
 
 .. code-block:: python
 
