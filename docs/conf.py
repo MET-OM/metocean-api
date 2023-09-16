@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'metocean_engine'
+project = 'metocean-api'
 copyright = '2023, KonstantinChri'
 author = 'KonstantinChri' 
 
