@@ -9,7 +9,6 @@ dependencies:
   - xarray
   - dask
   - pip
-  - nco
   - pynco
   - netcdf4
   - time
