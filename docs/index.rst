@@ -52,17 +52,17 @@ Several options for **product** are available:
 
 .. code-block:: bash
   
-  # For combined wind and wave NORA3 data: product='NORA3_wind_wave'
-  # For wind NORA3 data (Nordic Seas): product='NORA3_wind_sub'
-  # For wave NORA3 data (Nordic Seas): product='NORA3_wave_sub'
-  # For wave NORA3 data (Panarctic): product='NORA3_wave'
-  # For coastal wave NORA3 data: product='NORAC_wave'
+  * For combined wind and wave NORA3 data: product='NORA3_wind_wave'
+  * For wind NORA3 data (Nordic Seas): product='NORA3_wind_sub'
+  * For wave NORA3 data (Nordic Seas): product='NORA3_wave_sub'
+  * For wave NORA3 data (Panarctic): product='NORA3_wave'
+  * For coastal wave NORA3 data: product='NORAC_wave'
 
 Import data from server to **ts-object** and save it as csv:
 
 .. code-block:: python
 
-   ts.import_ts(save_csv=True)
+   ts.import_data(save_csv=True)
 
 Data is saved in:
 
@@ -75,7 +75,7 @@ To import data from a local csv-file to **ts-object**:
 
 .. code-block:: python
 
-   ts.load_ts(local_file=ts.datafile)  
+   ts.load_data(local_file=ts.datafile)  
    print(ts.data)
 
 .. image:: ts.data.png

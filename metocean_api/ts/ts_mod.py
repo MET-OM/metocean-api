@@ -1,6 +1,6 @@
 from __future__ import annotations # For TYPE_CHECKING
 
-from metocean_api.ts.aux_funcs import distance_2points, find_nearest_rotCoord, find_nearest_cartCoord, get_date_list, get_url_info, get_near_coord, create_dataframe
+#from metocean_api.ts.aux_funcs import distance_2points, find_nearest_rotCoord, find_nearest_cartCoord, get_date_list, get_url_info, get_near_coord, create_dataframe
 from .read_metno import *
 
 class TimeSeries:
@@ -18,7 +18,7 @@ class TimeSeries:
     self.data = data
     return
 
-  def import_ts(self, save_csv = True):
+  def import_data(self, save_csv = True):
     if ((self.product=='NORA3_wave_sub') or (self.product=='NORA3_wave')):
       self.variable =  ['hs','tp','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
       self.data = NORA3_ts(self, save_csv = save_csv)
@@ -33,7 +33,7 @@ class TimeSeries:
     return
 
 
-  def load_ts(self, local_file):
+  def load_data(self, local_file):
     import pandas as pd
     self.data = pd.read_csv(local_file,comment='#',index_col=0, parse_dates=True)
 
