@@ -15,14 +15,13 @@ setuptools.setup(
     version = __version__,
     license = 'GPLv2',
     install_requires = [
-        'python',
-        'matplotlib',
-        'numpy',
+        'python>=3.9',
+        'matplotlib>=3.1',
+        'numpy>=1.17',
         'pandas',
         'xarray',
         'dask',
         'pip',
-        'nco',
         'pynco',
         'netcdf4',
         'time',
@@ -34,3 +33,5 @@ setuptools.setup(
     tests_require = ['pytest'],
     scripts = []
 )
+
+
