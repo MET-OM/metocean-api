@@ -64,8 +64,7 @@ Data is saved in:
 
 .. code-block:: python
 
-   print(df_ts.datafile)  
-   'NORA3_wind_wave_lon1.32_lat53.324_19890101_20221231.csv' 
+   print(df_ts.datafile) #'NORA3_wind_wave_lon1.32_lat53.324_19890101_20221231.csv' 
 
 To import data from a local csv-file to **ts-object**:
 
