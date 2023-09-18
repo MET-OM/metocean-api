@@ -10,8 +10,5 @@ sphinx:
 
 formats: all
 
-python:
-  install:
-    - requirements: requirements.txt
 
 
