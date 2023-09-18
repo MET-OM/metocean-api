@@ -41,18 +41,24 @@ This section documents the **ts-module**. The ts-object is initialized with the 
 
    from metocean_api import ts
    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,
-                      start_time='1990-01-01', end_time='1990-03-31' , 
+                      start_time='2000-01-01', end_time='2000-03-31' , 
                       product='NORA3_wind_wave') 
 
-Several options for **product** are available:
+Several options for **product** are available. Please check the data catalog for the time coverage:
 
 .. code-block:: bash
   
-  * For combined wind and wave NORA3 data: product='NORA3_wind_wave'
-  * For wind NORA3 data (Nordic Seas): product='NORA3_wind_sub'
-  * For wave NORA3 data (Nordic Seas): product='NORA3_wave_sub'
-  * For wave NORA3 data (Panarctic, slow due to large files): product='NORA3_wave'
+  * For wind NORA3 sub data (Nordic Seas): product='NORA3_wind_sub'
+    Data catalog: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
+  * For wave NORA3 sub data (Nordic Seas): product='NORA3_wave_sub' 
+    Data catalog: https://thredds.met.no/thredds/catalog/nora3_subset_wave/wave_tser/catalog.html
+  * For combined wind and wave NORA3 sub data: product='NORA3_wind_wave'
+  * For wave NORA3 data (Nordic Seas + Arctic): product='NORA3_wave'
+    Data catalog: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_files/catalog.html
   * For coastal wave NORA3 data: product='NORAC_wave'
+    Data catalog: https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
+
+    
 
 Import data from server to **ts-object** and save it as csv:
 
