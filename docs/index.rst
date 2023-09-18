@@ -41,7 +41,7 @@ This section documents the **ts-module**. The ts-object is initialized with the 
 
    from metocean_api import ts
    ts = ts.TimeSeries(lon=1.320, lat=53.324,
-                      start_time='1990-01-01', end_time='2022-12-31' , 
+                      start_time='1990-01-01', end_time='1990-12-31' , 
                       product='NORA3_wind_wave') 
 
 Several options for **product** are available:
