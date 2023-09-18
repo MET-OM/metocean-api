@@ -40,7 +40,7 @@ This section documents the **ts-module**. The ts-object is initialized with the 
 .. code-block:: python
 
    from metocean_api import ts
-   ts = ts.TimeSeries(lon=1.320, lat=53.324,
+   df_ts = ts.TimeSeries(lon=1.320, lat=53.324,
                       start_time='1990-01-01', end_time='1990-12-31' , 
                       product='NORA3_wind_wave') 
 
@@ -58,21 +58,21 @@ Import data from server to **ts-object** and save it as csv:
 
 .. code-block:: python
 
-   ts.import_data(save_csv=True)
+   df_ts.import_data(save_csv=True)
 
 Data is saved in:
 
 .. code-block:: python
 
-   print(ts.datafile)  
+   print(df_ts.datafile)  
    'NORA3_wind_wave_lon1.32_lat53.324_19890101_20221231.csv' 
 
 To import data from a local csv-file to **ts-object**:
 
 .. code-block:: python
 
-   ts.load_data(local_file=ts.datafile)  
-   print(ts.data)
+   df_ts.load_data(local_file=df_ts.datafile)  
+   print(df_ts.data)
 
 .. image:: ts.data.png
   :width: 800
