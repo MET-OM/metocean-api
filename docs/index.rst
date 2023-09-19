@@ -21,17 +21,17 @@ Installing **metocean-api**
 
 .. code-block:: bash
 
-   $ git clone https://github.com/MET-OM/metocean-api.git
-   $ cd metocean-api/
+   git clone https://github.com/MET-OM/metocean-api.git
+   cd metocean-api/
 
 3. Create environment with the required dependencies and install metocean-api
 
 .. code-block:: bash
 
-  $ conda config --add channels conda-forge
-  $ conda env create -f environment.yml
-  $ conda activate metocean-api
-  $ pip install --no-deps -e .
+  conda config --add channels conda-forge
+  conda env create -f environment.yml
+  conda activate metocean-api
+  pip install --no-deps -e .
 
 Creating a TimeSeries-object
 =====================================
