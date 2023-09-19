@@ -35,7 +35,7 @@ Installing **metocean-api**
 
 Creating a TimeSeries-object
 =====================================
-This section documents the **ts-module**. The ts-object is initialized with the following command:
+This section documents the **ts-module**. The ts-object is initialized with the following python command:
 
 .. code-block:: python
 
