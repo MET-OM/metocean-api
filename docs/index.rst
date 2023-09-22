@@ -68,7 +68,7 @@ This section documents the **ts-module**. The ts-object is initialized with the 
 Several options for **product** are available. Please check the data catalog for the time coverage:
 
 .. code-block:: bash
-  
+
   * For wind NORA3 sub data (Nordic Seas): product='NORA3_wind_sub'
     Data catalog: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
   * For wave NORA3 sub data (Nordic Seas): product='NORA3_wave_sub' 
