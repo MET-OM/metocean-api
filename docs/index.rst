@@ -67,19 +67,18 @@ This section documents the **ts-module**. The ts-object is initialized with the 
 
 Several options for **product** are available. Please check the data catalog for the time coverage:
 
-.. code-block:: bash
-
-  * For wind NORA3 sub data (Nordic Seas): product='NORA3_wind_sub'
-    Data catalog: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
-  * For wave NORA3 sub data (Nordic Seas): product='NORA3_wave_sub' 
-    Data catalog: https://thredds.met.no/thredds/catalog/nora3_subset_wave/wave_tser/catalog.html
-  * For combined wind and wave NORA3 sub data: product='NORA3_wind_wave'
-  * For wave NORA3 data (Nordic Seas + Arctic): product='NORA3_wave'
-    Data catalog: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_files/catalog.html
-  * For coastal wave NORA3 data: product='NORAC_wave'
-    Data catalog: https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
-  * For global reananalysis ERA5 (wind and waves): product='ERA5'
-    Data catalog: https://doi.org/10.24381/cds.adbb2d47
+* For wind NORA3 sub data (Nordic Seas): product='NORA3_wind_sub',
+  Data catalog: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
+* For wave NORA3 sub data (Nordic Seas): product='NORA3_wave_sub', 
+  Data catalog: https://thredds.met.no/thredds/catalog/nora3_subset_wave/wave_tser/catalog.html
+* For combined wind and wave NORA3 sub data: product='NORA3_wind_wave',
+* For wave NORA3 data (Nordic Seas + Arctic): product='NORA3_wave',
+  Data catalog: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_files/catalog.html
+* For coastal wave NORA3 data: product='NORAC_wave',
+  Data catalog: https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
+* For global reananalysis ERA5 (wind and waves): product='ERA5',
+  The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
+  Data catalog: https://doi.org/10.24381/cds.adbb2d47
 
 
 Import data from server to **ts-object** and save it as csv:
