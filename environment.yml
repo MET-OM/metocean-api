@@ -13,3 +13,4 @@ dependencies:
   - netcdf4
   - time
   - pytest
+  - cdsapi

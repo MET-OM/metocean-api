@@ -69,7 +69,7 @@ def get_url_info(product, date):
     return x_coor_str, y_coor_str, infile
 
 def get_date_list(product, start_date, end_date):
-    if product == 'NORA3_wave':
+    if product == 'NORA3_wave' or product == 'ERA5':
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
@@ -78,6 +78,7 @@ def get_date_list(product, start_date, end_date):
     elif product == 'NORAC_wave':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
     return date_list
+
 
 def drop_variables(product):
     if product == 'NORA3_wave':
