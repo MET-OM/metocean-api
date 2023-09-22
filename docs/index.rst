@@ -10,23 +10,27 @@ Welcome to metocean-api's documentation!
 
 The package contains functions to extract time series to csv-format from:
   * `NORA3`_ hindcast dataset 
-  * ...
+  * `ERA5`_ hindcast dataset 
 
 .. _NORA3: https://marine.met.no/node/19
+.. _ERA5: https://doi.org/10.24381/cds.adbb2d47
 
 Installing **metocean-api**
 =============================================
-Quick Installation 
-+++++++++++++++++++
-metocean-api can be installed from PyPI:
+Alternative 1: Using Mambaforge (alternative to Miniconda)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+1. Install `mambaforge <https://mamba.readthedocs.io/en/latest/installation.html>`_ (`download <https://github.com/conda-forge/miniforge#mambaforge>`_)
+2. Set up a *Python 3* environment for metocean-api and install metocean-api
 
 .. code-block:: bash
 
-   $ pip install metocean-api
+   $ mamba create -n metocean-api python=3 metocean-api
+   $ conda activate metocean-api
 
-Alternative 1: Using Conda and Git (recommended)
+Alternative 2: Using Mambaforge (alternative to Miniconda) and Git
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-1. Install anaconda3 or miniconda3
+1. Install `mambaforge <https://mamba.readthedocs.io/en/latest/installation.html>`_ (`download <https://github.com/conda-forge/miniforge#mambaforge>`_)
 2. Clone metocean-api:
 
 .. code-block:: bash
@@ -38,10 +42,17 @@ Alternative 1: Using Conda and Git (recommended)
 
 .. code-block:: bash
 
-  $ conda config --add channels conda-forge
-  $ conda env create -f environment.yml
+  $ mamba env create -f environment.yml
   $ conda activate metocean-api
   $ pip install --no-deps -e .
+
+This installs the metocean-api as an editable package. Therefore, you can directly make changes to the repository or fetch the newest changes with :code:`git pull`. 
+
+To update the local conda environment in case of new dependencies added to environment.yml:
+
+.. code-block:: bash
+
+  $ mamba env update -f environment.yml
 
 Creating a TimeSeries-object
 =====================================
@@ -67,8 +78,9 @@ Several options for **product** are available. Please check the data catalog for
     Data catalog: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_files/catalog.html
   * For coastal wave NORA3 data: product='NORAC_wave'
     Data catalog: https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
+  * For global reananalysis ERA5 (wind and waves): product='ERA5'
+    Data catalog: https://doi.org/10.24381/cds.adbb2d47
 
-    
 
 Import data from server to **ts-object** and save it as csv:
 
