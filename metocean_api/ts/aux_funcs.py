@@ -88,6 +88,8 @@ def drop_variables(product):
     elif product == 'NORA3_wind_sub':
         drop_var = ['projection_lambert','longitude','latitude','x','y','height']  
     elif product == 'NORAC_wave':
+        drop_var = ['longitude','latitude'] 
+    elif product == 'ERA5':
         drop_var = ['longitude','latitude']  
     return drop_var
 

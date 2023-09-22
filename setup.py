@@ -23,7 +23,8 @@ setuptools.setup(
         'pip',
         'nco',
         'netcdf4',
-        'pytest'
+        'pytest',
+        'cdsapi',
     ],
     packages = setuptools.find_packages(),
     include_package_data = True,

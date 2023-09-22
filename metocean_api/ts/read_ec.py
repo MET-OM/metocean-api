@@ -1,17 +1,38 @@
 from abc import ABC, abstractmethod
 
-import cdsapi
 import pandas as pd
+import xarray as xr
+import os 
 
-from .aux_funcs import get_date_list
+from .aux_funcs import get_date_list, create_dataframe
 
+def ERA5_ts(self, save_csv = False):
+    """
+    Extract times series of  the nearest gird point (lon,lat) from
+    ERA5 reanalysis and save it as netcdf.
+    """
+    filename = download_era5_from_cds(self.start_time, self.end_time, self.lon, self.lat,self.variable, folder='temp')
+    ds = xr.open_dataset(filename)
+    df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.values[0], lat_near=ds.latitude.values[0], outfile=self.datafile, variable=self.variable,save_csv=save_csv, height=self.height)    
+    
+    return df
 
-def download_era5_from_cds(start_time, end_time, lon, lat, folder='temp') -> str:
+def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='temp') -> str:
+    import cdsapi
     """Downloads ERA5 data from the Copernicus Climate Data Store for a
     given point and time period"""
     start_time = pd.Timestamp(start_time)
     end_time = pd.Timestamp(end_time)
     c = cdsapi.Client()
+
+
+    # Create directory
+    try:
+        # Create target Directory
+        os.mkdir(folder)
+        print("Directory " , folder ,  " Created ")
+    except FileExistsError:
+        print("Directory " , folder ,  " already exists")
 
     filename = f'{folder}/EC_ERA5.nc'
 
@@ -23,14 +44,7 @@ def download_era5_from_cds(start_time, end_time, lon, lat, folder='temp') -> str
     cds_command = {
         'product_type': 'reanalysis',
         'format': 'netcdf',
-        'variable': [
-            '100m_u_component_of_wind', '100m_v_component_of_wind', '10m_u_component_of_wind',
-            '10m_v_component_of_wind', '2m_temperature', 'instantaneous_10m_wind_gust',
-            'mean_direction_of_total_swell', 'mean_direction_of_wind_waves', 'mean_period_of_total_swell',
-            'mean_period_of_wind_waves', 'mean_wave_direction', 'mean_wave_period',
-            'peak_wave_period', 'significant_height_of_combined_wind_waves_and_swell', 'significant_height_of_total_swell',
-            'significant_height_of_wind_waves',
-        ],
+        'variable': variable,
         'date': dates,
         'time': [
             '00:00', '01:00', '02:00',
@@ -43,7 +57,7 @@ def download_era5_from_cds(start_time, end_time, lon, lat, folder='temp') -> str
             '21:00', '22:00', '23:00',
         ],
         'area': [
-            lat+0.01, lon[0]-0.01, lat[0]-0.01,lon[1]+0.01,
+            lat+0.001, lon-0.001, lat-0.001,lon+0.001,
             #53.33, 1.31, 53.31,1.33,
         ],
     }
