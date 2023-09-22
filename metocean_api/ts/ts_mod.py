@@ -30,6 +30,15 @@ class TimeSeries:
     elif self.product == 'NORAC_wave':
       self.variable =  ['hs','tp','t0m1','t02','t01','dp','dir', 'phs0','ptp0','pdir0' ,'phs1','ptp0','pdir1']
       self.data = NORA3_ts(self, save_csv = save_csv) 
+    elif self.product == 'ERA5':
+      self.variable == [
+            '100m_u_component_of_wind', '100m_v_component_of_wind', '10m_u_component_of_wind',
+            '10m_v_component_of_wind', '2m_temperature', 'instantaneous_10m_wind_gust',
+            'mean_direction_of_total_swell', 'mean_direction_of_wind_waves', 'mean_period_of_total_swell',
+            'mean_period_of_wind_waves', 'mean_wave_direction', 'mean_wave_period',
+            'peak_wave_period', 'significant_height_of_combined_wind_waves_and_swell', 'significant_height_of_total_swell',
+            'significant_height_of_wind_waves',
+        ]
     return
 
 
