@@ -99,7 +99,7 @@ To import data from a local csv-file to **ts-object**:
    df_ts.load_data(local_file=df_ts.datafile)  
    print(df_ts.data)
 
-.. image:: ts.data.png
+.. image:: ts.data0.png
   :width: 800
 
 
