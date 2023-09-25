@@ -91,7 +91,7 @@ Data is saved in:
 
 .. code-block:: python
 
-   print(df_ts.datafile) #'NORA3_wind_wave_lon1.32_lat53.324_19890101_20221231.csv' 
+   print(df_ts.datafile) #'NORA3_wind_wave_lon1.32_lat53.324_20000101_20000331.csv' 
 
 To import data from a local csv-file to **ts-object**:
 
@@ -100,7 +100,7 @@ To import data from a local csv-file to **ts-object**:
    df_ts.load_data(local_file=df_ts.datafile)  
    print(df_ts.data)
 
-.. image:: ts.data.png
+.. image:: ts.data0.png
   :width: 800
 
 
