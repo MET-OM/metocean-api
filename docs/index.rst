@@ -16,17 +16,20 @@ The package contains functions to extract time series to csv-format from:
 
 Installing **metocean-api**
 =============================================
-Quick Installation 
-+++++++++++++++++++
-metocean-api can be installed from PyPI:
+Alternative 1: Using Mambaforge (alternative to Miniconda)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+1. Install `mambaforge <https://mamba.readthedocs.io/en/latest/installation.html>`_ (`download <https://github.com/conda-forge/miniforge#mambaforge>`_)
+2. Set up a *Python 3* environment for metocean-api and install metocean-api
 
 .. code-block:: bash
 
-   $ pip install metocean-api
+   $ mamba create -n metocean-api python=3 metocean-api
+   $ conda activate metocean-api
 
-Alternative 1: Using Conda and Git (recommended)
+Alternative 2: Using Mambaforge (alternative to Miniconda) and Git
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-1. Install anaconda3 or miniconda3
+1. Install `mambaforge <https://mamba.readthedocs.io/en/latest/installation.html>`_ (`download <https://github.com/conda-forge/miniforge#mambaforge>`_)
 2. Clone metocean-api:
 
 .. code-block:: bash
@@ -38,10 +41,17 @@ Alternative 1: Using Conda and Git (recommended)
 
 .. code-block:: bash
 
-  $ conda config --add channels conda-forge
-  $ conda env create -f environment.yml
+  $ mamba env create -f environment.yml
   $ conda activate metocean-api
   $ pip install --no-deps -e .
+
+This installs the metocean-api as an editable package. Therefore, you can directly make changes to the repository or fetch the newest changes with :code:`git pull`. 
+
+To update the local conda environment in case of new dependencies added to environment.yml:
+
+.. code-block:: bash
+
+  $ mamba env update -f environment.yml
 
 Creating a TimeSeries-object
 =====================================
