@@ -40,6 +40,9 @@ class TimeSeries:
             'significant_height_of_wind_waves',
         ]
       self.data = ERA5_ts(self, save_csv = save_csv) 
+    elif self.product == 'NORA3_stormsurge':
+      self.variable =  ['zeta']
+      self.data = NORA3_stormsurge_ts(self, save_csv = save_csv) 
     return
 
 

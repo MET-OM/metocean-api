@@ -74,6 +74,8 @@ Several options for **product** are available. Please check the data catalog for
 * For combined wind and wave NORA3 sub data: product='NORA3_wind_wave'
 * For wave NORA3 data (Nordic Seas + Arctic): product='NORA3_wave'
   https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_files/catalog.html
+* For sea level NORA3 data (Nordic Seas): product='NORA3_stormsurge'
+  https://thredds.met.no/thredds/catalog/stormrisk/catalog.html
 * For coastal wave NORA3 data: product='NORAC_wave'
   https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
 * For global reananalysis ERA5 (wind and waves): product='ERA5' 
