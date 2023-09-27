@@ -6,6 +6,7 @@ import numpy as np
 import time
 import os
 from nco import Nco
+from pathlib import Path
 
 
 from .aux_funcs import get_date_list, get_url_info, get_near_coord, create_dataframe, check_datafile_exists
@@ -26,7 +27,8 @@ def NORA3_ts(self, save_csv = False):
     # extract point and create temp files
     for i in range(len(date_list)):
         x_coor_str, y_coor_str, infile = get_url_info(product=self.product, date=date_list[i])
-        tempfile[i] = os.path.join(dirName, "temp"+date_list.strftime('%Y%m%d')[i]+".nc")
+        tempfile[i] = str(Path(dirName+"/"+"temp"+date_list.strftime('%Y%m%d')[i]+".nc"))
+
              
         if i==0:
             x_coor, y_coor, lon_near, lat_near = get_near_coord(infile=infile, lon=self.lon, lat=self.lat, product=self.product)        
@@ -98,7 +100,7 @@ def NORA3_stormsurge_ts(self, save_csv = False):
     # extract point and create temp files
     for i in range(len(date_list)):
         x_coor_str, y_coor_str, infile = get_url_info(product=self.product, date=date_list[i])
-        tempfile[i] = os.path.join(dirName, "temp"+date_list.strftime('%Y%m%d')[i]+".nc")
+        tempfile[i] = str(Path(dirName+"/"+"temp"+date_list.strftime('%Y%m%d')[i]+".nc"))
 
              
         if i==0:
