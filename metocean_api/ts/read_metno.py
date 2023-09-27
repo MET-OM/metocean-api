@@ -21,14 +21,11 @@ def NORA3_ts(self, save_csv = False):
     self.variable.append('latitude')  # keep info of regular lat
     date_list = get_date_list(product=self.product, start_date=self.start_time, end_date=self.end_time)        
 
-    dirName = "temp"
-    tempfile = tempfile_dir(date_list,dirName=dirName)
+    tempfile = tempfile_dir(self.product,date_list,dirName="temp")
 
     # extract point and create temp files
     for i in range(len(date_list)):
         x_coor_str, y_coor_str, infile = get_url_info(product=self.product, date=date_list[i])
-        tempfile[i] = str(Path(dirName+"/"+"temp"+date_list.strftime('%Y%m%d')[i]+".nc"))
-
              
         if i==0:
             x_coor, y_coor, lon_near, lat_near = get_near_coord(infile=infile, lon=self.lon, lat=self.lat, product=self.product)        
@@ -94,14 +91,11 @@ def NORA3_stormsurge_ts(self, save_csv = False):
     #self.variable.append('lat_rho')  # keep info of regular lat
     date_list = get_date_list(product=self.product, start_date=self.start_time, end_date=self.end_time)        
     
-    dirName = "temp"
-    tempfile = tempfile_dir(date_list,dirName=dirName)
+    tempfile = tempfile_dir(self.product,date_list,dirName="temp")
 
     # extract point and create temp files
     for i in range(len(date_list)):
         x_coor_str, y_coor_str, infile = get_url_info(product=self.product, date=date_list[i])
-        tempfile[i] = str(Path(dirName+"/"+"temp"+date_list.strftime('%Y%m%d')[i]+".nc"))
-
              
         if i==0:
             x_coor, y_coor, lon_near, lat_near = get_near_coord(infile=infile, lon=self.lon, lat=self.lat, product=self.product)        
@@ -127,7 +121,7 @@ def NORA3_stormsurge_ts(self, save_csv = False):
     return df
 
 
-def tempfile_dir(date_list,dirName):
+def tempfile_dir(product, date_list,dirName):
     tempfile = [None] *len(date_list)
     # Create directory
     try:
@@ -136,6 +130,10 @@ def tempfile_dir(date_list,dirName):
         print("Directory " , dirName ,  " Created ")
     except FileExistsError:
         print("Directory " , dirName ,  " already exists")
+    
+    for i in range(len(date_list)):
+        tempfile[i] = str(Path(dirName+"/"+"temp_"+product+"_"+date_list.strftime('%Y%m%d')[i]+".nc"))
+
     return tempfile
 
 
