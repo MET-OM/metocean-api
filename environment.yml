@@ -11,6 +11,5 @@ dependencies:
   - pip
   - pynco
   - netcdf4
-  - time
   - pytest
   - cdsapi
