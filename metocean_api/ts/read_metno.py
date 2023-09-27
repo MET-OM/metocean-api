@@ -26,7 +26,7 @@ def NORA3_ts(self, save_csv = False):
     # extract point and create temp files
     for i in range(len(date_list)):
         x_coor_str, y_coor_str, infile = get_url_info(product=self.product, date=date_list[i])
-        tempfile[i] = dirName+'/temp'+date_list.strftime('%Y%m%d')[i]+'.nc'
+        tempfile[i] = r""+dirName+"/temp"+date_list.strftime('%Y%m%d')[i]+".nc"
              
         if i==0:
             x_coor, y_coor, lon_near, lat_near = get_near_coord(infile=infile, lon=self.lon, lat=self.lat, product=self.product)        
