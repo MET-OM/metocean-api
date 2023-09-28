@@ -1,7 +1,7 @@
 from __future__ import annotations # For TYPE_CHECKING
 
-#from metocean_api.ts.aux_funcs import distance_2points, find_nearest_rotCoord, find_nearest_cartCoord, get_date_list, get_url_info, get_near_coord, create_dataframe
 from .read_metno import *
+from .read_ec import *
 
 class TimeSeries:
   def __init__(self, lon: float, lat: float, start_time: str='1990-01-01T00:00', end_time: str='1991-12-31T23:59',  
@@ -30,6 +30,19 @@ class TimeSeries:
     elif self.product == 'NORAC_wave':
       self.variable =  ['hs','tp','t0m1','t02','t01','dp','dir', 'phs0','ptp0','pdir0' ,'phs1','ptp0','pdir1']
       self.data = NORA3_ts(self, save_csv = save_csv) 
+    elif self.product == 'ERA5':
+      self.variable = [
+            '100m_u_component_of_wind', '100m_v_component_of_wind', '10m_u_component_of_wind',
+            '10m_v_component_of_wind', '2m_temperature', 'instantaneous_10m_wind_gust',
+            'mean_direction_of_total_swell', 'mean_direction_of_wind_waves', 'mean_period_of_total_swell',
+            'mean_period_of_wind_waves', 'mean_wave_direction', 'mean_wave_period',
+            'peak_wave_period', 'significant_height_of_combined_wind_waves_and_swell', 'significant_height_of_total_swell',
+            'significant_height_of_wind_waves',
+        ]
+      self.data = ERA5_ts(self, save_csv = save_csv) 
+    elif self.product == 'NORA3_stormsurge':
+      self.variable =  ['zeta']
+      self.data = NORA3_stormsurge_ts(self, save_csv = save_csv) 
     return
 
 

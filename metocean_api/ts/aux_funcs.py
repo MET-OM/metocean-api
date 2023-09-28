@@ -36,16 +36,11 @@ def find_nearest_cartCoord(lon_model, lat_model, lon0, lat0):
     x0 = dx.where(dx == dx.min(), drop=True).x
     return x0, y0
 
-def get_url_spec(product, day):
-    if product == 'SPEC_NORA3':
-        url = 'https://thredds.met.no/thredds/dodsC/windsurfer/mywavewam3km_spectra/' + \
-            day.strftime('%Y') + '/'+day.strftime('%m') + \
-            '/SPC'+day.strftime('%Y%m%d')+'00.nc'
-    elif product == 'SPEC_WW3':
-        url = 'https://thredds.met.no/thredds/dodsC/ww3_4km_latest_files/' + \
-            'ww3_POI_SPC_'+day.strftime('%Y%m%d')+'T00Z.nc'
-    return url
-
+def find_nearest_rhoCoord(lon_model, lat_model, lon0, lat0):
+    #print('find nearest point...')
+    dx = distance_2points(lat0, lon0, lat_model, lon_model)
+    eta_rho0, xi_rho0 = np.where(dx.values == dx.values.min())
+    return eta_rho0, xi_rho0
 
 def get_url_info(product, date):
     if product == 'NORA3_wave':
@@ -65,11 +60,15 @@ def get_url_info(product, date):
         infile = 'https://thredds.met.no/thredds/dodsC/norac_wave/field/ww3.'+date.strftime('%Y%m')+'.nc'
         x_coor_str = 'node'
         y_coor_str = 'node'
+    elif product == 'NORA3_stormsurge':     
+        infile = 'https://thredds.met.no/thredds/dodsC/stormrisk/zeta_nora3era5_N4_'+date.strftime('%Y')+'.nc'
+        x_coor_str = 'eta_rho'
+        y_coor_str = 'xi_rho'
     print(infile)   
     return x_coor_str, y_coor_str, infile
 
 def get_date_list(product, start_date, end_date):
-    if product == 'NORA3_wave':
+    if product == 'NORA3_wave' or product == 'ERA5':
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
@@ -77,7 +76,10 @@ def get_date_list(product, start_date, end_date):
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
     elif product == 'NORAC_wave':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
+    elif product == 'NORA3_stormsurge':
+        date_list = pd.date_range(start=start_date , end=end_date, freq='YS')
     return date_list
+
 
 def drop_variables(product):
     if product == 'NORA3_wave':
@@ -87,7 +89,11 @@ def drop_variables(product):
     elif product == 'NORA3_wind_sub':
         drop_var = ['projection_lambert','longitude','latitude','x','y','height']  
     elif product == 'NORAC_wave':
+        drop_var = ['longitude','latitude'] 
+    elif product == 'ERA5':
         drop_var = ['longitude','latitude']  
+    elif product == 'NORA3_stormsurge':
+        drop_var = ['lon_rho','lat_rho']  
     return drop_var
 
 def get_near_coord(infile, lon, lat, product):
@@ -111,10 +117,16 @@ def get_near_coord(infile, lon, lat, product):
         lat_near = ds.latitude.sel(node=node_id).values  
         x_coor = node_id
         y_coor = node_id
+    elif product=='NORA3_stormsurge':
+        eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon_rho, ds.lat_rho, lon, lat)
+        lon_near = ds.lon_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
+        lat_near = ds.lat_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
+        x_coor = eta_rho
+        y_coor = xi_rho
     print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
     return x_coor, y_coor, lon_near, lat_near
 
-def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, save_csv=True,  height=None):
+def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,  height=None):
     top_header = '#'+product + ' DATA. LONGITUDE:'+str(lon_near.round(4))+', LATITUDE:' + str(lat_near.round(4)) 
     if product=='NORA3_wind_sub': 
         ds0 = ds
@@ -123,15 +135,16 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, save_csv=T
             ds[variable_height] = ds0[variable].sel(height=height[i])
  
         ds = ds.drop_vars('height')
-        ds = ds.drop([variable[0]])
-        ds = ds.drop([variable[1]]) 
-        ds = ds.drop('projection_lambert')
-        ds = ds.drop('latitude')
-        ds = ds.drop('longitude')
+        ds = ds.drop_vars([variable[0]])
+        ds = ds.drop_vars([variable[1]]) 
+        ds = ds.drop_vars('projection_lambert')
+        ds = ds.drop_vars('latitude')
+        ds = ds.drop_vars('longitude')
     else: 
         drop_var = drop_variables(product=product) 
         ds = ds.drop_vars(drop_var)
-
+ 
+    ds = ds.sel(time=slice(start_time,end_time)) 
     df = ds.to_dataframe()
     df = df.astype(float).round(2)
     df.index = pd.DatetimeIndex(data=ds.time.values)
@@ -156,5 +169,10 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, save_csv=T
 
     return df
 
-
-
+def check_datafile_exists(datafile):
+    if os.path.exists(datafile):
+        os.remove(datafile)
+        print(datafile, 'already exists, so it will be deleted and create a new....')
+    else:
+        pass# print("....")
+    return
