@@ -11,13 +11,13 @@ def ERA5_ts(self, save_csv = False):
     Extract times series of  the nearest gird point (lon,lat) from
     ERA5 reanalysis and save it as netcdf.
     """
-    filename = download_era5_from_cds(self.start_time, self.end_time, self.lon, self.lat,self.variable, folder='temp')
+    filename = download_era5_from_cds(self.start_time, self.end_time, self.lon, self.lat,self.variable, folder='cache')
     ds = xr.open_dataset(filename)
     df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.values[0], lat_near=ds.latitude.values[0], outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)
     
     return df
 
-def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='temp') -> str:
+def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='cache') -> str:
     import cdsapi
     """Downloads ERA5 data from the Copernicus Climate Data Store for a
     given point and time period"""
