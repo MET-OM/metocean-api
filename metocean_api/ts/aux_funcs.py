@@ -56,6 +56,10 @@ def get_url_info(product, date):
         infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/wind_hourly/arome3kmwind_1hr_'+date.strftime('%Y%m')+'.nc'
         x_coor_str = 'x'
         y_coor_str = 'y'
+    elif product == 'NORA3_atm_sub':   
+        infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_hourly/arome3km_1hr_'+date.strftime('%Y%m')+'.nc'
+        x_coor_str = 'x'
+        y_coor_str = 'y'
     elif product == 'NORAC_wave':     
         infile = 'https://thredds.met.no/thredds/dodsC/norac_wave/field/ww3.'+date.strftime('%Y%m')+'.nc'
         x_coor_str = 'node'
@@ -72,7 +76,7 @@ def get_date_list(product, start_date, end_date):
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
-    elif product == 'NORA3_wind_sub':
+    elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
     elif product == 'NORAC_wave':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
@@ -80,13 +84,12 @@ def get_date_list(product, start_date, end_date):
         date_list = pd.date_range(start=start_date , end=end_date, freq='YS')
     return date_list
 
-
 def drop_variables(product):
     if product == 'NORA3_wave':
        drop_var = ['projection_ob_tran','longitude','latitude']
     elif product == 'NORA3_wave_sub':
         drop_var = ['projection_ob_tran','longitude','latitude']
-    elif product == 'NORA3_wind_sub':
+    elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub':
         drop_var = ['projection_lambert','longitude','latitude','x','y','height']  
     elif product == 'NORAC_wave':
         drop_var = ['longitude','latitude'] 
@@ -105,7 +108,7 @@ def get_near_coord(infile, lon, lat, product):
         lat_near = ds.latitude.sel(rlat=rlat, rlon=rlon).values[0][0]
         x_coor = rlon
         y_coor = rlat
-    elif product=='NORA3_wind_sub':
+    elif product=='NORA3_wind_sub' or product == 'NORA3_atm_sub':
         x, y = find_nearest_cartCoord(ds.longitude, ds.latitude, lon, lat)
         lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
         lat_near = ds.latitude.sel(y=y, x=x).values[0][0]  
@@ -156,7 +159,6 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     
     #units = dict(zip(variable, units))
     #print(units)
-    
 
     if save_csv == True:
         df.to_csv(outfile,index_label='time')
