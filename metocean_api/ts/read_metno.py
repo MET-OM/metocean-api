@@ -15,7 +15,6 @@ def NORAC_ts(self, save_csv = False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     norac wave hindcast and save it as netcdf.
-    height: default is 10, only applied for wind 
     """
     self.variable.append('longitude') # keep info of regular lon
     self.variable.append('latitude')  # keep info of regular lat
@@ -51,7 +50,6 @@ def NORA3_wind_wave_ts(self, save_csv = False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     nora3 wind and wave hindcast and save it as netcdf.
-    height: default is 10, only applied for wind 
     """
     self.variable.append('longitude') # keep info of regular lon
     self.variable.append('latitude')  # keep info of regular lat
@@ -86,7 +84,6 @@ def NORA3_atm_ts(self, save_csv = False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     nora3 atm. hindcast (parameteres exc. wind & waves) and save it as netcdf.
-    height: default is 10, only applied for wind 
     """
     self.variable.append('longitude') # keep info of regular lon
     self.variable.append('latitude')  # keep info of regular lat
@@ -110,7 +107,6 @@ def NORA3_atm_ts(self, save_csv = False):
     #merge temp files
     ds = xr.open_mfdataset(paths=tempfile[:])    
     #Save in csv format    
-    breakpoint()
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)    
     ds.close()
     #remove temp files

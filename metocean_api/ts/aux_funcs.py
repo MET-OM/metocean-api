@@ -89,8 +89,10 @@ def drop_variables(product):
        drop_var = ['projection_ob_tran','longitude','latitude']
     elif product == 'NORA3_wave_sub':
         drop_var = ['projection_ob_tran','longitude','latitude']
-    elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub':
+    elif product == 'NORA3_wind_sub':
         drop_var = ['projection_lambert','longitude','latitude','x','y','height']  
+    elif product == 'NORA3_atm_sub':
+        drop_var = ['projection_lambert','longitude','latitude','x','y']  
     elif product == 'NORAC_wave':
         drop_var = ['longitude','latitude'] 
     elif product == 'ERA5':
