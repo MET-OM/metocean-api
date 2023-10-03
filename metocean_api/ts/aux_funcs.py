@@ -153,6 +153,13 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     df = ds.to_dataframe()
     df = df.astype(float).round(2)
     df.index = pd.DatetimeIndex(data=ds.time.values)
+    
+    list_vars = [i for i in ds.data_vars]
+    vars_info = ['#Variables:']
+
+    for vars in list_vars:
+#        vars_info = "#"+vars+",long_name:"+ds[vars].long_name+",units:"+ds[vars].units
+        vars_info = np.append(vars_info,"#"+vars+", units:"+ds[vars].units)
 
     #units = {'hs': 'm', 'tp': 's'}
     #units = []
@@ -167,7 +174,11 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
         with open(outfile, 'r+') as f:
             content = f.read()
             f.seek(0, 0)
-            f.write(top_header.rstrip('\r\n') + '\n' + content)
+            f.write((top_header).rstrip('\r\n') + '\n')
+            for k in range(len(vars_info)-1):                
+                f.write(vars_info[k].rstrip('\r\n') + '\n' )
+            f.write(vars_info[-1].rstrip('\r\n') + '\n' + content)
+
     else:
         pass
 
