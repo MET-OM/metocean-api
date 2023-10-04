@@ -56,6 +56,10 @@ def get_url_info(product, date):
         infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/wind_hourly/arome3kmwind_1hr_'+date.strftime('%Y%m')+'.nc'
         x_coor_str = 'x'
         y_coor_str = 'y'
+    elif product == 'NORA3_atm_sub':   
+        infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_hourly/arome3km_1hr_'+date.strftime('%Y%m')+'.nc'
+        x_coor_str = 'x'
+        y_coor_str = 'y'
     elif product == 'NORAC_wave':     
         infile = 'https://thredds.met.no/thredds/dodsC/norac_wave/field/ww3.'+date.strftime('%Y%m')+'.nc'
         x_coor_str = 'node'
@@ -72,14 +76,13 @@ def get_date_list(product, start_date, end_date):
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
-    elif product == 'NORA3_wind_sub':
+    elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
     elif product == 'NORAC_wave':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
     elif product == 'NORA3_stormsurge':
         date_list = pd.date_range(start=start_date , end=end_date, freq='YS')
     return date_list
-
 
 def drop_variables(product):
     if product == 'NORA3_wave':
@@ -88,6 +91,8 @@ def drop_variables(product):
         drop_var = ['projection_ob_tran','longitude','latitude']
     elif product == 'NORA3_wind_sub':
         drop_var = ['projection_lambert','longitude','latitude','x','y','height']  
+    elif product == 'NORA3_atm_sub':
+        drop_var = ['projection_lambert','longitude','latitude','x','y']  
     elif product == 'NORAC_wave':
         drop_var = ['longitude','latitude'] 
     elif product == 'ERA5':
@@ -105,7 +110,7 @@ def get_near_coord(infile, lon, lat, product):
         lat_near = ds.latitude.sel(rlat=rlat, rlon=rlon).values[0][0]
         x_coor = rlon
         y_coor = rlat
-    elif product=='NORA3_wind_sub':
+    elif product=='NORA3_wind_sub' or product == 'NORA3_atm_sub':
         x, y = find_nearest_cartCoord(ds.longitude, ds.latitude, lon, lat)
         lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
         lat_near = ds.latitude.sel(y=y, x=x).values[0][0]  
@@ -127,7 +132,6 @@ def get_near_coord(infile, lon, lat, product):
     return x_coor, y_coor, lon_near, lat_near
 
 def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,  height=None):
-    top_header = '#'+product + ' DATA. LONGITUDE:'+str(lon_near.round(4))+', LATITUDE:' + str(lat_near.round(4)) 
     if product=='NORA3_wind_sub': 
         ds0 = ds
         for i in range(len(height)):
@@ -148,22 +152,38 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     df = ds.to_dataframe()
     df = df.astype(float).round(2)
     df.index = pd.DatetimeIndex(data=ds.time.values)
+    
+    top_header = '#'+product + ';LONGITUDE:'+str(lon_near.round(4))+';LATITUDE:' + str(lat_near.round(4)) 
+    list_vars = [i for i in ds.data_vars]
+    vars_info = ['#Variable_name;standard_name;long_name;units']
 
-    #units = {'hs': 'm', 'tp': 's'}
-    #units = []
-    #for i in range(len(variable)):
-    #    units.append(ds[variable[i]].units)
-    
-    #units = dict(zip(variable, units))
-    #print(units)
-    
+    for vars in list_vars:
+        try:
+            standard_name = ds[vars].standard_name
+        except AttributeError as e:
+            standard_name = '-'
+        try:
+            long_name = ds[vars].long_name
+        except AttributeError as e:
+            long_name = '-'
+            
+        vars_info = np.append(vars_info,"#"+vars+";"+standard_name+";"+long_name+";"+ds[vars].units)
+
+    #try:
+    #    institution = '#Institution;'+ds.institution
+    #except AttributeError as e:
+    #    institution = '#Institution;-' 
 
     if save_csv == True:
         df.to_csv(outfile,index_label='time')
         with open(outfile, 'r+') as f:
             content = f.read()
             f.seek(0, 0)
-            f.write(top_header.rstrip('\r\n') + '\n' + content)
+            f.write((top_header).rstrip('\r\n') + '\n')
+            for k in range(len(vars_info)-1):                
+                f.write(vars_info[k].rstrip('\r\n') + '\n' )
+            f.write(vars_info[-1].rstrip('\r\n') + '\n' + content)
+
     else:
         pass
 
@@ -176,3 +196,12 @@ def check_datafile_exists(datafile):
     else:
         pass# print("....")
     return
+
+
+def read_commented_lines(datafile):
+    commented_lines = []
+    with open(datafile) as f:
+        for line in f:
+            if line.startswith("#"):
+                commented_lines = np.append(commented_lines,line)
+    return commented_lines

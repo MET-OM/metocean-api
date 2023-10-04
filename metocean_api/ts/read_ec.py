@@ -34,12 +34,12 @@ def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
     except FileExistsError:
         print("Directory " , folder ,  " already exists")
 
-    filename = f'{folder}/EC_ERA5.nc'
-
     days = get_date_list('ERA5',start_time, end_time)
     # Create string for dates
     dates = [days[0].strftime('%Y-%m-%d'), days[-1].strftime('%Y-%m-%d')]
     dates = '/'.join(dates)
+
+    filename = f'{folder}/ERA5_'+"lon"+str(lon)+"lat"+str(lat)+"_"+days[0].strftime('%Y%m%d')+'_'+days[-1].strftime('%Y%m%d')+".nc"
 
     cds_command = {
         'product_type': 'reanalysis',

@@ -21,15 +21,15 @@ class TimeSeries:
   def import_data(self, save_csv = True):
     if ((self.product=='NORA3_wave_sub') or (self.product=='NORA3_wave')):
       self.variable =  ['hs','tp','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
-      self.data = NORA3_ts(self, save_csv = save_csv)
+      self.data = NORA3_wind_wave_ts(self, save_csv = save_csv)
     elif self.product == 'NORA3_wind_sub':
        self.variable =  ['wind_speed','wind_direction']
-       self.data = NORA3_ts(self, save_csv = save_csv)
+       self.data = NORA3_wind_wave_ts(self, save_csv = save_csv)
     elif self.product == 'NORA3_wind_wave':
       self.data = NORA3_combined_ts(self, save_csv = save_csv)
     elif self.product == 'NORAC_wave':
       self.variable =  ['hs','tp','t0m1','t02','t01','dp','dir', 'phs0','ptp0','pdir0' ,'phs1','ptp0','pdir1']
-      self.data = NORA3_ts(self, save_csv = save_csv) 
+      self.data = NORAC_ts(self, save_csv = save_csv) 
     elif self.product == 'ERA5':
       self.variable = [
             '100m_u_component_of_wind', '100m_v_component_of_wind', '10m_u_component_of_wind',
@@ -43,8 +43,12 @@ class TimeSeries:
     elif self.product == 'NORA3_stormsurge':
       self.variable =  ['zeta']
       self.data = NORA3_stormsurge_ts(self, save_csv = save_csv) 
+    elif self.product == 'NORA3_atm_sub':
+      self.variable =  ['air_pressure_at_sea_level', 'air_temperature_2m', 'relative_humidity_2m', 
+                        'surface_net_longwave_radiation', 'surface_net_shortwave_radiation',
+                        'precipitation_amount_hourly','fog']
+      self.data = NORA3_atm_ts(self, save_csv = save_csv) 
     return
-
 
   def load_data(self, local_file):
     import pandas as pd
