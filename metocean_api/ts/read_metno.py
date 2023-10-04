@@ -9,7 +9,7 @@ from nco import Nco
 from pathlib import Path
 
 
-from .aux_funcs import get_date_list, get_url_info, get_near_coord, create_dataframe, check_datafile_exists
+from .aux_funcs import get_date_list, get_url_info, get_near_coord, create_dataframe, check_datafile_exists, read_commented_lines
 
 def NORAC_ts(self, save_csv = False):
     """
@@ -156,27 +156,26 @@ def NORA3_combined_ts(self, save_csv = True):
     self.variable = ['hs','tp','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
     self.product = 'NORA3_wave_sub'
     df_wave = NORA3_wind_wave_ts(self, save_csv=True)
-    with open(self.datafile) as f:
-        top_header_wave = f.readline()
+    top_header_wave = read_commented_lines(self.datafile)
     os.remove(self.datafile)
     self.variable = ['wind_speed','wind_direction']
     self.product = 'NORA3_wind_sub' 
     df_wind = NORA3_wind_wave_ts(self, save_csv=True)
-    with open(self.datafile) as f:
-        top_header_wind = f.readline()
+    top_header_wind = read_commented_lines(self.datafile)
     os.remove(self.datafile)
     
     # merge dataframes
     df = df_wind.join(df_wave)
-
+    top_header = np.append(top_header_wave,top_header_wind) 
     if save_csv == True:
         df.to_csv(self.datafile, index_label='time')
-        top_header =  top_header_wave + top_header_wind + '\n'  
         with open(self.datafile, 'r+') as f:
             content = f.read()
             f.seek(0, 0)
-            f.write(top_header.rstrip('\r\n') + '\n' + content)
-    
+            for k in range(len(top_header)-1):                
+                f.write(top_header[k].rstrip('\r\n') + '\n' )
+            f.write(top_header[-1].rstrip('\r\n') + '\n' + content)
+
     print('Data saved at: ' +self.datafile)
 
     return df
@@ -207,5 +206,4 @@ def apply_nco(infile,tempfile,opt):
             time.sleep(10)  # wait for 10 seconds before re-trying
         else:
             break
-
 

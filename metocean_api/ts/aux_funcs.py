@@ -132,7 +132,6 @@ def get_near_coord(infile, lon, lat, product):
     return x_coor, y_coor, lon_near, lat_near
 
 def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,  height=None):
-    top_header = '#'+product + ' DATA. LONGITUDE:'+str(lon_near.round(4))+', LATITUDE:' + str(lat_near.round(4)) 
     if product=='NORA3_wind_sub': 
         ds0 = ds
         for i in range(len(height)):
@@ -154,20 +153,26 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     df = df.astype(float).round(2)
     df.index = pd.DatetimeIndex(data=ds.time.values)
     
+    top_header = '#'+product + ';LONGITUDE:'+str(lon_near.round(4))+';LATITUDE:' + str(lat_near.round(4)) 
     list_vars = [i for i in ds.data_vars]
-    vars_info = ['#Variables:']
+    vars_info = ['#Variable_name;standard_name;long_name;units']
 
     for vars in list_vars:
-#        vars_info = "#"+vars+",long_name:"+ds[vars].long_name+",units:"+ds[vars].units
-        vars_info = np.append(vars_info,"#"+vars+", units:"+ds[vars].units)
+        try:
+            standard_name = ds[vars].standard_name
+        except AttributeError as e:
+            standard_name = '-'
+        try:
+            long_name = ds[vars].long_name
+        except AttributeError as e:
+            long_name = '-'
+            
+        vars_info = np.append(vars_info,"#"+vars+";"+standard_name+";"+long_name+";"+ds[vars].units)
 
-    #units = {'hs': 'm', 'tp': 's'}
-    #units = []
-    #for i in range(len(variable)):
-    #    units.append(ds[variable[i]].units)
-    
-    #units = dict(zip(variable, units))
-    #print(units)
+    #try:
+    #    institution = '#Institution;'+ds.institution
+    #except AttributeError as e:
+    #    institution = '#Institution;-' 
 
     if save_csv == True:
         df.to_csv(outfile,index_label='time')
@@ -191,3 +196,12 @@ def check_datafile_exists(datafile):
     else:
         pass# print("....")
     return
+
+
+def read_commented_lines(datafile):
+    commented_lines = []
+    with open(datafile) as f:
+        for line in f:
+            if line.startswith("#"):
+                commented_lines = np.append(commented_lines,line)
+    return commented_lines

@@ -67,15 +67,19 @@ This section documents the **ts-module**. The ts-object is initialized with the 
 
 Several options for **product** are available. Please check the data catalog for the time coverage:
 
-* For wind NORA3 sub data (Nordic Seas): product='NORA3_wind_sub'
+* For wind NORA3 sub data (Nordic Area): product='NORA3_wind_sub'
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
+
+* For atmospheric (pressure,temperature,precipitation,humidity, radiation) NORA3 sub data (Nordic Area): product='NORA3_atm_sub'
+
+  Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_hourly/catalog.html
 
 * For wave NORA3 sub data (Nordic Seas): product='NORA3_wave_sub' 
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_wave/wave_tser/catalog.html
 
-* For combined wind and wave NORA3 sub data: product='NORA3_wind_wave'
+* For combined wind and wave NORA3 sub data (Nordic Seas): product='NORA3_wind_wave'
 
 * For wave NORA3 data (Nordic Seas + Arctic): product='NORA3_wave'
 
