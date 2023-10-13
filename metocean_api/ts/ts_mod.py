@@ -32,13 +32,16 @@ class TimeSeries:
       self.data = NORAC_ts(self, save_csv = save_csv) 
     elif self.product == 'ERA5':
       self.variable = [
-            '100m_u_component_of_wind', '100m_v_component_of_wind', '10m_u_component_of_wind',
-            '10m_v_component_of_wind', '2m_temperature', 'instantaneous_10m_wind_gust',
-            'mean_direction_of_total_swell', 'mean_direction_of_wind_waves', 'mean_period_of_total_swell',
-            'mean_period_of_wind_waves', 'mean_wave_direction', 'mean_wave_period',
-            'peak_wave_period', 'significant_height_of_combined_wind_waves_and_swell', 'significant_height_of_total_swell',
-            'significant_height_of_wind_waves',
+             'significant_height_of_combined_wind_waves_and_swell', 
         ]
+#      self.variable = [
+#            '100m_u_component_of_wind', '100m_v_component_of_wind', '10m_u_component_of_wind',
+#            '10m_v_component_of_wind', '2m_temperature', 'instantaneous_10m_wind_gust',
+#            'mean_direction_of_total_swell', 'mean_direction_of_wind_waves', 'mean_period_of_total_swell',
+#            'mean_period_of_wind_waves', 'mean_wave_direction', 'mean_wave_period',
+#            'peak_wave_period', 'significant_height_of_combined_wind_waves_and_swell', 'significant_height_of_total_swell',
+#            'significant_height_of_wind_waves',
+#        ] 
       self.data = ERA5_ts(self, save_csv = save_csv) 
     elif self.product == 'NORA3_stormsurge':
       self.variable =  ['zeta']
