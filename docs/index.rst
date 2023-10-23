@@ -122,8 +122,13 @@ To import data from a local csv-file to **ts-object**:
 .. image:: ts.data0.png
   :width: 900
 
+To combine several csv-files produced by to **metocean-api**:
 
+.. code-block:: python
 
+   df = ts.ts_mod.combine_data(list_files=['NORA3_wind_sub_lon1.32_lat53.324_20210101_20210131.csv',
+                                           'NORA3_atm_sub_lon1.32_lat53.324_20210101_20210331.csv'],
+                                   output_file='combined_NORA3_lon1.32_lat53.324.csv')  
 
 .. toctree::
    :maxdepth: 2

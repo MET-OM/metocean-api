@@ -1,9 +1,10 @@
 from metocean_api import ts
 
 # Define TimeSeries-object
-df_ts = ts.TimeSeries(lon=109.94, lat=15.51,start_time='2000-01-01', end_time='2010-12-31' , product='ERA5', 
-                      variable=[ 
-            'significant_height_of_combined_wind_waves_and_swell','mean_wave_direction'])
+df_ts = ts.TimeSeries(lon=109.94, lat=15.51,start_time='2000-01-01', end_time='2000-12-31' , product='ERA5', 
+                      variable=[ 'significant_height_of_combined_wind_waves_and_swell',
+                                'mean_wave_direction',
+                                'peak_wave_period'])
 
 # list of wind and wave parameters in ERA5:
 #        [    '100m_u_component_of_wind', '100m_v_component_of_wind', '10m_u_component_of_wind',

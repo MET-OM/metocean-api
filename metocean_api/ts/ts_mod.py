@@ -2,6 +2,32 @@ from __future__ import annotations # For TYPE_CHECKING
 
 from .read_metno import *
 from .read_ec import *
+from .aux_funcs import read_commented_lines
+
+def combine_data(list_files = [], output_file=False):
+    import pandas as pd
+    for i in range(len(list_files)):
+      df = pd.read_csv(list_files[i],comment='#',index_col=0, parse_dates=True)
+      top_header = read_commented_lines(list_files[i])
+      if i==0:
+        df_all = df
+        top_header_all = top_header
+      else:
+        #df_all = df_all.join(df)
+        df_all = pd.merge(df_all,df, how='outer', left_index=True, right_index=True)
+        top_header_all = np.append(top_header_all,top_header)
+    if output_file==False:
+      pass
+    else:
+      df_all.to_csv(output_file, index_label='time')
+      with open(output_file, 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        for k in range(len(top_header_all)-1):                
+          f.write(top_header_all[k].rstrip('\r\n') + '\n' )
+        f.write(top_header_all[-1].rstrip('\r\n') + '\n' + content)
+      print('Data saved at: ' +output_file)    
+    return df_all
 
 class TimeSeries:
   def __init__(self, lon: float, lat: float, start_time: str='1990-01-01T00:00', end_time: str='1991-12-31T23:59', variable: str=[], 
@@ -29,7 +55,8 @@ class TimeSeries:
       if self.variable == []:       
         self.variable =  ['wind_speed','wind_direction']
       else:
-       self.data = NORA3_wind_wave_ts(self, save_csv = save_csv)
+       pass
+      self.data = NORA3_wind_wave_ts(self, save_csv = save_csv)
     elif self.product == 'NORA3_wind_wave':
       self.data = NORA3_combined_ts(self, save_csv = save_csv)
     elif self.product == 'NORAC_wave':
@@ -64,6 +91,7 @@ class TimeSeries:
   def load_data(self, local_file):
     import pandas as pd
     self.data = pd.read_csv(local_file,comment='#',index_col=0, parse_dates=True)
+
 
 
 
