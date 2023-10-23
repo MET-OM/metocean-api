@@ -205,3 +205,6 @@ def read_commented_lines(datafile):
             if line.startswith("#"):
                 commented_lines = np.append(commented_lines,line)
     return commented_lines
+
+
+

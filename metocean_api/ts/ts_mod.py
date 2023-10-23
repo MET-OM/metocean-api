@@ -2,9 +2,35 @@ from __future__ import annotations # For TYPE_CHECKING
 
 from .read_metno import *
 from .read_ec import *
+from .aux_funcs import read_commented_lines
+
+def combine_data(list_files = [], output_file=False):
+    import pandas as pd
+    for i in range(len(list_files)):
+      df = pd.read_csv(list_files[i],comment='#',index_col=0, parse_dates=True)
+      top_header = read_commented_lines(list_files[i])
+      if i==0:
+        df_all = df
+        top_header_all = top_header
+      else:
+        #df_all = df_all.join(df)
+        df_all = pd.merge(df_all,df, how='outer', left_index=True, right_index=True)
+        top_header_all = np.append(top_header_all,top_header)
+    if output_file==False:
+      pass
+    else:
+      df_all.to_csv(output_file, index_label='time')
+      with open(output_file, 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        for k in range(len(top_header_all)-1):                
+          f.write(top_header_all[k].rstrip('\r\n') + '\n' )
+        f.write(top_header_all[-1].rstrip('\r\n') + '\n' + content)
+      print('Data saved at: ' +output_file)    
+    return df_all
 
 class TimeSeries:
-  def __init__(self, lon: float, lat: float, start_time: str='1990-01-01T00:00', end_time: str='1991-12-31T23:59',  
+  def __init__(self, lon: float, lat: float, start_time: str='1990-01-01T00:00', end_time: str='1991-12-31T23:59', variable: str=[], 
   name: str='AnonymousArea', product: str='NORA3_wave_sub', datafile: str='EmptyFile', data = [], height: int = [10, 20, 50, 100, 250, 500, 750]):
     self.name = name
     self.lon = lon
@@ -12,7 +38,7 @@ class TimeSeries:
     self.product = product
     self.start_time = start_time
     self.end_time = end_time
-    self.variable = []
+    self.variable = variable
     self.height = height
     self.datafile = product+'_lon'+str(self.lon)+'_lat'+str(self.lat)+'_'+self.start_time.replace('-','')+'_'+self.end_time.replace('-','')+'.csv'
     self.data = data
@@ -20,18 +46,28 @@ class TimeSeries:
 
   def import_data(self, save_csv = True):
     if ((self.product=='NORA3_wave_sub') or (self.product=='NORA3_wave')):
-      self.variable =  ['hs','tp','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
+      if self.variable == []:
+        self.variable =  ['hs','tp','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
+      else:
+        pass
       self.data = NORA3_wind_wave_ts(self, save_csv = save_csv)
     elif self.product == 'NORA3_wind_sub':
-       self.variable =  ['wind_speed','wind_direction']
-       self.data = NORA3_wind_wave_ts(self, save_csv = save_csv)
+      if self.variable == []:       
+        self.variable =  ['wind_speed','wind_direction']
+      else:
+       pass
+      self.data = NORA3_wind_wave_ts(self, save_csv = save_csv)
     elif self.product == 'NORA3_wind_wave':
       self.data = NORA3_combined_ts(self, save_csv = save_csv)
     elif self.product == 'NORAC_wave':
-      self.variable =  ['hs','tp','t0m1','t02','t01','dp','dir', 'phs0','ptp0','pdir0' ,'phs1','ptp0','pdir1']
+      if self.variable == []:
+        self.variable =  ['hs','tp','t0m1','t02','t01','dp','dir', 'phs0','ptp0','pdir0' ,'phs1','ptp0','pdir1']
+      else:
+        pass
       self.data = NORAC_ts(self, save_csv = save_csv) 
     elif self.product == 'ERA5':
-      self.variable = [
+      if self.variable == []:
+        self.variable = [
             '100m_u_component_of_wind', '100m_v_component_of_wind', '10m_u_component_of_wind',
             '10m_v_component_of_wind', '2m_temperature', 'instantaneous_10m_wind_gust',
             'mean_direction_of_total_swell', 'mean_direction_of_wind_waves', 'mean_period_of_total_swell',
@@ -39,6 +75,8 @@ class TimeSeries:
             'peak_wave_period', 'significant_height_of_combined_wind_waves_and_swell', 'significant_height_of_total_swell',
             'significant_height_of_wind_waves',
         ]
+      else:
+        pass 
       self.data = ERA5_ts(self, save_csv = save_csv) 
     elif self.product == 'NORA3_stormsurge':
       self.variable =  ['zeta']
@@ -53,6 +91,7 @@ class TimeSeries:
   def load_data(self, local_file):
     import pandas as pd
     self.data = pd.read_csv(local_file,comment='#',index_col=0, parse_dates=True)
+
 
 
 
