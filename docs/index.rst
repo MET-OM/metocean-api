@@ -122,7 +122,7 @@ To import data from a local csv-file to **ts-object**:
 .. image:: ts.data0.png
   :width: 900
 
-To combine several csv-files produced by to **metocean-api**:
+To combine several csv-files produced by **metocean-api**:
 
 .. code-block:: python
 
