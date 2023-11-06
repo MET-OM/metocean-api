@@ -60,6 +60,11 @@ def get_url_info(product, date):
         infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_hourly/arome3km_1hr_'+date.strftime('%Y%m')+'.nc'
         x_coor_str = 'x'
         y_coor_str = 'y'
+    elif product == 'NORA3_atm3hr_sub':   
+        infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_3hourly/arome3km_3hr_'+date.strftime('%Y%m')+'.nc'
+        #infile = '/lustre/storeB/project/fou/om/NORA3/equinor/atm_v3/arome3km_3hr_'+date.strftime('%Y%m')+'.nc'
+        x_coor_str = 'x'
+        y_coor_str = 'y'
     elif product == 'NORAC_wave':     
         infile = 'https://thredds.met.no/thredds/dodsC/norac_wave/field/ww3.'+date.strftime('%Y%m')+'.nc'
         x_coor_str = 'node'
@@ -76,7 +81,7 @@ def get_date_list(product, start_date, end_date):
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
-    elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub':
+    elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
     elif product == 'NORAC_wave':
         date_list = pd.date_range(start=start_date , end=end_date, freq='M')
@@ -93,6 +98,8 @@ def drop_variables(product):
         drop_var = ['projection_lambert','longitude','latitude','x','y','height']  
     elif product == 'NORA3_atm_sub':
         drop_var = ['projection_lambert','longitude','latitude','x','y']  
+    elif product == 'NORA3_atm3hr_sub':
+        drop_var = ['projection_lambert','longitude','latitude','x','y','height'] 
     elif product == 'NORAC_wave':
         drop_var = ['longitude','latitude'] 
     elif product == 'ERA5':
@@ -110,7 +117,7 @@ def get_near_coord(infile, lon, lat, product):
         lat_near = ds.latitude.sel(rlat=rlat, rlon=rlon).values[0][0]
         x_coor = rlon
         y_coor = rlat
-    elif product=='NORA3_wind_sub' or product == 'NORA3_atm_sub':
+    elif product=='NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
         x, y = find_nearest_cartCoord(ds.longitude, ds.latitude, lon, lat)
         lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
         lat_near = ds.latitude.sel(y=y, x=x).values[0][0]  
@@ -141,6 +148,20 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
         ds = ds.drop_vars('height')
         ds = ds.drop_vars([variable[0]])
         ds = ds.drop_vars([variable[1]]) 
+        ds = ds.drop_vars('projection_lambert')
+        ds = ds.drop_vars('latitude')
+        ds = ds.drop_vars('longitude')
+    elif product=='NORA3_atm3hr_sub': 
+        ds0 = ds
+        for i in range(len(height)):
+            variable_height = [k + '_'+str(height[i])+'m' for k in variable]
+            ds[variable_height] = ds0[variable].sel(height=height[i])
+ 
+        ds = ds.drop_vars('height')
+        ds = ds.drop_vars('wind_speed')
+        ds = ds.drop_vars('wind_direction') 
+        ds = ds.drop_vars('air_temperature')
+        ds = ds.drop_vars('relative_humidity') 
         ds = ds.drop_vars('projection_lambert')
         ds = ds.drop_vars('latitude')
         ds = ds.drop_vars('longitude')

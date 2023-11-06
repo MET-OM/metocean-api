@@ -86,6 +86,11 @@ class TimeSeries:
                         'surface_net_longwave_radiation', 'surface_net_shortwave_radiation',
                         'precipitation_amount_hourly','fog']
       self.data = NORA3_atm_ts(self, save_csv = save_csv) 
+    elif self.product == 'NORA3_atm3hr_sub':
+      #self.variable =  ['wind_speed', 'wind_direction', 'density', 'tke']
+      self.variable =  ['wind_speed', 'wind_direction', 'air_temperature', 'relative_humidity']
+      self.height = [50, 100, 150, 200, 300]
+      self.data = NORA3_atm3hr_ts(self, save_csv = save_csv) 
     return
 
   def load_data(self, local_file):
