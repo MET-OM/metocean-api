@@ -67,7 +67,7 @@ This section documents the **ts-module**. The ts-object is initialized with the 
 
 Several options for **product** are available. Please check the data catalog for the time coverage:
 
-* For wind NORA3 hourly data in  10, 20, 50, 100, 250, 500, 750m (Nordic Area): product='NORA3_wind_sub'
+* For wind NORA3 hourly data in 10, 20, 50, 100, 250, 500, 750m (Nordic Area): product='NORA3_wind_sub'
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
 
@@ -75,7 +75,7 @@ Several options for **product** are available. Please check the data catalog for
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_hourly/catalog.html
 
-* For SST and 3-hourly atmospheric (wind, temperature, relative humidity) NORA3 data (Nordic Area): product='NORA3_atn3hr_sub'
+* For SST and atmospheric (wind, temperature, relative humidity) NORA3 3-hourly data in 50, 100, 150, 200, 300m (Nordic Area): product='NORA3_atm3hr_sub'
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html
 
