@@ -143,7 +143,6 @@ def NORA3_atm3hr_ts(self, save_csv = False):
 
     #Save in csv format    
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:4], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)    
-    print(df)
     ds.close()
     #remove temp files
     #for i in range(len(date_list)):
