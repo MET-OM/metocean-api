@@ -80,11 +80,11 @@ def get_date_list(product, start_date, end_date):
     if product == 'NORA3_wave' or product == 'ERA5':
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='M')
+        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
     elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='M')
+        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
     elif product == 'NORAC_wave':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='M')
+        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
     elif product == 'NORA3_stormsurge':
         date_list = pd.date_range(start=start_date , end=end_date, freq='YS')
     return date_list
