@@ -82,14 +82,16 @@ class TimeSeries:
       self.variable =  ['zeta']
       self.data = NORA3_stormsurge_ts(self, save_csv = save_csv) 
     elif self.product == 'NORA3_atm_sub':
-      self.variable =  ['air_pressure_at_sea_level', 'air_temperature_2m', 'relative_humidity_2m', 
+      if self.variable == []:
+        self.variable =  ['air_pressure_at_sea_level', 'air_temperature_2m', 'relative_humidity_2m', 
                         'surface_net_longwave_radiation', 'surface_net_shortwave_radiation',
                         'precipitation_amount_hourly','fog']
+      else:
+        pass
       self.data = NORA3_atm_ts(self, save_csv = save_csv) 
     elif self.product == 'NORA3_atm3hr_sub':
-      #self.variable =  ['wind_speed', 'wind_direction', 'density', 'tke']
-      self.variable =  ['wind_speed', 'wind_direction', 'air_temperature', 'relative_humidity']
       self.height = [50, 100, 150, 200, 300]
+      self.variable =  ['wind_speed', 'wind_direction', 'air_temperature', 'relative_humidity', 'density', 'tke'] 
       self.data = NORA3_atm3hr_ts(self, save_csv = save_csv) 
     return
 

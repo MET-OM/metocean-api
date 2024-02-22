@@ -139,10 +139,27 @@ def NORA3_atm3hr_ts(self, save_csv = False):
 
     check_datafile_exists(self.datafile)
     #merge temp files
-    ds = xr.open_mfdataset(paths=tempfile[:])    
+    ds = xr.open_mfdataset(paths=tempfile[:])
 
-    #Save in csv format    
-    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:4], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)    
+    # make density and tke in the same numer of dimensions as the other parameteres    
+    ds['density0'] = xr.ones_like(ds['wind_speed'])
+    ds['density0'].attrs['units'] = ds['density'].units
+    ds['density0'].attrs['standard_name'] = ds['density'].standard_name
+    ds['density0'].attrs['long_name'] = ds['density'].long_name
+    ds['density0'][:,2,:,:] = ds['density'][:,0,:,:].values # 150 m 
+    ds = ds.drop_vars('density')
+    ds = ds.rename_vars({'density0': 'density'})
+
+    ds['tke0'] = xr.ones_like(ds['wind_speed'])
+    ds['tke0'].attrs['units'] = ds['tke'].units
+    ds['tke0'].attrs['standard_name'] = '-'
+    ds['tke0'].attrs['long_name'] = ds['tke'].long_name
+    ds['tke0'][:,2,:,:] = ds['tke'][:,0,:,:].values # 150 m  
+    ds = ds.drop_vars('tke')
+    ds = ds.rename_vars({'tke0': 'tke'})
+
+    #Save in csv format  
+    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:-2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)    
     ds.close()
     #remove temp files
     #for i in range(len(date_list)):

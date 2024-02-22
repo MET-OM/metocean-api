@@ -46,7 +46,7 @@ def test_extract_NORA3atm3hr():
     df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-31', product='NORA3_atm3hr_sub')
     # Import data from thredds.met.no and save it as csv
     df_ts.import_data(save_csv=False)
-    if df_ts.data.shape == (248,20):
+    if df_ts.data.shape == (248,30):
         pass
     else:
         raise ValueError("Shape is not correct")    
