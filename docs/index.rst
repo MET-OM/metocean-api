@@ -108,7 +108,7 @@ Import data from server to **ts-object** and save it as csv:
 
 .. code-block:: python
 
-   df_ts.import_data(save_csv=True)
+   df_ts.import_data(save_csv=True, save_nc=False)
 
 Data is saved in:
 
