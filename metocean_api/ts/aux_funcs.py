@@ -139,7 +139,7 @@ def get_near_coord(infile, lon, lat, product):
     print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
     return x_coor, y_coor, lon_near, lat_near
 
-def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,  height=None):
+def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,save_nc=True, height=None):
     if product=='NORA3_wind_sub': 
         ds0 = ds
         for i in range(len(height)):
@@ -207,10 +207,10 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
             for k in range(len(vars_info)-1):                
                 f.write(vars_info[k].rstrip('\r\n') + '\n' )
             f.write(vars_info[-1].rstrip('\r\n') + '\n' + content)
-
-    else:
-        pass
-
+    
+    if save_nc == True:
+        ds.to_netcdf(outfile.replace('csv','nc'))
+    
     return df
 
 def check_datafile_exists(datafile):

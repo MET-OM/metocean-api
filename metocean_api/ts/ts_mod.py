@@ -44,27 +44,27 @@ class TimeSeries:
     self.data = data
     return
 
-  def import_data(self, save_csv = True):
+  def import_data(self, save_csv = True, save_nc = False):
     if ((self.product=='NORA3_wave_sub') or (self.product=='NORA3_wave')):
       if self.variable == []:
         self.variable =  ['hs','tp','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
       else:
         pass
-      self.data = NORA3_wind_wave_ts(self, save_csv = save_csv)
+      self.data = NORA3_wind_wave_ts(self, save_csv = save_csv, save_nc = save_nc)
     elif self.product == 'NORA3_wind_sub':
       if self.variable == []:       
         self.variable =  ['wind_speed','wind_direction']
       else:
        pass
-      self.data = NORA3_wind_wave_ts(self, save_csv = save_csv)
+      self.data = NORA3_wind_wave_ts(self, save_csv = save_csv,save_nc = save_nc)
     elif self.product == 'NORA3_wind_wave':
-      self.data = NORA3_combined_ts(self, save_csv = save_csv)
+      self.data = NORA3_combined_ts(self, save_csv = save_csv,save_nc = save_nc)
     elif self.product == 'NORAC_wave':
       if self.variable == []:
         self.variable =  ['hs','tp','t0m1','t02','t01','dp','dir', 'phs0','ptp0','pdir0' ,'phs1','ptp0','pdir1']
       else:
         pass
-      self.data = NORAC_ts(self, save_csv = save_csv) 
+      self.data = NORAC_ts(self, save_csv = save_csv,save_nc = save_nc) 
     elif self.product == 'ERA5':
       if self.variable == []:
         self.variable = [
@@ -77,10 +77,10 @@ class TimeSeries:
         ]
       else:
         pass 
-      self.data = ERA5_ts(self, save_csv = save_csv) 
+      self.data = ERA5_ts(self, save_csv = save_csv,save_nc = save_nc) 
     elif self.product == 'NORA3_stormsurge':
       self.variable =  ['zeta']
-      self.data = NORA3_stormsurge_ts(self, save_csv = save_csv) 
+      self.data = NORA3_stormsurge_ts(self, save_csv = save_csv,save_nc = save_nc) 
     elif self.product == 'NORA3_atm_sub':
       if self.variable == []:
         self.variable =  ['air_pressure_at_sea_level', 'air_temperature_2m', 'relative_humidity_2m', 
@@ -88,11 +88,11 @@ class TimeSeries:
                         'precipitation_amount_hourly','fog']
       else:
         pass
-      self.data = NORA3_atm_ts(self, save_csv = save_csv) 
+      self.data = NORA3_atm_ts(self, save_csv = save_csv,save_nc = save_nc) 
     elif self.product == 'NORA3_atm3hr_sub':
       self.height = [50, 100, 150, 200, 300]
       self.variable =  ['wind_speed', 'wind_direction', 'air_temperature', 'relative_humidity', 'density', 'tke'] 
-      self.data = NORA3_atm3hr_ts(self, save_csv = save_csv) 
+      self.data = NORA3_atm3hr_ts(self, save_csv = save_csv,save_nc = save_nc) 
     return
 
   def load_data(self, local_file):
