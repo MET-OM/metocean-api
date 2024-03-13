@@ -71,6 +71,7 @@ def get_url_info(product, date):
         y_coor_str = 'node'
     elif product == 'NORA3_stormsurge':     
         infile = 'https://thredds.met.no/thredds/dodsC/stormrisk/zeta_nora3era5_N4_'+date.strftime('%Y')+'.nc'
+        #infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_sealevel/sealevel/zeta_nora3era5_N4_'+date.strftime('%Y')+'.nc'
         x_coor_str = 'eta_rho'
         y_coor_str = 'xi_rho'
     print(infile)   
@@ -138,7 +139,7 @@ def get_near_coord(infile, lon, lat, product):
     print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
     return x_coor, y_coor, lon_near, lat_near
 
-def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,  height=None):
+def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,save_nc=True, height=None):
     if product=='NORA3_wind_sub': 
         ds0 = ds
         for i in range(len(height)):
@@ -156,12 +157,14 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
         for i in range(len(height)):
             variable_height = [k + '_'+str(height[i])+'m' for k in variable]
             ds[variable_height] = ds0[variable].sel(height=height[i])
- 
+
         ds = ds.drop_vars('height')
         ds = ds.drop_vars('wind_speed')
         ds = ds.drop_vars('wind_direction') 
         ds = ds.drop_vars('air_temperature')
         ds = ds.drop_vars('relative_humidity') 
+        ds = ds.drop_vars('tke') 
+        ds = ds.drop_vars('density') 
         ds = ds.drop_vars('projection_lambert')
         ds = ds.drop_vars('latitude')
         ds = ds.drop_vars('longitude')
@@ -204,10 +207,10 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
             for k in range(len(vars_info)-1):                
                 f.write(vars_info[k].rstrip('\r\n') + '\n' )
             f.write(vars_info[-1].rstrip('\r\n') + '\n' + content)
-
-    else:
-        pass
-
+    
+    if save_nc == True:
+        ds.to_netcdf(outfile.replace('csv','nc'))
+    
     return df
 
 def check_datafile_exists(datafile):

@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .aux_funcs import get_date_list, get_url_info, get_near_coord, create_dataframe, check_datafile_exists, read_commented_lines
 
-def NORAC_ts(self, save_csv = False):
+def NORAC_ts(self, save_csv = False, save_nc = False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     norac wave hindcast and save it as netcdf.
@@ -37,7 +37,7 @@ def NORAC_ts(self, save_csv = False):
     #merge temp files
     ds = xr.open_mfdataset(paths=tempfile[:])    
     #Save in csv format    
-    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)    
+    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close()
     #remove temp files
     #for i in range(len(date_list)):
@@ -46,7 +46,7 @@ def NORAC_ts(self, save_csv = False):
     return df
 
 
-def NORA3_wind_wave_ts(self, save_csv = False):
+def NORA3_wind_wave_ts(self, save_csv = False, save_nc = False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     nora3 wind and wave hindcast and save it as netcdf.
@@ -72,7 +72,7 @@ def NORA3_wind_wave_ts(self, save_csv = False):
     #merge temp files
     ds = xr.open_mfdataset(paths=tempfile[:])    
     #Save in csv format    
-    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)    
+    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, save_nc = save_nc, height=self.height)    
     ds.close()
     #remove temp files
     #for i in range(len(date_list)):
@@ -80,7 +80,7 @@ def NORA3_wind_wave_ts(self, save_csv = False):
     
     return df
 
-def NORA3_atm_ts(self, save_csv = False):
+def NORA3_atm_ts(self, save_csv = False, save_nc = False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     nora3 atm. hindcast (parameteres exc. wind & waves) and save it as netcdf.
@@ -107,7 +107,7 @@ def NORA3_atm_ts(self, save_csv = False):
     #merge temp files
     ds = xr.open_mfdataset(paths=tempfile[:])    
     #Save in csv format    
-    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)    
+    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close()
     #remove temp files
     #for i in range(len(date_list)):
@@ -115,7 +115,7 @@ def NORA3_atm_ts(self, save_csv = False):
     
     return df
 
-def NORA3_atm3hr_ts(self, save_csv = False):
+def NORA3_atm3hr_ts(self, save_csv = False, save_nc = False):
     """
     Extract times series of the nearest grid point (lon,lat) from
     nora3 atm. hindcast 3-hour files (parameters fex. wind & temperature) and save it as netcdf.
@@ -139,10 +139,27 @@ def NORA3_atm3hr_ts(self, save_csv = False):
 
     check_datafile_exists(self.datafile)
     #merge temp files
-    ds = xr.open_mfdataset(paths=tempfile[:])    
+    ds = xr.open_mfdataset(paths=tempfile[:])
 
-    #Save in csv format    
-    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:4], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)    
+    # make density and tke in the same numer of dimensions as the other parameteres    
+    ds['density0'] = xr.ones_like(ds['wind_speed'])
+    ds['density0'].attrs['units'] = ds['density'].units
+    ds['density0'].attrs['standard_name'] = ds['density'].standard_name
+    ds['density0'].attrs['long_name'] = ds['density'].long_name
+    ds['density0'][:,2,:,:] = ds['density'][:,0,:,:].values # 150 m 
+    ds = ds.drop_vars('density')
+    ds = ds.rename_vars({'density0': 'density'})
+
+    ds['tke0'] = xr.ones_like(ds['wind_speed'])
+    ds['tke0'].attrs['units'] = ds['tke'].units
+    ds['tke0'].attrs['standard_name'] = '-'
+    ds['tke0'].attrs['long_name'] = ds['tke'].long_name
+    ds['tke0'][:,2,:,:] = ds['tke'][:,0,:,:].values # 150 m  
+    ds = ds.drop_vars('tke')
+    ds = ds.rename_vars({'tke0': 'tke'})
+
+    #Save in csv format  
+    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:-2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc=save_nc, height=self.height)    
     ds.close()
     #remove temp files
     #for i in range(len(date_list)):
@@ -150,7 +167,7 @@ def NORA3_atm3hr_ts(self, save_csv = False):
     
     return df
 
-def NORA3_stormsurge_ts(self, save_csv = False):
+def NORA3_stormsurge_ts(self, save_csv = False,save_nc = False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     nora3 sea level dataset and save it as netcdf.
@@ -179,7 +196,7 @@ def NORA3_stormsurge_ts(self, save_csv = False):
     ds = ds.rename_dims({'ocean_time': 'time'})   
     ds = ds.rename_vars({'ocean_time': 'time'})   
     #Save in csv format    
-    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)    
+    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close()
     #remove temp files
     #for i in range(len(date_list)):
@@ -187,7 +204,7 @@ def NORA3_stormsurge_ts(self, save_csv = False):
     
     return df
 
-def NORA3_combined_ts(self, save_csv = True):
+def NORA3_combined_ts(self, save_csv = True,save_nc = False):
     self.variable = ['hs','tp','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
     self.product = 'NORA3_wave_sub'
     df_wave = NORA3_wind_wave_ts(self, save_csv=True)

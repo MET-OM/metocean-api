@@ -75,7 +75,7 @@ Several options for **product** are available. Please check the data catalog for
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_hourly/catalog.html
 
-* For SST and atmospheric (wind, temperature, relative humidity) NORA3 3-hourly data in 50, 100, 150, 200, 300m (Nordic Area): product='NORA3_atm3hr_sub'
+* For SST and atmospheric (wind, temperature, relative humidity, tke, air density) NORA3 3-hourly data in 50, 100, 150, 200, 300m (Nordic Area): product='NORA3_atm3hr_sub'
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html
 
@@ -108,7 +108,7 @@ Import data from server to **ts-object** and save it as csv:
 
 .. code-block:: python
 
-   df_ts.import_data(save_csv=True)
+   df_ts.import_data(save_csv=True, save_nc=False)
 
 Data is saved in:
 
