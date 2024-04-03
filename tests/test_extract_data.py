@@ -10,7 +10,6 @@ def test_extract_NORA3wind():
     else:
         raise ValueError("Shape is not correct")    
     
-
 def test_extract_NORA3wave():
     # Define TimeSeries-object
     df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-31', product='NORA3_wave_sub')
