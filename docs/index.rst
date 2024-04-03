@@ -103,6 +103,11 @@ Several options for **product** are available. Please check the data catalog for
   
   Dataset: https://doi.org/10.24381/cds.adbb2d47
 
+* For wave buoy observations (Statens vegvesen - E39): product='E39_letter_location_wave', e.g,  product='E39_B_Sulafjorden_wave'
+
+  The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
+  
+  Dataset: https://thredds.met.no/thredds/catalog/obs/buoy-svv-e39/catalog.html
 
 Import data from server to **ts-object** and save it as csv:
 
