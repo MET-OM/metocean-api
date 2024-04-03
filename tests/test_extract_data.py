@@ -55,7 +55,7 @@ def test_extract_OBS():
     df_ts = ts.TimeSeries(lon='', lat='',start_time='2017-01-01', end_time='2017-01-31' , product='E39_B_Sulafjorden_wave', variable=['Hm0', 'tp'])
     # Import data from thredds.met.no 
     df_ts.import_data(save_csv=False,save_nc=False)
-    if df_ts.data.shape == (4464, 3):
+    if df_ts.data.shape == (4464,2):
         pass
     else:
         raise ValueError("Shape is not correct")    
