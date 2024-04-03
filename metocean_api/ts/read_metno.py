@@ -284,7 +284,6 @@ def OBS_E39(self, save_csv = False, save_nc = False):
     self.datafile.replace(self.datafile.split('_')[-3],'lat'+str(np.round(ds.latitude.mean().values,2)))
     self.datafile.replace(self.datafile.split('_')[-4],'lon'+str(np.round(ds.longitude.mean().values,2)))
     df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.mean().values, lat_near=ds.latitude.mean().values, outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
-    breakpoint()
     ds.close() 
     print('Data saved at: ' +self.datafile)
 
