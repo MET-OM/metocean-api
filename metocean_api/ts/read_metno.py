@@ -259,3 +259,32 @@ def apply_nco(infile,tempfile,opt):
         else:
             break
 
+def OBS_E39(self, save_csv = False, save_nc = False):
+    """
+    Extract times series of metocean E39 observations and save it as netcdf/csv.
+    """
+    self.variable.append('longitude') # keep info of  lon
+    self.variable.append('latitude')  # keep info of  lat
+    date_list = get_date_list(product=self.product, start_date=self.start_time, end_date=self.end_time) 
+    tempfile = tempfile_dir(self.product,self.lon, self.lat, date_list,dirName="cache")
+
+    # extract point and create temp files
+    for i in range(len(date_list)):
+        x_coor_str, y_coor_str, infile = get_url_info(product=self.product, date=date_list[i])
+             
+        opt = ['-O -v '+",".join(self.variable)]
+        apply_nco(infile,tempfile[i],opt)
+        
+    
+    check_datafile_exists(self.datafile)
+    
+    #merge temp files
+    ds = xr.open_mfdataset(paths=tempfile[:])
+    #Save in csv format    
+    self.datafile.replace(self.datafile.split('_')[-3],'lat'+str(np.round(ds.latitude.mean().values,2)))
+    self.datafile.replace(self.datafile.split('_')[-4],'lon'+str(np.round(ds.longitude.mean().values,2)))
+    df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.mean().values, lat_near=ds.latitude.mean().values, outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
+    ds.close() 
+    print('Data saved at: ' +self.datafile)
+
+    return df

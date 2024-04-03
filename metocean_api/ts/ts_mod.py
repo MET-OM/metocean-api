@@ -93,14 +93,15 @@ class TimeSeries:
       self.height = [50, 100, 150, 200, 300]
       self.variable =  ['wind_speed', 'wind_direction', 'air_temperature', 'relative_humidity', 'density', 'tke'] 
       self.data = NORA3_atm3hr_ts(self, save_csv = save_csv,save_nc = save_nc) 
+    elif self.product.startswith('E39'):
+      if self.variable == []:
+        self.variable =  ['Hm0'] 
+      self.data = OBS_E39(self, save_csv = save_csv,save_nc = save_nc)       
     return
 
   def load_data(self, local_file):
     import pandas as pd
     self.data = pd.read_csv(local_file,comment='#',index_col=0, parse_dates=True)
-
-
-
 
 
 

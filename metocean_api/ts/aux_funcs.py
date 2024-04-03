@@ -74,6 +74,10 @@ def get_url_info(product, date):
         #infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_sealevel/sealevel/zeta_nora3era5_N4_'+date.strftime('%Y')+'.nc'
         x_coor_str = 'eta_rho'
         y_coor_str = 'xi_rho'
+    elif product.startswith('E39'):     
+        infile = 'https://thredds.met.no/thredds/dodsC/obs/buoy-svv-e39/'+date.strftime('%Y/%m/%Y%m')+'_'+product+'.nc'
+        x_coor_str = 'longitude'
+        y_coor_str = 'latitude'  
     print(infile)   
     return x_coor_str, y_coor_str, infile
 
@@ -88,6 +92,8 @@ def get_date_list(product, start_date, end_date):
         date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
     elif product == 'NORA3_stormsurge':
         date_list = pd.date_range(start=start_date , end=end_date, freq='YS')
+    elif product.startswith('E39'):
+        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
     return date_list
 
 def drop_variables(product):
@@ -107,6 +113,8 @@ def drop_variables(product):
         drop_var = ['longitude','latitude']  
     elif product == 'NORA3_stormsurge':
         drop_var = ['lon_rho','lat_rho']  
+    elif product.startswith('E39'):
+        drop_var = ['longitude','latitude']
     return drop_var
 
 def get_near_coord(infile, lon, lat, product):
