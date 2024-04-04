@@ -7,7 +7,7 @@ import os
 
 from .aux_funcs import get_date_list, create_dataframe
 
-def ERA5_ts(self, save_csv = False):
+def ERA5_ts(self, save_csv = False, save_nc=False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     ERA5 reanalysis and save it as netcdf.
