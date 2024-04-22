@@ -15,7 +15,7 @@ def test_extract_NORA3wave():
     df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-31', product='NORA3_wave_sub')
     # Import data from thredds.met.no 
     df_ts.import_data(save_csv=False,save_nc=False)
-    if df_ts.data.shape == (744,13):
+    if df_ts.data.shape == (744,14):
         pass
     else:
         raise ValueError("Shape is not correct")    
