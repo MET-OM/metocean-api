@@ -205,7 +205,7 @@ def NORA3_stormsurge_ts(self, save_csv = False,save_nc = False):
     return df
 
 def NORA3_combined_ts(self, save_csv = True,save_nc = False):
-    self.variable = ['hs','tp','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
+    self.variable = ['hs','tp','fpI', 'tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
     self.product = 'NORA3_wave_sub'
     df_wave = NORA3_wind_wave_ts(self, save_csv=True)
     top_header_wave = read_commented_lines(self.datafile)
