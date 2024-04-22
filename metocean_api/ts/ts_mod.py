@@ -47,7 +47,7 @@ class TimeSeries:
   def import_data(self, save_csv = True, save_nc = False):
     if ((self.product=='NORA3_wave_sub') or (self.product=='NORA3_wave')):
       if self.variable == []:
-        self.variable =  ['hs','tp','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
+        self.variable =  ['hs','tp','fpI','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
       else:
         pass
       self.data = NORA3_wind_wave_ts(self, save_csv = save_csv, save_nc = save_nc)
@@ -61,7 +61,7 @@ class TimeSeries:
       self.data = NORA3_combined_ts(self, save_csv = save_csv,save_nc = save_nc)
     elif self.product == 'NORAC_wave':
       if self.variable == []:
-        self.variable =  ['hs','tp','t0m1','t02','t01','dp','dir', 'phs0','ptp0','pdir0' ,'phs1','ptp0','pdir1']
+        self.variable =  ['hs','tp','fpI','t0m1','t02','t01','dp','dir', 'phs0','ptp0','pdir0' ,'phs1','ptp0','pdir1']
       else:
         pass
       self.data = NORAC_ts(self, save_csv = save_csv,save_nc = save_nc) 
