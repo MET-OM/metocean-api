@@ -82,7 +82,7 @@ def get_url_info(product, date):
         infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_ocean/surface/{}/ocean_surface_2_4km-{}.nc'.format(date.strftime('%Y/%m'), date.strftime('%Y%m%d')) 
         x_coor_str = 'x'
         y_coor_str = 'y'
-    elif product == 'NorkystDA_surface': 
+    elif product == 'NorkystDA_zdepth': 
         infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_ocean/zdepth/{}/ocean_zdepth_2_4km-{}.nc'.format(date.strftime('%Y/%m'), date.strftime('%Y%m%d')) 
         x_coor_str = 'x'
         y_coor_str = 'y'
@@ -151,6 +151,12 @@ def get_near_coord(infile, lon, lat, product):
         eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon_rho, ds.lat_rho, lon, lat)
         lon_near = ds.lon_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
         lat_near = ds.lat_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
+        x_coor = eta_rho
+        y_coor = xi_rho
+    elif product=='NorkystDA_surface':
+        eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon, ds.lat, lon, lat)
+        lon_near = ds.lon.sel(y=eta_rho, x=xi_rho).values[0][0]
+        lat_near = ds.lat.sel(y=eta_rho, x=xi_rho).values[0][0]
         x_coor = eta_rho
         y_coor = xi_rho
     print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
