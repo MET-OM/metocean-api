@@ -97,6 +97,12 @@ class TimeSeries:
       if self.variable == []:
         self.variable =  ['Hm0'] 
       self.data = OBS_E39(self, save_csv = save_csv,save_nc = save_nc)       
+    elif self.product == 'NorkystDA_surface':
+      self.variable = ['u', 'v', 'zeta', 'temp','salt']
+      self.data = NorkystDA_surface_ts(self, save_csv = save_csv, save_nc = save_nc)      
+
+      
+
     return
 
   def load_data(self, local_file):
