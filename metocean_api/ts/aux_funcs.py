@@ -91,7 +91,7 @@ def get_url_info(product, date):
     return x_coor_str, y_coor_str, infile
 
 def get_date_list(product, start_date, end_date):
-    if product == 'NORA3_wave' or product == 'ERA5':
+    if product == 'NORA3_wave' or product == 'ERA5' or product.startswith('NorkystDA'):
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
@@ -153,7 +153,7 @@ def get_near_coord(infile, lon, lat, product):
         lat_near = ds.lat_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
         x_coor = eta_rho
         y_coor = xi_rho
-    elif product=='NorkystDA_surface':
+    elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
         eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon, ds.lat, lon, lat)
         lon_near = ds.lon.sel(y=eta_rho, x=xi_rho).values[0][0]
         lat_near = ds.lat.sel(y=eta_rho, x=xi_rho).values[0][0]
