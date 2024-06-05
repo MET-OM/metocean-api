@@ -77,7 +77,16 @@ def get_url_info(product, date):
     elif product.startswith('E39'):     
         infile = 'https://thredds.met.no/thredds/dodsC/obs/buoy-svv-e39/'+date.strftime('%Y/%m/%Y%m')+'_'+product+'.nc'
         x_coor_str = 'longitude'
-        y_coor_str = 'latitude'  
+        y_coor_str = 'latitude' 
+    elif product == 'NorkystDA_surface': 
+        infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_ocean/surface/{}/ocean_surface_2_4km-{}.nc'.format(date.strftime('%Y/%m'), date.strftime('%Y%m%d')) 
+        x_coor_str = 'x'
+        y_coor_str = 'y'
+    elif product == 'NorkystDA_surface': 
+        infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_ocean/zdepth/{}/ocean_zdepth_2_4km-{}.nc'.format(date.strftime('%Y/%m'), date.strftime('%Y%m%d')) 
+        x_coor_str = 'x'
+        y_coor_str = 'y'
+        z_coor_str = 'depth'
     print(infile)   
     return x_coor_str, y_coor_str, infile
 
