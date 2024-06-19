@@ -31,7 +31,7 @@ def combine_data(list_files = [], output_file=False):
 
 class TimeSeries:
   def __init__(self, lon: float, lat: float, start_time: str='1990-01-01T00:00', end_time: str='1991-12-31T23:59', variable: str=[], 
-  name: str='AnonymousArea', product: str='NORA3_wave_sub', datafile: str='EmptyFile', data = [], height: int = [10, 20, 50, 100, 250, 500, 750]):
+  name: str='AnonymousArea', product: str='NORA3_wave_sub', datafile: str='EmptyFile', data = [], height: int = [10, 20, 50, 100, 250, 500, 750], depth: float = [0, 1, 2.5, 5, 10]):
     self.name = name
     self.lon = lon
     self.lat = lat
@@ -40,6 +40,7 @@ class TimeSeries:
     self.end_time = end_time
     self.variable = variable
     self.height = height
+    self.depth = depth
     self.datafile = product+'_lon'+str(self.lon)+'_lat'+str(self.lat)+'_'+self.start_time.replace('-','')+'_'+self.end_time.replace('-','')+'.csv'
     self.data = data
     return
@@ -100,6 +101,10 @@ class TimeSeries:
     elif self.product == 'NorkystDA_surface':
       self.variable = ['u', 'v', 'zeta', 'temp','salt']
       self.data = NorkystDA_surface_ts(self, save_csv = save_csv, save_nc = save_nc)      
+    elif self.product == 'NorkystDA_zdepth':
+      self.variable = ['u', 'v', 'zeta', 'temp','salt', 'AKs']
+      self.depth = [0.0, 1.0, 2.5, 5.0, 7.5, 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0, 75.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 750.0, 1000.0, 1250.0, 1500.0, 1750.0, 2000.0, 2250.0, 2500.0]
+      self.data = NorkystDA_zdepth_ts(self, save_csv = save_csv, save_nc = save_nc)     
 
       
 

@@ -267,6 +267,41 @@ def NorkystDA_surface_ts(self, save_csv = False,save_nc = False):
     
     return df
 
+def NorkystDA_zdepth_ts(self, save_csv = False,save_nc = False):
+    """
+    Extract times series of  the nearest gird point (lon,lat) from
+    norkystDA surface dataset and save it as netcdf or csv.
+    """
+    #self.variable.append('lon_rho') # keep info of regular lon
+    #self.variable.append('lat_rho')  # keep info of regular lat
+    date_list = get_date_list(product=self.product, start_date=self.start_time, end_date=self.end_time)        
+    
+    tempfile = tempfile_dir(self.product,self.lon, self.lat, date_list,dirName="cache")
+
+    # extract point and create temp files
+    for i in range(len(date_list)):
+        x_coor_str, y_coor_str, infile = get_url_info(product=self.product, date=date_list[i])
+             
+        if i==0:
+            x_coor, y_coor, lon_near, lat_near = get_near_coord(infile=infile, lon=self.lon, lat=self.lat, product=self.product)        
+
+        opt = ['-O -v '+",".join(self.variable)+' -d '+x_coor_str+','+str(x_coor[0])+' -d '+y_coor_str+','+str(y_coor[0])]
+
+        apply_nco(infile,tempfile[i],opt)
+    
+    check_datafile_exists(self.datafile)
+    
+    #merge temp files
+    ds = xr.open_mfdataset(paths=tempfile[:])
+    #Save in csv format    
+    df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height, depth = self.depth)    
+    ds.close()
+    #remove temp files
+    #for i in range(len(date_list)):
+    #    os.remove(tempfile[i])
+    
+    return df
+
 def tempfile_dir(product,lon,lat, date_list,dirName):
     tempfile = [None] *len(date_list)
     # Create directory

@@ -1,11 +1,11 @@
 from __future__ import annotations
-
 import matplotlib.pyplot as plt
 import xarray as xr
 import pandas as pd
 import numpy as np
 import time
 import os
+import cartopy.crs as ccrs
 from nco import Nco
 
 def distance_2points(lat1, lon1, lat2, lon2):
@@ -35,6 +35,37 @@ def find_nearest_cartCoord(lon_model, lat_model, lon0, lat0):
     y0 = dx.where(dx == dx.min(), drop=True).y
     x0 = dx.where(dx == dx.min(), drop=True).x
     return x0, y0
+
+def proj_xy_from_lonlat( proj, lon,lat):
+    try:
+        print(len(lon))
+    except:
+        lon = np.array([lon])
+        lat = np.array([lat])
+    transform = proj.transform_points(ccrs.PlateCarree(), lon, lat)
+    x = transform[..., 0]
+    y = transform[..., 1]
+    return x[0],y[0]
+
+def proj_rotation_angle(proj, ds):
+    x0,y0 = proj_xy_from_lonlat(proj, 0, 90)
+    return np.rad2deg(np.arctan2(x0-ds.x.values, y0-ds.y.values))
+
+def rotate_vectors_tonorth(angle,ui,vi):
+    #Rotate vectors
+    cosa = np.cos(angle)
+    sina = np.sin(angle)
+
+    uo = (ui * cosa) - (vi * sina)
+    vo = (ui * sina) + (vi * cosa)
+    return uo, vo
+
+def uv2spddir(u,v):
+    '''Function that will calculate speed and direction from u- and v-components'''
+    iSpd = np.sqrt((u**2) + (v**2))
+    iDir = np.arctan2(u,v) * (180 / np.pi)
+    iDir = np.where((iDir < 0),iDir + 360,iDir)
+    return iSpd, iDir
 
 def find_nearest_rhoCoord(lon_model, lat_model, lon0, lat0):
     #print('find nearest point...')
@@ -86,7 +117,6 @@ def get_url_info(product, date):
         infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_ocean/zdepth/{}/ocean_zdepth_2_4km-{}.nc'.format(date.strftime('%Y/%m'), date.strftime('%Y%m%d')) 
         x_coor_str = 'x'
         y_coor_str = 'y'
-        z_coor_str = 'depth'
     print(infile)   
     return x_coor_str, y_coor_str, infile
 
@@ -124,6 +154,8 @@ def drop_variables(product):
         drop_var = ['lon_rho','lat_rho']  
     elif product.startswith('E39'):
         drop_var = ['longitude','latitude']
+    elif product.startswith('NorkystDA'):
+        drop_var = ['lon','lat', 'projection_stere']
     return drop_var
 
 def get_near_coord(infile, lon, lat, product):
@@ -155,14 +187,17 @@ def get_near_coord(infile, lon, lat, product):
         y_coor = xi_rho
     elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
         eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon, ds.lat, lon, lat)
-        lon_near = ds.lon.sel(y=eta_rho, x=xi_rho).values[0][0]
-        lat_near = ds.lat.sel(y=eta_rho, x=xi_rho).values[0][0]
-        x_coor = eta_rho
-        y_coor = xi_rho
+        print(eta_rho, xi_rho)
+        lon_near = ds.lon.isel(y=eta_rho[0], x=xi_rho[0]).values
+        lat_near = ds.lat.isel(y=eta_rho[0], x=xi_rho[0]).values
+        print(lon_near, lat_near)
+        x_coor = xi_rho
+        y_coor = eta_rho
     print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
     return x_coor, y_coor, lon_near, lat_near
 
-def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,save_nc=True, height=None):
+def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,save_nc=True, height=None, depth = None):
+    print(depth)
     if product=='NORA3_wind_sub': 
         ds0 = ds
         for i in range(len(height)):
@@ -191,12 +226,48 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
         ds = ds.drop_vars('projection_lambert')
         ds = ds.drop_vars('latitude')
         ds = ds.drop_vars('longitude')
+
+    elif product == 'NorkystDA_zdepth':
+        ds0 = ds
+        crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60,false_easting=0, false_northing=0)
+        angle = proj_rotation_angle(crs, ds)
+
+        for i in range(len(depth)):
+            variable_height = [k + '_'+str(depth[i])+'m' for k in variable]
+            ds[variable_height] = ds0[variable].sel(depth=depth[i])
+            # zeta is surface elevation, no point in adding for each depth. 
+            if np.abs(depth[i]) > 0 and 'zeta_{}m'.format(depth[i]) in ds.keys():
+                ds = ds.drop_vars('zeta_{}m'.format(depth[i]))
+            
+            u, v = rotate_vectors_tonorth(angle, ds['u_{}m'.format(depth[i])].values, ds['v_{}m'.format(depth[i])].values)
+            spd, dir = uv2spddir(u, v)
+            ds['current_speed_{}m'.format(depth[i])] = xr.DataArray(spd, dims=('time', 'y', 'x'), attrs = {"standard_name": 'sea_water_speed', "units": "meter seconds-1"})
+            ds['current_direction_{}m'.format(depth[i])] = xr.DataArray(dir, dims=('time', 'y', 'x'), attrs = {"standard_name" : "sea_water_velocity_from_direction", "units": "degrees"})
+            ds = ds.drop_vars(['u_{}m'.format(depth[i]), 'v_{}m'.format(depth[i])])
+                
+        drop_var = drop_variables(product=product) 
+        ds = ds.drop_vars(drop_var)
+        ds = ds.drop_vars(variable)
+
+    elif product == 'NorkystDA_surface':
+        crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60,false_easting=0, false_northing=0)
+        angle = proj_rotation_angle(crs, ds)
+        u, v = rotate_vectors_tonorth(angle, ds['u'].values, ds['v'].values)
+        spd, dir = uv2spddir(u, v)
+        ds['current_speed'] = xr.DataArray(spd, dims=('time', 'y', 'x'), attrs = {"standard_name": 'sea_water_speed', "units": "meter seconds-1"})
+        ds['current_direction'] = xr.DataArray(dir, dims=('time', 'y', 'x'), attrs = {"standard_name" : "sea_water_velocity_from_direction", "units": "degrees"})
+        
+        ds = ds.drop_vars(['u', 'v'])
+        drop_var = drop_variables(product=product) 
+        ds = ds.drop_vars(drop_var)
+
     else: 
         drop_var = drop_variables(product=product) 
         ds = ds.drop_vars(drop_var)
  
     ds = ds.sel(time=slice(start_time,end_time)) 
     df = ds.to_dataframe()
+    print(df)
     df = df.astype(float).round(2)
     df.index = pd.DatetimeIndex(data=ds.time.values)
     
