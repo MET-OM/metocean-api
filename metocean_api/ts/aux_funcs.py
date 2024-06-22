@@ -32,8 +32,10 @@ def find_nearest_rotCoord(lon_model, lat_model, lon0, lat0):
 def find_nearest_cartCoord(lon_model, lat_model, lon0, lat0):
     #print('find nearest point...')
     dx = distance_2points(lat0, lon0, lat_model, lon_model)
-    y0 = dx.where(dx == dx.min(), drop=True).y
-    x0 = dx.where(dx == dx.min(), drop=True).x
+    x_name = 'x' if 'x' in dx.dims else 'X' if 'X' in dx.dims else None
+    x0 = dx.where(dx == dx.min(), drop=True)[x_name]    
+    y_name = 'y' if 'y' in dx.dims else 'Y' if 'Y' in dx.dims else None
+    y0 = dx.where(dx == dx.min(), drop=True)[y_name]    
     return x0, y0
 
 def find_nearest_rhoCoord(lon_model, lat_model, lon0, lat0):
@@ -74,6 +76,11 @@ def get_url_info(product, date):
         #infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_sealevel/sealevel/zeta_nora3era5_N4_'+date.strftime('%Y')+'.nc'
         x_coor_str = 'eta_rho'
         y_coor_str = 'xi_rho'
+    elif product == 'NORKYST800':     
+        infile = 'https://thredds.met.no/thredds/dodsC/fou-hi/norkyst800m-1h/NorKyst-800m_ZDEPTHS_his.an.'+date.strftime('%Y%m%d%H')+'.nc'
+        #https://thredds.met.no/thredds/dodsC/fou-hi/norkyst800m-1h/NorKyst-800m_ZDEPTHS_his.an.2024062200.nc
+        x_coor_str = 'X'
+        y_coor_str = 'Y'
     elif product.startswith('E39'):     
         infile = 'https://thredds.met.no/thredds/dodsC/obs/buoy-svv-e39/'+date.strftime('%Y/%m/%Y%m')+'_'+product+'.nc'
         x_coor_str = 'longitude'
@@ -92,6 +99,8 @@ def get_date_list(product, start_date, end_date):
         date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
     elif product == 'NORA3_stormsurge':
         date_list = pd.date_range(start=start_date , end=end_date, freq='YS')
+    elif product == 'NORKYST800':
+        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product.startswith('E39'):
         date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
     return date_list
@@ -113,6 +122,8 @@ def drop_variables(product):
         drop_var = ['longitude','latitude']  
     elif product == 'NORA3_stormsurge':
         drop_var = ['lon_rho','lat_rho']  
+    elif product == 'NORKYST800':
+        drop_var = ['lon','lat']  
     elif product.startswith('E39'):
         drop_var = ['longitude','latitude']
     return drop_var
@@ -144,6 +155,12 @@ def get_near_coord(infile, lon, lat, product):
         lat_near = ds.lat_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
         x_coor = eta_rho
         y_coor = xi_rho
+    elif product=='NORKYST800':
+        x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
+        lon_near = ds.lon.sel(Y=y, X=x).values[0][0]
+        lat_near = ds.lat.sel(Y=y, X=x).values[0][0]  
+        x_coor = x
+        y_coor = y
     print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
     return x_coor, y_coor, lon_near, lat_near
 
@@ -176,6 +193,19 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
         ds = ds.drop_vars('projection_lambert')
         ds = ds.drop_vars('latitude')
         ds = ds.drop_vars('longitude')
+    elif product=='NORKYST800': 
+        ds0 = ds
+        for i in range(len(height)):
+            variable_height = [k + '_'+str(height[i])+'m' for k in variable]
+            ds[variable_height] = ds0[variable].sel(depth=height[i])
+        ds = ds.drop_vars(variable)
+        ds = ds.drop_vars('depth')
+        ds = ds.drop_vars('lat')
+        ds = ds.drop_vars('lon')
+        ds = ds.drop_vars('X')
+        ds = ds.drop_vars('Y')
+        ds = ds.drop_vars('projection_stere')
+        ds = ds.squeeze(drop=True)
     else: 
         drop_var = drop_variables(product=product) 
         ds = ds.drop_vars(drop_var)

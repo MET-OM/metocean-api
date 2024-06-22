@@ -59,3 +59,13 @@ def test_extract_OBS():
         pass
     else:
         raise ValueError("Shape is not correct")    
+        
+def test_NORKYST800():
+    # Define TimeSeries-object
+    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2020-01-01', end_time='2020-01-02', product='NORKYST800')
+    # Import data from thredds.met.no 
+    df_ts.import_data(save_csv=False,save_nc=False)
+    if df_ts.data.shape == (48, 144):
+        pass
+    else:
+        raise ValueError("Shape is not correct")   
