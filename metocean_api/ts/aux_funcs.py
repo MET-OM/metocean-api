@@ -77,8 +77,10 @@ def get_url_info(product, date):
         x_coor_str = 'eta_rho'
         y_coor_str = 'xi_rho'
     elif product == 'NORKYST800':     
-        infile = 'https://thredds.met.no/thredds/dodsC/fou-hi/norkyst800m-1h/NorKyst-800m_ZDEPTHS_his.an.'+date.strftime('%Y%m%d%H')+'.nc'
-        #https://thredds.met.no/thredds/dodsC/fou-hi/norkyst800m-1h/NorKyst-800m_ZDEPTHS_his.an.2024062200.nc
+        if date<pd.Timestamp('2017-02-20 00:00:00'):
+            infile = 'https://thredds.met.no/thredds/dodsC/sea/norkyst800mv0_1h/NorKyst-800m_ZDEPTHS_his.an.'+date.strftime('%Y%m%d%H')+'.nc'
+        else:
+            infile = 'https://thredds.met.no/thredds/dodsC/fou-hi/norkyst800m-1h/NorKyst-800m_ZDEPTHS_his.an.'+date.strftime('%Y%m%d%H')+'.nc'
         x_coor_str = 'X'
         y_coor_str = 'Y'
     elif product.startswith('E39'):     
@@ -195,9 +197,11 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
         ds = ds.drop_vars('longitude')
     elif product=='NORKYST800': 
         ds0 = ds
+        breakpoint()
         for i in range(len(height)):
-            variable_height = [k + '_'+str(height[i])+'m' for k in variable]
-            ds[variable_height] = ds0[variable].sel(depth=height[i])
+            if 'depth' in ds0[variable].dims:  # Check if 'depth' is a dimension of the variable
+                variable_height = [k + '_'+str(height[i])+'m' for k in variable]
+                ds[variable_height] = ds0[variable].sel(depth=height[i])
         ds = ds.drop_vars(variable)
         ds = ds.drop_vars('depth')
         ds = ds.drop_vars('lat')

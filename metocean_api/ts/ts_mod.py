@@ -97,7 +97,7 @@ class TimeSeries:
       self.height = [ 0.,    3.,   10.,   15.,   25.,   50.,   75.,  100.,  150.,  200.,
         250.,  300.,  500., 1000., 2000., 3000.]
       if self.variable == []:
-        self.variable =  ['salinity','tke','temperature', 'u','v','w','zeta', 'ubar', 'vbar'] 
+        self.variable =  ['salinity','temperature', 'u','v','zeta'] 
       self.data = NORKYST800_ts(self, save_csv = save_csv,save_nc = save_nc) 
     elif self.product.startswith('E39'):
       if self.variable == []:
