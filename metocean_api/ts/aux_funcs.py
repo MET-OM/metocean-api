@@ -156,6 +156,9 @@ def drop_variables(product):
         drop_var = ['longitude','latitude']
     elif product.startswith('NorkystDA'):
         drop_var = ['lon','lat', 'projection_stere']
+        if 'zdepth' in product:
+            drop_var.append('depth')
+
     return drop_var
 
 def get_near_coord(infile, lon, lat, product):
@@ -186,18 +189,16 @@ def get_near_coord(infile, lon, lat, product):
         x_coor = eta_rho
         y_coor = xi_rho
     elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
-        eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon, ds.lat, lon, lat)
-        print(eta_rho, xi_rho)
-        lon_near = ds.lon.isel(y=eta_rho[0], x=xi_rho[0]).values
-        lat_near = ds.lat.isel(y=eta_rho[0], x=xi_rho[0]).values
-        print(lon_near, lat_near)
-        x_coor = xi_rho
-        y_coor = eta_rho
+
+        x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
+        lon_near = ds.lon.sel(y=y, x=x).values[0][0]
+        lat_near = ds.lat.sel(y=y, x=x).values[0][0]  
+        x_coor = x.values
+        y_coor = y.values  
     print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
     return x_coor, y_coor, lon_near, lat_near
 
 def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,save_nc=True, height=None, depth = None):
-    print(depth)
     if product=='NORA3_wind_sub': 
         ds0 = ds
         for i in range(len(height)):
@@ -267,7 +268,6 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
  
     ds = ds.sel(time=slice(start_time,end_time)) 
     df = ds.to_dataframe()
-    print(df)
     df = df.astype(float).round(2)
     df.index = pd.DatetimeIndex(data=ds.time.values)
     
