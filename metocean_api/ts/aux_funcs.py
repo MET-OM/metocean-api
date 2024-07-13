@@ -283,13 +283,16 @@ def read_commented_lines(datafile):
 
 def remove_dimensions_from_netcdf(input_file, dimensions_to_remove=['X', 'Y']):
     """
-    Remove specified dimensions from all variables in a NetCDF file and save the result to a new file.
+    Remove specified dimensions from all variables in a NetCDF file and save the result to the same file.
     
     Parameters:
     input_file (str): Path to the input NetCDF file.
-    output_file (str): Path to the output NetCDF file.
     dimensions_to_remove (list): A list of dimensions to remove from each variable.
     """
+    # Check if the input file exists
+    if not os.path.exists(input_file):
+        return
+
     # Open the input NetCDF file using xarray
     ds = xr.open_dataset(input_file)
     
@@ -298,5 +301,5 @@ def remove_dimensions_from_netcdf(input_file, dimensions_to_remove=['X', 'Y']):
         if dim in ds.dims and ds.sizes[dim] == 1:
             ds = ds.squeeze(dim=dim)
     
-    # Write the updated dataset to the output NetCDF file
+    # Write the updated dataset to the same NetCDF file
     ds.to_netcdf(input_file)
