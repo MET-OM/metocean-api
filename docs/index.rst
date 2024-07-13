@@ -96,7 +96,7 @@ Several options for **product** are available. Please check the data catalog for
 * For coastal wave NORA3 data: product='NORAC_wave'
 
   Dataset: https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
-* For ocean data (temperature, currents, salinity etc) Norkyst800 data: product='NORKYST800'
+* For ocean data (sea level, temperature, currents, salinity over depth ) Norkyst800 data (from 2016-09-14 to today): product='NORKYST800'
 
   Dataset: https://thredds.met.no/thredds/fou-hi/norkyst800v2.html
 

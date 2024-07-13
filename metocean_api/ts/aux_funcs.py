@@ -77,9 +77,9 @@ def get_url_info(product, date):
         x_coor_str = 'eta_rho'
         y_coor_str = 'xi_rho'
     elif product == 'NORKYST800':     
-        if date<pd.Timestamp('2017-02-20 00:00:00'):
+        if date>=pd.Timestamp('2016-09-14 00:00:00') and date<=pd.Timestamp('2019-02-26 00:00:00'):
             infile = 'https://thredds.met.no/thredds/dodsC/sea/norkyst800mv0_1h/NorKyst-800m_ZDEPTHS_his.an.'+date.strftime('%Y%m%d%H')+'.nc'
-        else:
+        elif date>pd.Timestamp('2019-02-26 00:00:00'):
             infile = 'https://thredds.met.no/thredds/dodsC/fou-hi/norkyst800m-1h/NorKyst-800m_ZDEPTHS_his.an.'+date.strftime('%Y%m%d%H')+'.nc'
         x_coor_str = 'X'
         y_coor_str = 'Y'
@@ -197,12 +197,20 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
         ds = ds.drop_vars('longitude')
     elif product=='NORKYST800': 
         ds0 = ds
-        breakpoint()
+        if 'depth' in ds['zeta'].dims:
+            ds['zeta'] = ds.zeta.sel(depth=0)
+
+        var_list = []
+        for var_name in variable:
+        # Check if 'depth' is not in the dimensions of the variable
+            if 'depth' in ds[var_name].dims:
+            # Append variable name to the list
+                var_list.append(var_name)
+
         for i in range(len(height)):
-            if 'depth' in ds0[variable].dims:  # Check if 'depth' is a dimension of the variable
-                variable_height = [k + '_'+str(height[i])+'m' for k in variable]
-                ds[variable_height] = ds0[variable].sel(depth=height[i])
-        ds = ds.drop_vars(variable)
+                variable_height = [k + '_'+str(height[i])+'m' for k in var_list]
+                ds[variable_height] = ds0[var_list].sel(depth=height[i],method='nearest')
+        ds = ds.drop_vars(var_list)
         ds = ds.drop_vars('depth')
         ds = ds.drop_vars('lat')
         ds = ds.drop_vars('lon')
@@ -210,6 +218,7 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
         ds = ds.drop_vars('Y')
         ds = ds.drop_vars('projection_stere')
         ds = ds.squeeze(drop=True)
+
     else: 
         drop_var = drop_variables(product=product) 
         ds = ds.drop_vars(drop_var)
@@ -218,7 +227,7 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     df = ds.to_dataframe()
     df = df.astype(float).round(2)
     df.index = pd.DatetimeIndex(data=ds.time.values)
-    
+
     top_header = '#'+product + ';LONGITUDE:'+str(lon_near.round(4))+';LATITUDE:' + str(lat_near.round(4)) 
     list_vars = [i for i in ds.data_vars]
     vars_info = ['#Variable_name;standard_name;long_name;units']
@@ -272,5 +281,22 @@ def read_commented_lines(datafile):
                 commented_lines = np.append(commented_lines,line)
     return commented_lines
 
-
-
+def remove_dimensions_from_netcdf(input_file, dimensions_to_remove=['X', 'Y']):
+    """
+    Remove specified dimensions from all variables in a NetCDF file and save the result to a new file.
+    
+    Parameters:
+    input_file (str): Path to the input NetCDF file.
+    output_file (str): Path to the output NetCDF file.
+    dimensions_to_remove (list): A list of dimensions to remove from each variable.
+    """
+    # Open the input NetCDF file using xarray
+    ds = xr.open_dataset(input_file)
+    
+    # Squeeze out the dimensions specified if they are singleton dimensions
+    for dim in dimensions_to_remove:
+        if dim in ds.dims and ds.sizes[dim] == 1:
+            ds = ds.squeeze(dim=dim)
+    
+    # Write the updated dataset to the output NetCDF file
+    ds.to_netcdf(input_file)
