@@ -8,8 +8,9 @@ df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='1990-01-01', end_time='202
 #df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2001-03-31' , product='NORA3_stormsurge')
 #df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2021-01-01', end_time='2021-03-31' , product='NORA3_atm_sub')
 #df_ts = ts.TimeSeries(lon=3.7, lat=61.8, start_time='2023-01-01', end_time='2023-02-01', product='NORA3_atm3hr_sub')
-#df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2019-02-26', end_time='2019-02-27' , product='NORKYST800')
-
+#df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2020-09-14', end_time='2020-09-15', product='NORKYST800')
+#df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2017-01-19', end_time='2017-01-20' , product='NorkystDA_zdepth')
+#df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2017-01-19', end_time='2017-01-20' , product='NorkystDA_surface')
 
 # Import data from thredds.met.no and save it as csv
 df_ts.import_data(save_csv=True)
