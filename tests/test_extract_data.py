@@ -62,12 +62,31 @@ def test_extract_OBS():
         
 def test_NORKYST800():
     # Define TimeSeries-object
-    df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2020-09-14', end_time='2020-09-14', product='NORKYST800')
+    df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2020-09-14', end_time='2020-09-15', product='NORKYST800')
     # Import data from thredds.met.no 
     df_ts.import_data(save_csv=False,save_nc=False)
-    if df_ts.data.shape == (24, 65):
+    if df_ts.data.shape == (48, 65):
         pass
     else:
         raise ValueError("Shape is not correct")   
 
+def test_NorkystDA_zdepth():
+    # Define TimeSeries-object
+    df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2017-01-19', end_time='2017-01-20', product='NorkystDA_zdepth')
+    # Import data from thredds.met.no 
+    df_ts.import_data(save_csv=False,save_nc=False)
+    if df_ts.data.shape == (24, 146):
+        pass
+    else:
+        raise ValueError("Shape is not correct")   
+
+def test_NorkystDA_surface():
+    # Define TimeSeries-object
+    df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2017-01-19', end_time='2017-01-20', product='NorkystDA_surface')
+    # Import data from thredds.met.no 
+    df_ts.import_data(save_csv=False,save_nc=False)
+    if df_ts.data.shape == (48, 5):
+        pass
+    else:
+        raise ValueError("Shape is not correct") 
 
