@@ -41,7 +41,10 @@ def NORAC_ts(self, save_csv = False, save_nc = False, save_cache =False):
    #remove temp/cache files
     if save_cache == False:
         for i in range(len(date_list)):
-            os.remove(tempfile[i])
+            try:
+                os.remove(tempfile[i])
+            except PermissionError:
+                print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
     
     return df
 
@@ -77,7 +80,10 @@ def NORA3_wind_wave_ts(self, save_csv = False, save_nc = False, save_cache =Fals
    #remove temp/cache files
     if save_cache == False:
         for i in range(len(date_list)):
-            os.remove(tempfile[i])
+            try:
+                os.remove(tempfile[i])
+            except PermissionError:
+                print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
     
     return df
 
@@ -113,7 +119,10 @@ def NORA3_atm_ts(self, save_csv = False, save_nc = False, save_cache =False):
    #remove temp/cache files
     if save_cache == False:
         for i in range(len(date_list)):
-            os.remove(tempfile[i])
+            try:
+                os.remove(tempfile[i])
+            except PermissionError:
+                print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
     
     return df
 
@@ -166,7 +175,10 @@ def NORA3_atm3hr_ts(self, save_csv = False, save_nc = False, save_cache =False):
    #remove temp/cache files
     if save_cache == False:
         for i in range(len(date_list)):
-            os.remove(tempfile[i])
+            try:
+                os.remove(tempfile[i])
+            except PermissionError:
+                print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
     
     return df
 
@@ -204,7 +216,10 @@ def NORA3_stormsurge_ts(self, save_csv = False,save_nc = False, save_cache =Fals
    #remove temp/cache files
     if save_cache == False:
         for i in range(len(date_list)):
-            os.remove(tempfile[i])
+            try:
+                os.remove(tempfile[i])
+            except PermissionError:
+                print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
     
     return df
 
@@ -238,10 +253,13 @@ def NORKYST800_ts(self, save_csv = False, save_nc = False, save_cache = False):
     #Save in csv format   
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:-2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close()
-    #remove temp/cache files
+   #remove temp/cache files
     if save_cache == False:
         for i in range(len(date_list)):
-            os.remove(tempfile[i])
+            try:
+                os.remove(tempfile[i])
+            except PermissionError:
+                print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
     
     return df
 
@@ -307,7 +325,10 @@ def NorkystDA_surface_ts(self, save_csv = False,save_nc = False, save_cache =Fal
    #remove temp/cache files
     if save_cache == False:
         for i in range(len(date_list)):
-            os.remove(tempfile[i])    
+            try:
+                os.remove(tempfile[i])
+            except PermissionError:
+                print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
     
     return df
 
@@ -343,7 +364,10 @@ def NorkystDA_zdepth_ts(self, save_csv = False,save_nc = False, save_cache =Fals
    #remove temp/cache files
     if save_cache == False:
         for i in range(len(date_list)):
-            os.remove(tempfile[i])
+            try:
+                os.remove(tempfile[i])
+            except PermissionError:
+                print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
 
     return df
 
@@ -403,7 +427,11 @@ def OBS_E39(self, save_csv = False, save_nc = False, save_cache =False):
    #remove temp/cache files
     if save_cache == False:
         for i in range(len(date_list)):
-            os.remove(tempfile[i])
+            try:
+                os.remove(tempfile[i])
+            except PermissionError:
+                print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
+
     print('Data saved at: ' +self.datafile)
 
     return df
