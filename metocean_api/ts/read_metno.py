@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .aux_funcs import *
 
-def NORAC_ts(self, save_csv = False, save_nc = False):
+def NORAC_ts(self, save_csv = False, save_nc = False, save_cache =False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     norac wave hindcast and save it as netcdf.
@@ -38,14 +38,15 @@ def NORAC_ts(self, save_csv = False, save_nc = False):
     #Save in csv format    
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close()
-    #remove temp files
-    #for i in range(len(date_list)):
-    #    os.remove(tempfile[i])
+   #remove temp/cache files
+    if save_cache == False:
+        for i in range(len(date_list)):
+            os.remove(tempfile[i])
     
     return df
 
 
-def NORA3_wind_wave_ts(self, save_csv = False, save_nc = False):
+def NORA3_wind_wave_ts(self, save_csv = False, save_nc = False, save_cache =False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     nora3 wind and wave hindcast and save it as netcdf.
@@ -73,13 +74,14 @@ def NORA3_wind_wave_ts(self, save_csv = False, save_nc = False):
     #Save in csv format    
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, save_nc = save_nc, height=self.height)    
     ds.close()
-    #remove temp files
-    #for i in range(len(date_list)):
-    #    os.remove(tempfile[i])
+   #remove temp/cache files
+    if save_cache == False:
+        for i in range(len(date_list)):
+            os.remove(tempfile[i])
     
     return df
 
-def NORA3_atm_ts(self, save_csv = False, save_nc = False):
+def NORA3_atm_ts(self, save_csv = False, save_nc = False, save_cache =False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     nora3 atm. hindcast (parameteres exc. wind & waves) and save it as netcdf.
@@ -108,13 +110,14 @@ def NORA3_atm_ts(self, save_csv = False, save_nc = False):
     #Save in csv format    
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close()
-    #remove temp files
-    #for i in range(len(date_list)):
-    #    os.remove(tempfile[i])
+   #remove temp/cache files
+    if save_cache == False:
+        for i in range(len(date_list)):
+            os.remove(tempfile[i])
     
     return df
 
-def NORA3_atm3hr_ts(self, save_csv = False, save_nc = False):
+def NORA3_atm3hr_ts(self, save_csv = False, save_nc = False, save_cache =False):
     """
     Extract times series of the nearest grid point (lon,lat) from
     nora3 atm. hindcast 3-hour files (parameters fex. wind & temperature) and save it as netcdf.
@@ -160,13 +163,14 @@ def NORA3_atm3hr_ts(self, save_csv = False, save_nc = False):
     #Save in csv format  
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:-2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc=save_nc, height=self.height)    
     ds.close()
-    #remove temp files
-    #for i in range(len(date_list)):
-    #    os.remove(tempfile[i])
+   #remove temp/cache files
+    if save_cache == False:
+        for i in range(len(date_list)):
+            os.remove(tempfile[i])
     
     return df
 
-def NORA3_stormsurge_ts(self, save_csv = False,save_nc = False):
+def NORA3_stormsurge_ts(self, save_csv = False,save_nc = False, save_cache =False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     nora3 sea level dataset and save it as netcdf.
@@ -197,13 +201,14 @@ def NORA3_stormsurge_ts(self, save_csv = False,save_nc = False):
     #Save in csv format    
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close()
-    #remove temp files
-    #for i in range(len(date_list)):
-    #    os.remove(tempfile[i])
+   #remove temp/cache files
+    if save_cache == False:
+        for i in range(len(date_list)):
+            os.remove(tempfile[i])
     
     return df
 
-def NORKYST800_ts(self, save_csv = False, save_nc = False):
+def NORKYST800_ts(self, save_csv = False, save_nc = False, save_cache = False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     Norkyst800.
@@ -233,15 +238,16 @@ def NORKYST800_ts(self, save_csv = False, save_nc = False):
     #Save in csv format   
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:-2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close()
-    #remove temp files
-    #for i in range(len(date_list)):
-    #    os.remove(tempfile[i])
+    #remove temp/cache files
+    if save_cache == False:
+        for i in range(len(date_list)):
+            os.remove(tempfile[i])
     
     return df
 
 
 
-def NORA3_combined_ts(self, save_csv = True,save_nc = False):
+def NORA3_combined_ts(self, save_csv = True,save_nc = False, save_cache =False):
     self.variable = ['hs','tp','fpI', 'tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
     self.product = 'NORA3_wave_sub'
     df_wave = NORA3_wind_wave_ts(self, save_csv=True)
@@ -269,7 +275,7 @@ def NORA3_combined_ts(self, save_csv = True,save_nc = False):
 
     return df
 
-def NorkystDA_surface_ts(self, save_csv = False,save_nc = False):
+def NorkystDA_surface_ts(self, save_csv = False,save_nc = False, save_cache =False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     norkystDA surface dataset and save it as netcdf or csv.
@@ -298,13 +304,14 @@ def NorkystDA_surface_ts(self, save_csv = False,save_nc = False):
     #Save in csv format    
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close()
-    #remove temp files
-    #for i in range(len(date_list)):
-    #    os.remove(tempfile[i])
+   #remove temp/cache files
+    if save_cache == False:
+        for i in range(len(date_list)):
+            os.remove(tempfile[i])    
     
     return df
 
-def NorkystDA_zdepth_ts(self, save_csv = False,save_nc = False):
+def NorkystDA_zdepth_ts(self, save_csv = False,save_nc = False, save_cache =False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     norkystDA surface dataset and save it as netcdf or csv.
@@ -333,10 +340,11 @@ def NorkystDA_zdepth_ts(self, save_csv = False,save_nc = False):
     #Save in csv format    
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height, depth = self.depth)    
     ds.close()
-    #remove temp files
-    #for i in range(len(date_list)):
-    #    os.remove(tempfile[i])
-    
+   #remove temp/cache files
+    if save_cache == False:
+        for i in range(len(date_list)):
+            os.remove(tempfile[i])
+
     return df
 
 def tempfile_dir(product,lon,lat, date_list,dirName):
@@ -366,7 +374,7 @@ def apply_nco(infile,tempfile,opt):
         else:
             break
 
-def OBS_E39(self, save_csv = False, save_nc = False):
+def OBS_E39(self, save_csv = False, save_nc = False, save_cache =False):
     """
     Extract times series of metocean E39 observations and save it as netcdf/csv.
     """
@@ -392,6 +400,10 @@ def OBS_E39(self, save_csv = False, save_nc = False):
     self.datafile.replace(self.datafile.split('_')[-4],'lon'+str(np.round(ds.longitude.mean().values,2)))
     df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.mean().values, lat_near=ds.latitude.mean().values, outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv,save_nc = save_nc, height=self.height)    
     ds.close() 
+   #remove temp/cache files
+    if save_cache == False:
+        for i in range(len(date_list)):
+            os.remove(tempfile[i])
     print('Data saved at: ' +self.datafile)
 
     return df
