@@ -31,7 +31,7 @@ def combine_data(list_files = [], output_file=False):
 
 class TimeSeries:
   def __init__(self, lon: float, lat: float, start_time: str='1990-01-01T00:00', end_time: str='1991-12-31T23:59', variable: str=[], 
-  name: str='AnonymousArea', product: str='NORA3_wave_sub', datafile: str='EmptyFile', data = [], height: int = [10, 20, 50, 100, 250, 500, 750]):
+  name: str='AnonymousArea', product: str='NORA3_wave_sub', datafile: str='EmptyFile', data = [], height: int = [10, 20, 50, 100, 250, 500, 750], depth: float = [0, 1, 2.5, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200, 250, 300, 350, 400, 450, 500, 750, 1000, 1250,1500, 1750, 2000, 2250, 2500]):
     self.name = name
     self.lon = lon
     self.lat = lat
@@ -40,6 +40,7 @@ class TimeSeries:
     self.end_time = end_time
     self.variable = variable
     self.height = height
+    self.depth = depth
     self.datafile = product+'_lon'+str(self.lon)+'_lat'+str(self.lat)+'_'+self.start_time.replace('-','')+'_'+self.end_time.replace('-','')+'.csv'
     self.data = data
     return
@@ -103,6 +104,15 @@ class TimeSeries:
       if self.variable == []:
         self.variable =  ['Hm0'] 
       self.data = OBS_E39(self, save_csv = save_csv,save_nc = save_nc)       
+    elif self.product == 'NorkystDA_surface':
+      self.variable = ['u', 'v', 'zeta', 'temp','salt']
+      self.data = NorkystDA_surface_ts(self, save_csv = save_csv, save_nc = save_nc)      
+    elif self.product == 'NorkystDA_zdepth':
+      self.variable = ['u', 'v', 'zeta', 'temp','salt', 'AKs']
+      self.data = NorkystDA_zdepth_ts(self, save_csv = save_csv, save_nc = save_nc)     
+
+      
+
     return
 
   def load_data(self, local_file):
