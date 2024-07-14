@@ -19,6 +19,10 @@ def distance_2points(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2)**2
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
     distance = R * c  # in km
+
+    if distance.min() > 50: # min distance between requested and available grid points above 50 km
+        raise ValueError("Requested grid point out of model domain!!!")
+
     return distance
 
 
@@ -345,7 +349,7 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     
     if save_nc == True:
         ds.to_netcdf(outfile.replace('csv','nc'))
-    
+
     return df
 
 def check_datafile_exists(datafile):
