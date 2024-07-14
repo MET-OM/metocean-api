@@ -201,18 +201,18 @@ def get_near_coord(infile, lon, lat, product):
         lat_near = ds.lat_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
         x_coor = eta_rho
         y_coor = xi_rho
-    elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
-        x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
-        lon_near = ds.lon.sel(y=y, x=x).values[0][0]
-        lat_near = ds.lat.sel(y=y, x=x).values[0][0]  
-        x_coor = x.values
-        y_coor = y.values  
     elif product=='NORKYST800':
         x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
         lon_near = ds.lon.sel(Y=y, X=x).values[0][0]
         lat_near = ds.lat.sel(Y=y, X=x).values[0][0]  
         x_coor = x
         y_coor = y
+    elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
+        x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
+        lon_near = ds.lon.sel(y=y, x=x).values[0][0]
+        lat_near = ds.lat.sel(y=y, x=x).values[0][0]  
+        x_coor = x.values
+        y_coor = y.values  
     print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
     return x_coor, y_coor, lon_near, lat_near
 
