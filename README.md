@@ -1,5 +1,8 @@
 # metocean-api
 
+[![Tests (python)](https://github.com/MET-OM/metocean-api/actions/workflows/python.yml/badge.svg)](https://github.com/MET-OM/metocean-api/actions/workflows/python.yml)
+[![Lint](https://github.com/MET-OM/metocean-api/actions/workflows/lint.yml/badge.svg)](https://github.com/MET-OM/metocean-api/actions/workflows/lint.yml)
+[![Coverage Status](https://coveralls.io/repos/github/MET-OM/metocean-api/badge.svg?branch=master)](https://coveralls.io/github/MET-OM/metocean-api?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/metocean-api/badge/?version=latest)](https://metocean-api.readthedocs.io/en/latest/?badge=latest)
 
 
