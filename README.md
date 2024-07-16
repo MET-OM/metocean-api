@@ -1,5 +1,6 @@
 # metocean-api
 
+[![Tests (python)](https://github.com/MET-OM/metocean-api/actions/workflows/python.yml/badge.svg)](https://github.com/MET-OM/metocean-api/actions/workflows/test.yml)
 [![Documentation Status](https://readthedocs.org/projects/metocean-api/badge/?version=latest)](https://metocean-api.readthedocs.io/en/latest/?badge=latest)
 
 
