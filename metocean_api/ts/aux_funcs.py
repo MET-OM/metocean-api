@@ -165,6 +165,8 @@ def drop_variables(product):
         drop_var = ['longitude','latitude'] 
     elif product == 'ERA5':
         drop_var = ['longitude','latitude']  
+    elif product == 'GTSM':
+        drop_var = ['station_x_coordinate','station_y_coordinate', 'stations']  
     elif product == 'NORA3_stormsurge':
         drop_var = ['lon_rho','lat_rho']  
     elif product == 'NORKYST800':
@@ -310,7 +312,7 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     else: 
         drop_var = drop_variables(product=product) 
         ds = ds.drop_vars(drop_var)
- 
+
     ds = ds.sel(time=slice(start_time,end_time)) 
     df = ds.to_dataframe()
     df = df.astype(float).round(2)
@@ -391,3 +393,23 @@ def remove_dimensions_from_netcdf(input_file, dimensions_to_remove=['X', 'Y']):
     
     # Write the updated dataset to the same NetCDF file
     ds.to_netcdf(input_file)
+
+
+def day_list(start_time, end_time):
+    """Determins a Pandas data range of all the days in the time span"""
+    t0 = pd.Timestamp(start_time).strftime('%Y-%m-%d')
+    t1 = pd.Timestamp(end_time).strftime('%Y-%m-%d')
+    days = pd.date_range(start=t0, end=t1, freq='D')
+    return days
+
+def int_list_of_years(start_time, end_time):
+    year0 = min(pd.Series(day_list(start_time, end_time)).dt.year)
+    year1 = max(pd.Series(day_list(start_time, end_time)).dt.year)
+    return np.linspace(year0,year1,year1-year0+1).astype(int)
+
+def int_list_of_months(start_time, end_time):
+    if len(int_list_of_years(start_time, end_time))>1:
+        raise Exception('Only use this function for times within a single year!')
+    month0 = min(pd.Series(day_list(start_time, end_time)).dt.month)
+    month1 = max(pd.Series(day_list(start_time, end_time)).dt.month)
+    return np.linspace(month0,month1,month1-month0+1).astype(int)

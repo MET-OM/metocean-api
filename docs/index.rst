@@ -105,11 +105,18 @@ Several options for **product** are available. Please check the data catalog for
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_ocean/catalog.html
 
-* For global reananalysis ERA5 (wind and waves): product='ERA5' 
+* For global reanalysis ERA5 (wind and waves): product='ERA5' 
 
   The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
   
   Dataset: https://doi.org/10.24381/cds.adbb2d47
+
+* For global reanalysis/historical GTSM (storm surge, tidal elevation, total water level ): product='GTSM' 
+
+  The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
+  
+  Dataset: https://doi.org/10.24381/cds.a6d42d60
+
 
 * For wave buoy observations (Statens vegvesen - E39): product='E39_letter_location_wave', e.g,  product='E39_B_Sulafjorden_wave'
 
