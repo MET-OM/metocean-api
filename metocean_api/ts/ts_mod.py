@@ -79,6 +79,14 @@ class TimeSeries:
       else:
         pass 
       self.data = ERA5_ts(self, save_csv = save_csv,save_nc = save_nc) 
+    elif self.product == 'GTSM':
+      if self.variable == []:
+        self.variable = [
+            'storm_surge_residual','tidal_elevation','total_water_level'
+        ]
+      else:
+        pass 
+      self.data = GTSM_ts(self, save_csv = save_csv,save_nc = save_nc) 
     elif self.product == 'NORA3_stormsurge':
       self.variable =  ['zeta']
       self.data = NORA3_stormsurge_ts(self, save_csv = save_csv,save_nc = save_nc) 
