@@ -8,16 +8,25 @@ import os
 
 from .aux_funcs import *
 
+
 def ERA5_ts(self, save_csv = False, save_nc=False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     ERA5 reanalysis and save it as netcdf.
     """
-    filename = download_era5_from_cds(self.start_time, self.end_time, self.lon, self.lat,self.variable, folder='cache')
-    ds = xr.open_mfdataset(filename)
-    df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.values[0], lat_near=ds.latitude.values[0], outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)
-    
-    return df
+    filename_list = download_era5_from_cds(self.start_time, self.end_time, self.lon, self.lat,self.variable, folder='cache')
+    df_list = []
+    df_res = None
+    for filename in filename_list:
+        ds = xr.open_mfdataset(filename)
+        df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.values[0], lat_near=ds.latitude.values[0], outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)
+        df.drop(columns=['number', 'expver'], inplace=True)
+        if df_res is None:
+            df_res = df
+        else:
+            df_res = df_res.join(df)
+    return df_res
+
 
 def GTSM_ts(self, save_csv=False, save_nc=False):
     """
@@ -96,9 +105,9 @@ def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
                 #53.33, 1.31, 53.31,1.33,
             ],
         }
-        print('Download variable('+str(i+1)+'/'+str(len(variable)) +')' +':'+variable[i] ) 
+        print('Download variable('+str(i+1)+'/'+str(len(variable)) +')' +':'+variable[i] )
         c.retrieve('reanalysis-era5-single-levels', cds_command, filename)
-    return filename
+    return filename_list
 
 
 def download_gtsm_from_cds(start_time, end_time, lon, lat, variable,  folder='cache') -> str:
