@@ -312,10 +312,12 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     else: 
         drop_var = drop_variables(product=product) 
         ds = ds.drop_vars(drop_var)
-    ds = ds.sel(valid_time=slice(start_time,end_time))
+    # Check if 'valid_time' (e.g., ERA5) exists in the dataset dimensions, if not, use 'time' (NORA3,...)
+    time_dim = 'valid_time' if 'valid_time' in ds.dims else 'time'
+    ds = ds.sel({time_dim: slice(start_time, end_time)})
     df = ds.to_dataframe()
     df = df.astype(float).round(2)
-    df.index = pd.DatetimeIndex(data=ds.valid_time.values)
+    df.index = pd.DatetimeIndex(data=ds[time_dim].values)
 
     top_header = '#'+product + ';LONGITUDE:'+str(lon_near.round(4))+';LATITUDE:' + str(lat_near.round(4)) 
     list_vars = [i for i in ds.data_vars]
