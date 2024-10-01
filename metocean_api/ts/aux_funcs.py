@@ -312,11 +312,10 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     else: 
         drop_var = drop_variables(product=product) 
         ds = ds.drop_vars(drop_var)
-
-    ds = ds.sel(time=slice(start_time,end_time)) 
+    ds = ds.sel(valid_time=slice(start_time,end_time))
     df = ds.to_dataframe()
     df = df.astype(float).round(2)
-    df.index = pd.DatetimeIndex(data=ds.time.values)
+    df.index = pd.DatetimeIndex(data=ds.valid_time.values)
 
     top_header = '#'+product + ';LONGITUDE:'+str(lon_near.round(4))+';LATITUDE:' + str(lat_near.round(4)) 
     list_vars = [i for i in ds.data_vars]
@@ -338,6 +337,7 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     #    institution = '#Institution;'+ds.institution
     #except AttributeError as e:
     #    institution = '#Institution;-' 
+
 
     if save_csv == True:
         df.to_csv(outfile,index_label='time')
