@@ -13,7 +13,7 @@ setuptools.setup(
     url         = 'https://github.com/MET-OM/metocean-api',
     download_url = 'https://github.com/MET-OM/metocean-api',
     version = __version__,
-    license = 'GPLv2',
+    license = 'LGPLv2.1',
     install_requires = [
         'matplotlib>=3.1',
         'numpy>=1.17',
