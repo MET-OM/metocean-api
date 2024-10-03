@@ -9,7 +9,7 @@ import os
 from .aux_funcs import *
 
 
-def ERA5_ts(self, save_csv = False, save_nc=False):
+def ERA5_ts(self, save_csv=False, save_nc=False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     ERA5 reanalysis and save it as netcdf.
@@ -60,7 +60,7 @@ def GTSM_ts(self, save_csv=False, save_nc=False):
     return df
 
 
-def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='cache') -> str:
+def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='cache', use_cache=True) -> str:
     import cdsapi
     """Downloads ERA5 data from the Copernicus Climate Data Store for a
     given point and time period"""
@@ -105,8 +105,11 @@ def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
                 #53.33, 1.31, 53.31,1.33,
             ],
         }
-        print('Download variable('+str(i+1)+'/'+str(len(variable)) +')' +':'+variable[i] )
-        c.retrieve('reanalysis-era5-single-levels', cds_command, filename)
+        if use_cache and os.path.isfile(filename):
+            print('Reuse cached file for variable('+str(i+1)+'/'+str(len(variable)) +')' +':'+variable[i])
+        else:
+            print('Download variable('+str(i+1)+'/'+str(len(variable)) +')' +':'+variable[i] )
+            c.retrieve('reanalysis-era5-single-levels', cds_command, filename)
     return filename_list
 
 
