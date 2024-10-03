@@ -15,16 +15,45 @@ def ERA5_ts(self, save_csv = False, save_nc=False):
     ERA5 reanalysis and save it as netcdf.
     """
     filename_list = download_era5_from_cds(self.start_time, self.end_time, self.lon, self.lat,self.variable, folder='cache')
-    df_list = []
+
     df_res = None
+    ds_res = None
+    variable_info = []
+
     for filename in filename_list:
         ds = xr.open_mfdataset(filename)
-        df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.values[0], lat_near=ds.latitude.values[0], outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, height=self.height)
+        df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.values[0], lat_near=ds.latitude.values[0], outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=False, save_nc=False, height=self.height)
         df.drop(columns=['number', 'expver'], inplace=True)
+        variable = df.columns[0]
+        try:
+            standard_name = ds[variable].standard_name
+        except AttributeError:
+            standard_name = '-'
+        try:
+            long_name = ds[variable].long_name
+        except AttributeError:
+            long_name = '-'
+        variable_info.append(f'#{variable};{standard_name};{long_name};{ds[variable].units}\n')
+
         if df_res is None:
             df_res = df
+            ds_res = ds
         else:
             df_res = df_res.join(df)
+            ds_res = ds_res.merge(ds, compat='override')
+
+    if save_csv:
+        lon_near = ds.longitude.values[0]
+        lat_near = ds.latitude.values[0]
+        top_header = f'#{self.product};LONGITUDE:{lon_near:0.4f};LATITUDE:{lat_near:0.4f}\n'
+        header = [top_header, '#Variable_name;standard_name;long_name;units\n'] + variable_info
+        with open(self.datafile, 'w') as f:
+            f.writelines(header)
+            df_res.to_csv(f, index_label='time')
+
+    if save_nc:
+        ds_res.to_netcdf(self.datafile.replace('csv','nc'))
+
     return df_res
 
 
