@@ -9,8 +9,8 @@ dependencies:
   - xarray
   - dask
   - pip
-  - pynco
   - netcdf4
   - pytest
+  - pytest-cov
   - cdsapi
   - cartopy

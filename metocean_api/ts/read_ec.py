@@ -1,5 +1,3 @@
-from abc import ABC, abstractmethod
-
 import pandas as pd
 import xarray as xr
 import numpy as np
@@ -106,7 +104,7 @@ def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
     except FileExistsError:
         print("Directory " , folder ,  " already exists")
 
-    days = get_date_list('ERA5',start_time, end_time)
+    days = get_dates('ERA5',start_time, end_time)
     # Create string for dates
     dates = [days[0].strftime('%Y-%m-%d'), days[-1].strftime('%Y-%m-%d')]
     dates = '/'.join(dates)
@@ -152,7 +150,7 @@ def download_gtsm_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
     end_time = pd.Timestamp(end_time)
     c = cdsapi.Client()
 
-    days = get_date_list('ERA5',start_time, end_time)
+    days = get_dates('ERA5',start_time, end_time)
     years = days.year
     years = years.unique()
     years = [str(year) for year in years]
