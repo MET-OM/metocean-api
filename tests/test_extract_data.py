@@ -90,3 +90,12 @@ def test_NorkystDA_surface():
     else:
         raise ValueError("Shape is not correct") 
 
+def test_ECHOWAVE():
+    # Define TimeSeries-object
+    df_ts = ts.TimeSeries(lon=3.098, lat=52.48,start_time='2017-01-19', end_time='2017-01-20', product='ECHOWAVE')
+    # Import data from https://data.4tu.nl/datasets/ 
+    df_ts.import_data(save_csv=False,save_nc=False)
+    if df_ts.data.shape == (48, 22):
+        pass
+    else:
+        raise ValueError("Shape is not correct") 

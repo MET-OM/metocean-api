@@ -2,6 +2,7 @@ from __future__ import annotations # For TYPE_CHECKING
 
 from .read_metno import *
 from .read_ec import *
+from .read_tudelft import *
 from .aux_funcs import read_commented_lines
 
 def combine_data(list_files = [], output_file=False):
@@ -117,7 +118,10 @@ class TimeSeries:
       self.data = NorkystDA_surface_ts(self, save_csv = save_csv, save_nc = save_nc)      
     elif self.product == 'NorkystDA_zdepth':
       self.variable = ['u', 'v', 'zeta', 'temp','salt', 'AKs']
-      self.data = NorkystDA_zdepth_ts(self, save_csv = save_csv, save_nc = save_nc)     
+      self.data = NorkystDA_zdepth_ts(self, save_csv = save_csv, save_nc = save_nc)   
+    elif self.product == 'ECHOWAVE':
+      self.variable = [ 'ucur', 'vcur', 'uwnd', 'vwnd', 'wlv', 'ice', 'hs', 'lm', 't02', 't01', 'fp', 'dir', 'spr', 'dp', 'phs0', 'phs1', 'phs2', 'ptp0', 'ptp1', 'ptp2', 'pdir0', 'pdir1']
+      self.data = ECHOWAVE_ts(self, save_csv = save_csv, save_nc = save_nc)   
 
       
 

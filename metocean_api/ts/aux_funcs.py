@@ -130,6 +130,10 @@ def get_url_info(product, date):
         infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_ocean/zdepth/{}/ocean_zdepth_2_4km-{}.nc'.format(date.strftime('%Y/%m'), date.strftime('%Y%m%d')) 
         x_coor_str = 'x'
         y_coor_str = 'y'
+    elif product == 'ECHOWAVE': 
+        infile = 'https://opendap.4tu.nl/thredds/dodsC/data2/djht/f359cd0f-d135-416c-9118-e79dccba57b9/1/{}/TU-MREL_EU_ATL-2M_{}.nc'.format(date.strftime('%Y'),date.strftime('%Y%m')) 
+        x_coor_str = 'longitude'
+        y_coor_str = 'latitude'
     print(infile)   
     return x_coor_str, y_coor_str, infile
 
@@ -137,6 +141,8 @@ def get_date_list(product, start_date, end_date):
     if product == 'NORA3_wave' or product == 'ERA5' or product.startswith('NorkystDA'):
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
+        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
+    elif product == 'ECHOWAVE':
         date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
     elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
         date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
@@ -153,6 +159,8 @@ def get_date_list(product, start_date, end_date):
 def drop_variables(product):
     if product == 'NORA3_wave':
        drop_var = ['projection_ob_tran','longitude','latitude']
+    elif product == 'ECHOWAVE':
+       drop_var = ['longitude','latitude']
     elif product == 'NORA3_wave_sub':
         drop_var = ['projection_ob_tran','longitude','latitude']
     elif product == 'NORA3_wind_sub':
@@ -213,12 +221,20 @@ def get_near_coord(infile, lon, lat, product):
         lat_near = ds.lat.sel(Y=y, X=x).values[0][0]  
         x_coor = x
         y_coor = y
+    elif product=='ECHOWAVE':
+        ds_point = ds.sel(longitude=lon,latitude=lat,method='nearest')
+        lon_near = ds_point.longitude.values
+        lat_near = ds_point.latitude.values
+        x_coor = lon_near
+        y_coor = lat_near
     elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
         x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
         lon_near = ds.lon.sel(y=y, x=x).values[0][0]
         lat_near = ds.lat.sel(y=y, x=x).values[0][0]  
         x_coor = x.values
-        y_coor = y.values  
+        y_coor = y.values    
+    else:
+        print('Product Not Found!')
     print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
     return x_coor, y_coor, lon_near, lat_near
 

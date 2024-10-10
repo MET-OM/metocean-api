@@ -2,7 +2,8 @@ from metocean_api import ts
 
 
 # Define TimeSeries-object
-df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='1990-01-01', end_time='2020-12-31' , product='NORA3_wind_wave')
+#df_ts = ts.TimeSeries(lon=6.727, lat=65.064,start_time='2024-01-31', end_time='2024-02-01' , product='NORA3_wave')
+df_ts = ts.TimeSeries(lon=3.098, lat=52.48,start_time='1990-01-01', end_time='1990-01-02' , product='ECHOWAVE')
 #df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2021-01-01', end_time='2021-01-15' , product='NORA3_wind_sub')
 #df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2021-01-01', end_time='2021-03-31' , product='NORA3_wave_sub')
 #df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2001-03-31' , product='NORA3_stormsurge')
