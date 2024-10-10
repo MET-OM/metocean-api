@@ -21,15 +21,13 @@ setuptools.setup(
         'xarray',
         'dask',
         'pip',
-        'nco',
         'netcdf4',
-        'pytest',
         'cdsapi',
     ],
     packages = setuptools.find_packages(),
     include_package_data = True,
     setup_requires = ['setuptools_scm'],
-    tests_require = ['pytest'],
+    tests_require = ['pytest','pytest-cov'],
     scripts = []
 )
 

@@ -1,12 +1,9 @@
 from __future__ import annotations
-import matplotlib.pyplot as plt
+import os
 import xarray as xr
 import pandas as pd
 import numpy as np
-import time
-import os
 import cartopy.crs as ccrs
-from nco import Nco
 
 def distance_2points(lat1, lon1, lat2, lon2):
     R = 6371.0
@@ -130,109 +127,112 @@ def get_url_info(product, date):
         infile = 'https://thredds.met.no/thredds/dodsC/nora3_subset_ocean/zdepth/{}/ocean_zdepth_2_4km-{}.nc'.format(date.strftime('%Y/%m'), date.strftime('%Y%m%d')) 
         x_coor_str = 'x'
         y_coor_str = 'y'
-    print(infile)   
+    else:
+        raise ValueError(f'Product not found {product}')
     return x_coor_str, y_coor_str, infile
 
 def get_date_list(product, start_date, end_date):
     if product == 'NORA3_wave' or product == 'ERA5' or product.startswith('NorkystDA'):
-       date_list = pd.date_range(start=start_date , end=end_date, freq='D')
+       return pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
+        return pd.date_range(start=start_date , end=end_date, freq='MS')
     elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
+        return pd.date_range(start=start_date , end=end_date, freq='MS')
     elif product == 'NORAC_wave':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
+        return pd.date_range(start=start_date , end=end_date, freq='MS')
     elif product == 'NORA3_stormsurge':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='YS')
+        return pd.date_range(start=start_date , end=end_date, freq='YS')
     elif product == 'NORKYST800':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
+        return pd.date_range(start=start_date , end=end_date, freq='D')
     elif product.startswith('E39'):
-        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
-    return date_list
+        return pd.date_range(start=start_date , end=end_date, freq='MS')
+    raise ValueError(f'Product not found {product}')
 
-def drop_variables(product):
+def drop_variables(product: str):
     if product == 'NORA3_wave':
-       drop_var = ['projection_ob_tran','longitude','latitude']
+        return  ['projection_ob_tran','longitude','latitude']
     elif product == 'NORA3_wave_sub':
-        drop_var = ['projection_ob_tran','longitude','latitude']
+        return ['longitude','latitude','rlat','rlon']
     elif product == 'NORA3_wind_sub':
-        drop_var = ['projection_lambert','longitude','latitude','x','y','height']  
+        return ['projection_lambert','longitude','latitude','x','y','height']
     elif product == 'NORA3_atm_sub':
-        drop_var = ['projection_lambert','longitude','latitude','x','y']  
+        return ['projection_lambert','longitude','latitude','x','y']  
     elif product == 'NORA3_atm3hr_sub':
-        drop_var = ['projection_lambert','longitude','latitude','x','y','height'] 
+        return  ['projection_lambert','longitude','latitude','x','y','height'] 
     elif product == 'NORAC_wave':
         drop_var = ['longitude','latitude'] 
     elif product == 'ERA5':
-        drop_var = ['longitude','latitude']  
+        return  ['longitude','latitude']  
     elif product == 'GTSM':
-        drop_var = ['station_x_coordinate','station_y_coordinate', 'stations']  
+        return  ['station_x_coordinate','station_y_coordinate', 'stations']  
     elif product == 'NORA3_stormsurge':
-        drop_var = ['lon_rho','lat_rho']  
+        return  ['lon_rho','lat_rho']  
     elif product == 'NORKYST800':
-        drop_var = ['lon','lat']  
+        return  ['lon','lat']  
     elif product.startswith('E39'):
-        drop_var = ['longitude','latitude']
+        return  ['longitude','latitude']
     elif product.startswith('NorkystDA'):
-        drop_var = ['lon','lat', 'projection_stere']
+        drop_var = ['lon','lat','x','y']
         if 'zdepth' in product:
             drop_var.append('depth')
 
-    return drop_var
+        return drop_var
+    return []
 
 def get_near_coord(infile, lon, lat, product):
-    ds = xr.open_dataset(infile)
     print('Find nearest point to lon.='+str(lon)+','+'lat.='+str(lat))
-    if ((product=='NORA3_wave_sub') or (product=='NORA3_wave')) :
-        rlon, rlat = find_nearest_rotCoord(ds.longitude, ds.latitude, lon, lat)
-        lon_near = ds.longitude.sel(rlat=rlat, rlon=rlon).values[0][0]
-        lat_near = ds.latitude.sel(rlat=rlat, rlon=rlon).values[0][0]
-        x_coor = rlon
-        y_coor = rlat
-    elif product=='NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
-        x, y = find_nearest_cartCoord(ds.longitude, ds.latitude, lon, lat)
-        lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
-        lat_near = ds.latitude.sel(y=y, x=x).values[0][0]  
-        x_coor = x
-        y_coor = y  
-    elif product=='NORAC_wave':
-        node_id = distance_2points(ds.latitude.values,ds.longitude.values,lat,lon).argmin()
-        lon_near = ds.longitude.sel(node=node_id).values
-        lat_near = ds.latitude.sel(node=node_id).values  
-        x_coor = node_id
-        y_coor = node_id
-    elif product=='NORA3_stormsurge':
-        eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon_rho, ds.lat_rho, lon, lat)
-        lon_near = ds.lon_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
-        lat_near = ds.lat_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
-        x_coor = eta_rho
-        y_coor = xi_rho
-    elif product=='NORKYST800':
-        x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
-        lon_near = ds.lon.sel(Y=y, X=x).values[0][0]
-        lat_near = ds.lat.sel(Y=y, X=x).values[0][0]  
-        x_coor = x
-        y_coor = y
-    elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
-        x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
-        lon_near = ds.lon.sel(y=y, x=x).values[0][0]
-        lat_near = ds.lat.sel(y=y, x=x).values[0][0]  
-        x_coor = x.values
-        y_coor = y.values  
-    print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
-    return x_coor, y_coor, lon_near, lat_near
+    with xr.open_dataset(infile) as ds:
+        if ((product=='NORA3_wave_sub') or (product=='NORA3_wave')) :
+            rlon, rlat = find_nearest_rotCoord(ds.longitude, ds.latitude, lon, lat)
+            lon_near = ds.longitude.sel(rlat=rlat, rlon=rlon).values[0][0]
+            lat_near = ds.latitude.sel(rlat=rlat, rlon=rlon).values[0][0]
+            x_coor = rlon
+            y_coor = rlat
+        elif product=='NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
+            x, y = find_nearest_cartCoord(ds.longitude, ds.latitude, lon, lat)
+            lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
+            lat_near = ds.latitude.sel(y=y, x=x).values[0][0]  
+            x_coor = x.values[0]
+            y_coor = y.values[0]
+        elif product=='NORAC_wave':
+            node_id = distance_2points(ds.latitude.values,ds.longitude.values,lat,lon).argmin()
+            lon_near = ds.longitude.sel(node=node_id).values
+            lat_near = ds.latitude.sel(node=node_id).values  
+            x_coor = node_id
+            y_coor = node_id
+        elif product=='NORA3_stormsurge':
+            eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon_rho, ds.lat_rho, lon, lat)
+            lon_near = ds.lon_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
+            lat_near = ds.lat_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
+            x_coor = eta_rho
+            y_coor = xi_rho
+        elif product=='NORKYST800':
+            x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
+            lon_near = ds.lon.sel(Y=y, X=x).values[0][0]
+            lat_near = ds.lat.sel(Y=y, X=x).values[0][0]  
+            x_coor = x
+            y_coor = y
+        elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
+            x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
+            lon_near = ds.lon.sel(y=y, x=x).values[0][0]
+            lat_near = ds.lat.sel(y=y, x=x).values[0][0]
+            x_coor = x.values[0]
+            y_coor = y.values[0]
+        else:
+            raise ValueError(f'Product not found {product}')
+        print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
+        return x_coor, y_coor, lon_near, lat_near
 
-def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,save_nc=True, height=None, depth = None):
+def create_dataframe(product,ds: xr.Dataset, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,save_nc=True, height=None, depth = None):
     if product=='NORA3_wind_sub': 
-        ds0 = ds
         for i in range(len(height)):
             variable_height = [k + '_'+str(height[i])+'m' for k in variable]
-            ds[variable_height] = ds0[variable].sel(height=height[i])
- 
+            ds[variable_height] = ds[variable].sel(height=height[i])
+
         ds = ds.drop_vars('height')
         ds = ds.drop_vars([variable[0]])
         ds = ds.drop_vars([variable[1]]) 
-        ds = ds.drop_vars('projection_lambert')
+        ds = ds.drop_vars(['x','y'])
         ds = ds.drop_vars('latitude')
         ds = ds.drop_vars('longitude')
     elif product=='NORA3_atm3hr_sub': 
@@ -248,7 +248,7 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
         ds = ds.drop_vars('relative_humidity') 
         ds = ds.drop_vars('tke') 
         ds = ds.drop_vars('density') 
-        ds = ds.drop_vars('projection_lambert')
+        ds = ds.drop_vars('projection_lambert',errors="ignore")
         ds = ds.drop_vars('latitude')
         ds = ds.drop_vars('longitude')
 
@@ -263,28 +263,28 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
             # zeta is surface elevation, no point in adding for each depth. 
             if np.abs(depth[i]) > 0 and 'zeta_{}m'.format(depth[i]) in ds.keys():
                 ds = ds.drop_vars('zeta_{}m'.format(depth[i]))
-            
+
             u, v = rotate_vectors_tonorth(angle, ds['u_{}m'.format(depth[i])].values, ds['v_{}m'.format(depth[i])].values)
-            spd, dir = uv2spddir(u, v)
-            ds['current_speed_{}m'.format(depth[i])] = xr.DataArray(spd, dims=('time', 'y', 'x'), attrs = {"standard_name": 'sea_water_speed', "units": "meter seconds-1"})
-            ds['current_direction_{}m'.format(depth[i])] = xr.DataArray(dir, dims=('time', 'y', 'x'), attrs = {"standard_name" : "sea_water_velocity_from_direction", "units": "degrees"})
-            ds = ds.drop_vars(['u_{}m'.format(depth[i]), 'v_{}m'.format(depth[i])])
-                
+            spd, direction = uv2spddir(u, v)
+            ds[f'current_speed_{depth[i]}m'] = xr.DataArray(spd, dims=('time'), attrs = {"standard_name": 'sea_water_speed', "units": "meter seconds-1"})
+            ds[f'current_direction_{depth[i]}m'] = xr.DataArray(direction, dims=('time'), attrs = {"standard_name" : "sea_water_velocity_from_direction", "units": "degrees"})
+            ds = ds.drop_vars([f'u_{depth[i]}m', 'v_{}m'.format(depth[i])])
+
         drop_var = drop_variables(product=product) 
-        ds = ds.drop_vars(drop_var)
-        ds = ds.drop_vars(variable)
+        ds = ds.drop_vars(drop_var,errors="ignore")
+        ds = ds.drop_vars(variable,errors="ignore")
 
     elif product == 'NorkystDA_surface':
         crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60,false_easting=0, false_northing=0)
         angle = proj_rotation_angle(crs, ds)
         u, v = rotate_vectors_tonorth(angle, ds['u'].values, ds['v'].values)
-        spd, dir = uv2spddir(u, v)
-        ds['current_speed'] = xr.DataArray(spd, dims=('time', 'y', 'x'), attrs = {"standard_name": 'sea_water_speed', "units": "meter seconds-1"})
-        ds['current_direction'] = xr.DataArray(dir, dims=('time', 'y', 'x'), attrs = {"standard_name" : "sea_water_velocity_from_direction", "units": "degrees"})
-        
+        spd, direction = uv2spddir(u, v)
+        ds['current_speed'] = xr.DataArray(spd, dims=('time'), attrs = {"standard_name": 'sea_water_speed', "units": "meter seconds-1"})
+        ds['current_direction'] = xr.DataArray(direction, dims=('time'), attrs = {"standard_name" : "sea_water_velocity_from_direction", "units": "degrees"})
         ds = ds.drop_vars(['u', 'v'])
-        drop_var = drop_variables(product=product) 
-        ds = ds.drop_vars(drop_var)
+
+        drop_var = drop_variables(product=product)
+        ds = ds.drop_vars(drop_var,errors="ignore")
     elif product=='NORKYST800': 
         ds0 = ds
         if 'depth' in ds['zeta'].dims:
@@ -298,20 +298,15 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
                 var_list.append(var_name)
 
         for i in range(len(height)):
-                variable_height = [k + '_'+str(height[i])+'m' for k in var_list]
-                ds[variable_height] = ds0[var_list].sel(depth=height[i],method='nearest')
+            variable_height = [k + '_'+str(height[i])+'m' for k in var_list]
+            ds[variable_height] = ds0[var_list].sel(depth=height[i],method='nearest')
         ds = ds.drop_vars(var_list)
         ds = ds.drop_vars('depth')
-        ds = ds.drop_vars('lat')
-        ds = ds.drop_vars('lon')
-        ds = ds.drop_vars('X')
-        ds = ds.drop_vars('Y')
-        ds = ds.drop_vars('projection_stere')
         ds = ds.squeeze(drop=True)
 
-    else: 
+    else:
         drop_var = drop_variables(product=product) 
-        ds = ds.drop_vars(drop_var)
+        ds = ds.drop_vars(drop_var,errors="ignore")
     # Check if 'valid_time' (e.g., ERA5) exists in the dataset dimensions, if not, use 'time' (NORA3,...)
     time_dim = 'valid_time' if 'valid_time' in ds.dims else 'time'
     ds = ds.sel({time_dim: slice(start_time, end_time)})
@@ -323,35 +318,29 @@ def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time
     list_vars = [i for i in ds.data_vars]
     vars_info = ['#Variable_name;standard_name;long_name;units']
 
-    for vars in list_vars:
+    for var in list_vars:
         try:
-            standard_name = ds[vars].standard_name
-        except AttributeError as e:
+            standard_name = ds[var].standard_name
+        except AttributeError:
             standard_name = '-'
         try:
-            long_name = ds[vars].long_name
-        except AttributeError as e:
+            long_name = ds[var].long_name
+        except AttributeError:
             long_name = '-'
-            
-        vars_info = np.append(vars_info,"#"+vars+";"+standard_name+";"+long_name+";"+ds[vars].units)
 
-    #try:
-    #    institution = '#Institution;'+ds.institution
-    #except AttributeError as e:
-    #    institution = '#Institution;-' 
+        vars_info = np.append(vars_info,"#"+var+";"+standard_name+";"+long_name+";"+ds[var].units)
 
-
-    if save_csv == True:
+    if save_csv:
         df.to_csv(outfile,index_label='time')
-        with open(outfile, 'r+') as f:
+        with open(outfile, 'r+',encoding="utf8") as f:
             content = f.read()
             f.seek(0, 0)
             f.write((top_header).rstrip('\r\n') + '\n')
             for k in range(len(vars_info)-1):                
                 f.write(vars_info[k].rstrip('\r\n') + '\n' )
             f.write(vars_info[-1].rstrip('\r\n') + '\n' + content)
-    
-    if save_nc == True:
+
+    if save_nc:
         ds.to_netcdf(outfile.replace('csv','nc'))
 
     return df
@@ -360,42 +349,14 @@ def check_datafile_exists(datafile):
     if os.path.exists(datafile):
         os.remove(datafile)
         print(datafile, 'already exists, so it will be deleted and create a new....')
-    else:
-        pass# print("....")
-    return
-
 
 def read_commented_lines(datafile):
     commented_lines = []
-    with open(datafile) as f:
+    with open(datafile,encoding="utf8") as f:
         for line in f:
             if line.startswith("#"):
                 commented_lines = np.append(commented_lines,line)
     return commented_lines
-
-def remove_dimensions_from_netcdf(input_file, dimensions_to_remove=['X', 'Y']):
-    """
-    Remove specified dimensions from all variables in a NetCDF file and save the result to the same file.
-    
-    Parameters:
-    input_file (str): Path to the input NetCDF file.
-    dimensions_to_remove (list): A list of dimensions to remove from each variable.
-    """
-    # Check if the input file exists
-    if not os.path.exists(input_file):
-        return
-
-    # Open the input NetCDF file using xarray
-    ds = xr.open_dataset(input_file)
-    
-    # Squeeze out the dimensions specified if they are singleton dimensions
-    for dim in dimensions_to_remove:
-        if dim in ds.dims and ds.sizes[dim] == 1:
-            ds = ds.squeeze(dim=dim)
-    
-    # Write the updated dataset to the same NetCDF file
-    ds.to_netcdf(input_file)
-
 
 def day_list(start_time, end_time):
     """Determins a Pandas data range of all the days in the time span"""
@@ -411,7 +372,7 @@ def int_list_of_years(start_time, end_time):
 
 def int_list_of_months(start_time, end_time):
     if len(int_list_of_years(start_time, end_time))>1:
-        raise Exception('Only use this function for times within a single year!')
+        raise ValueError('Only use this function for times within a single year!')
     month0 = min(pd.Series(day_list(start_time, end_time)).dt.month)
     month1 = max(pd.Series(day_list(start_time, end_time)).dt.month)
     return np.linspace(month0,month1,month1-month0+1).astype(int)
