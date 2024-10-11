@@ -39,8 +39,8 @@ def ECHOWAVE_ts(self, save_csv = False, save_nc = False, save_cache =False):
     check_datafile_exists(self.datafile)
     #merge temp files
     ds = xr.open_mfdataset(paths=tempfile[:])   
-    ds.to_netcdf(f'{self.product}_xarray.nc',format='NETCDF3_64BIT')
-
+    ds.to_netcdf(f'{self.product}_xarray.nc',format='NETCDF3_64BIT') # add format to avoid *** AttributeError: NetCDF: String match to name in use
+    
     #Save in csv format    
     df = create_dataframe(product=self.product,ds=ds, lon_near=lon_near, lat_near=lat_near, outfile=self.datafile, variable=self.variable[:2], start_time = self.start_time, end_time = self.end_time, save_csv=save_csv, save_nc = save_nc, height=self.height)    
     ds.close()
@@ -52,7 +52,7 @@ def ECHOWAVE_ts(self, save_csv = False, save_nc = False, save_cache =False):
             except PermissionError:
                 print(f"Skipping deletion of {tempfile[i]} due to PermissionError")
 
-    return ds
+    return df
 
 
 

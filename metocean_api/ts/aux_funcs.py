@@ -138,6 +138,9 @@ def get_url_info(product, date):
     return x_coor_str, y_coor_str, infile
 
 def get_date_list(product, start_date, end_date):
+    from datetime import datetime
+    start_date = datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m')
+    end_date = datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')
     if product == 'NORA3_wave' or product == 'ERA5' or product.startswith('NorkystDA'):
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
