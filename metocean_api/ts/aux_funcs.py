@@ -139,18 +139,16 @@ def get_url_info(product, date):
 
 def get_date_list(product, start_date, end_date):
     from datetime import datetime
-    start_date = datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m')
-    end_date = datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m')
     if product == 'NORA3_wave' or product == 'ERA5' or product.startswith('NorkystDA'):
        date_list = pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
+        date_list = pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
     elif product == 'ECHOWAVE':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
+        date_list = pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
     elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
+        date_list = pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
     elif product == 'NORAC_wave':
-        date_list = pd.date_range(start=start_date , end=end_date, freq='MS')
+        date_list = pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
     elif product == 'NORA3_stormsurge':
         date_list = pd.date_range(start=start_date , end=end_date, freq='YS')
     elif product == 'NORKYST800':
