@@ -186,8 +186,7 @@ Several options for **product** are available. Please check the data catalog for
   .. code-block:: python
 
     product='E39_B_Sulafjorden_wave'
-
-  The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,  
+ 
   Dataset: https://thredds.met.no/thredds/catalog/obs/buoy-svv-e39/catalog.html
 
 Import data 
