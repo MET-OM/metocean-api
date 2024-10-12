@@ -84,7 +84,7 @@ Several options for **product** are available. Please check the data catalog for
   
    product='NORA3_wind_sub'
 
-  Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
+Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
 
 * For atmospheric (pressure,temperature,precipitation,humidity, radiation) NORA3 hourly surface data (Nordic Area) developed by MET Norway:
 
@@ -92,7 +92,7 @@ Several options for **product** are available. Please check the data catalog for
 
    product='NORA3_atm_sub'
 
-  Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_hourly/catalog.html
+Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_hourly/catalog.html
 
 * For SST and atmospheric (wind, temperature, relative humidity, tke, air density) NORA3 3-hourly data in 50, 100, 150, 200, 300m (Nordic Area) developed by MET Norway: 
 
@@ -100,7 +100,7 @@ Several options for **product** are available. Please check the data catalog for
   
    product='NORA3_atm3hr_sub'
 
-  Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html
+Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html
 
 * For wave NORA3 sub data (Nordic Seas) developed by MET Norway: 
 
@@ -108,7 +108,7 @@ Several options for **product** are available. Please check the data catalog for
 
    product='NORA3_wave_sub' 
 
-  Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_wave/wave_tser/catalog.html
+Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_wave/wave_tser/catalog.html
 
 * For combined wind and wave NORA3 sub data (Nordic Seas) developed by MET Norway: 
 
@@ -122,7 +122,7 @@ Several options for **product** are available. Please check the data catalog for
   
    product='NORA3_wave'
 
-  Dataset: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_files/catalog.html
+Dataset: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_files/catalog.html
 
 * For sea level NORA3 data (Nordic Seas) developed by MET Norway: 
 
@@ -137,7 +137,7 @@ Several options for **product** are available. Please check the data catalog for
   
    product='NORAC_wave'
 
-  Dataset: https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
+Dataset: https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
 
 * For ocean data (sea level, temperature, currents, salinity over depth ) Norkyst800 data (from 2016-09-14 to today) developed by MET Norway: 
 
@@ -145,7 +145,7 @@ Several options for **product** are available. Please check the data catalog for
 
    product='NORKYST800'
 
-  Dataset: https://thredds.met.no/thredds/fou-hi/norkyst800v2.html
+Dataset: https://thredds.met.no/thredds/fou-hi/norkyst800v2.html
 
 * For ocean data (sea level, temperature, currents, salinity over depth ) NorkystDA data (for 2017-2018) developed by MET Norway: 
 
@@ -153,7 +153,7 @@ Several options for **product** are available. Please check the data catalog for
   
    product='NorkystDA_zdepth' or product='NorkystDA_surface' (for only surface data) 
 
-  Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_ocean/catalog.html
+Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_ocean/catalog.html
 
 * For global reanalysis ERA5 (wind and waves) developed by ECMWF: 
 
@@ -161,18 +161,16 @@ Several options for **product** are available. Please check the data catalog for
  
    product='ERA5' 
 
-  The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
-  
-  Dataset: https://doi.org/10.24381/cds.adbb2d47
+The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
+Dataset: https://doi.org/10.24381/cds.adbb2d47
 
 * For Global Tide and Surge Model (storm surge, tidal elevation, total water level) developed by Deltares : 
 
 .. code-block:: python
    product='GTSM' 
 
-  The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
-  
-  Dataset: https://doi.org/10.24381/cds.a6d42d60
+The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
+Dataset: https://doi.org/10.24381/cds.a6d42d60
 
 * For ECHOWAVE (European COasts High Resolution Ocean WAVEs Hindcast) developed by Marine Renewable Energies Lab (MREL), TU Delft: 
 
@@ -180,7 +178,7 @@ Several options for **product** are available. Please check the data catalog for
 
    product='ECHOWAVE' 
   
-  Dataset: https://doi.org/10.4121/f359cd0f-d135-416c-9118-e79dccba57b9.v1, Publication: https://doi.org/10.1016/j.renene.2024.121391
+Dataset: https://doi.org/10.4121/f359cd0f-d135-416c-9118-e79dccba57b9.v1, Publication: https://doi.org/10.1016/j.renene.2024.121391
 
 * For wave buoy observations (Statens vegvesen - E39): product='E39_letter_location_wave', e.g,  
 
@@ -188,9 +186,8 @@ Several options for **product** are available. Please check the data catalog for
 
    product='E39_B_Sulafjorden_wave'
 
-  The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
-  
-  Dataset: https://thredds.met.no/thredds/catalog/obs/buoy-svv-e39/catalog.html
+The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,  
+Dataset: https://thredds.met.no/thredds/catalog/obs/buoy-svv-e39/catalog.html
 
 Import data from server to **ts-object** and save it as csv:
 
