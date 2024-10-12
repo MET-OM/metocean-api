@@ -141,13 +141,13 @@ def get_date_list(product, start_date, end_date):
     if product == 'NORA3_wave' or product == 'ERA5' or product.startswith('NorkystDA'):
        return pd.date_range(start=start_date , end=end_date, freq='D')
     elif product == 'NORA3_wave_sub':
-        date_list = pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
+        return pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
     elif product == 'ECHOWAVE':
-        date_list = pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
+        return pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
     elif product == 'NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
-        date_list = pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
+        return pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
     elif product == 'NORAC_wave':
-        date_list = pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
+        return pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m') , end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')
     elif product == 'NORA3_stormsurge':
         return pd.date_range(start=start_date , end=end_date, freq='YS')
     elif product == 'NORKYST800':
@@ -191,52 +191,54 @@ def drop_variables(product: str):
 
 def get_near_coord(infile, lon, lat, product):
     print('Find nearest point to lon.='+str(lon)+','+'lat.='+str(lat))
-    if ((product=='NORA3_wave_sub') or (product=='NORA3_wave')) :
-        rlon, rlat = find_nearest_rotCoord(ds.longitude, ds.latitude, lon, lat)
-        lon_near = ds.longitude.sel(rlat=rlat, rlon=rlon).values[0][0]
-        lat_near = ds.latitude.sel(rlat=rlat, rlon=rlon).values[0][0]
-        x_coor = rlon
-        y_coor = rlat
-    elif product=='NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
-        x, y = find_nearest_cartCoord(ds.longitude, ds.latitude, lon, lat)
-        lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
-        lat_near = ds.latitude.sel(y=y, x=x).values[0][0]  
-        x_coor = x
-        y_coor = y  
-    elif product=='NORAC_wave':
-        node_id = distance_2points(ds.latitude.values,ds.longitude.values,lat,lon).argmin()
-        lon_near = ds.longitude.sel(node=node_id).values
-        lat_near = ds.latitude.sel(node=node_id).values  
-        x_coor = node_id
-        y_coor = node_id
-    elif product=='NORA3_stormsurge':
-        eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon_rho, ds.lat_rho, lon, lat)
-        lon_near = ds.lon_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
-        lat_near = ds.lat_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
-        x_coor = eta_rho
-        y_coor = xi_rho
-    elif product=='NORKYST800':
-        x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
-        lon_near = ds.lon.sel(Y=y, X=x).values[0][0]
-        lat_near = ds.lat.sel(Y=y, X=x).values[0][0]  
-        x_coor = x
-        y_coor = y
-    elif product=='ECHOWAVE':
-        ds_point = ds.sel(longitude=lon,latitude=lat,method='nearest')
-        lon_near = ds_point.longitude.values
-        lat_near = ds_point.latitude.values
-        x_coor = lon_near
-        y_coor = lat_near
-    elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
-        x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
-        lon_near = ds.lon.sel(y=y, x=x).values[0][0]
-        lat_near = ds.lat.sel(y=y, x=x).values[0][0]  
-        x_coor = x.values
-        y_coor = y.values    
-    else:
-        print('Product Not Found!')
-    print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
-    return x_coor, y_coor, lon_near, lat_near
+    with xr.open_dataset(infile) as ds:
+        if ((product=='NORA3_wave_sub') or (product=='NORA3_wave')) :
+            rlon, rlat = find_nearest_rotCoord(ds.longitude, ds.latitude, lon, lat)
+            lon_near = ds.longitude.sel(rlat=rlat, rlon=rlon).values[0][0]
+            lat_near = ds.latitude.sel(rlat=rlat, rlon=rlon).values[0][0]
+            x_coor = rlon
+            y_coor = rlat
+        elif product=='NORA3_wind_sub' or product == 'NORA3_atm_sub' or product == 'NORA3_atm3hr_sub':
+            x, y = find_nearest_cartCoord(ds.longitude, ds.latitude, lon, lat)
+            lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
+            lat_near = ds.latitude.sel(y=y, x=x).values[0][0]  
+            x_coor = x.values[0]
+            y_coor = y.values[0]
+        elif product=='NORAC_wave':
+            node_id = distance_2points(ds.latitude.values,ds.longitude.values,lat,lon).argmin()
+            lon_near = ds.longitude.sel(node=node_id).values
+            lat_near = ds.latitude.sel(node=node_id).values  
+            x_coor = node_id
+            y_coor = node_id
+        elif product=='NORA3_stormsurge':
+            eta_rho, xi_rho = find_nearest_rhoCoord(ds.lon_rho, ds.lat_rho, lon, lat)
+            lon_near = ds.lon_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
+            lat_near = ds.lat_rho.sel(eta_rho=eta_rho, xi_rho=xi_rho).values[0][0]
+            x_coor = eta_rho
+            y_coor = xi_rho
+        elif product=='ECHOWAVE':
+            ds_point = ds.sel(longitude=lon,latitude=lat,method='nearest')
+            lon_near = ds_point.longitude.values
+            lat_near = ds_point.latitude.values
+            x_coor = lon_near
+            y_coor = lat_near
+        elif product=='NORKYST800':
+            x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
+            lon_near = ds.lon.sel(Y=y, X=x).values[0][0]
+            lat_near = ds.lat.sel(Y=y, X=x).values[0][0]  
+            x_coor = x
+            y_coor = y
+        elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
+            x, y = find_nearest_cartCoord(ds.lon, ds.lat, lon, lat)
+            lon_near = ds.lon.sel(y=y, x=x).values[0][0]
+            lat_near = ds.lat.sel(y=y, x=x).values[0][0]
+            x_coor = x.values[0]
+            y_coor = y.values[0]
+        else:
+            raise ValueError(f'Product not found {product}')
+        print('Found nearest: lon.='+str(lon_near)+',lat.=' + str(lat_near))     
+        return x_coor, y_coor, lon_near, lat_near
+
 
 def create_dataframe(product,ds, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,save_nc=True, height=None, depth = None):
     if product=='NORA3_wind_sub': 
