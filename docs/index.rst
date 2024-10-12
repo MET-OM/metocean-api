@@ -6,17 +6,24 @@
 Welcome to metocean-api's documentation!
 =====================================
 
-**metocean-api** is a Python tool to extract time series of metocean data from global/regional/coastal hindcasts/reananalysis.
-
-The package contains functions to extract time series to csv-format from:
-  * `NORA3`_ hindcast dataset  
-  * `ERA5`_ reanalysis dataset 
-
-.. _NORA3: https://marine.met.no/node/19
-.. _ERA5: https://doi.org/10.24381/cds.adbb2d47
+**metocean-api**  is a Python tool designed to extract time series of metocean (meteorological and oceanographic) data from a variety of sources, including global, regional, and coastal hindcasts and reanalysis.
+The extracted data can be saved in CSV format or netCDF for further analysis and usage.
+Refer to the section below for more information about the available datasets and variables. 
 
 Installing **metocean-api**
 =============================================
+Quick installation
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+.. code-block:: bash
+
+   $ pip install metocean-api
+
+or 
+
+.. code-block:: bash
+
+   $ conda install -c conda-forge metocean-api
+
 Alternative 1: Using Mambaforge (alternative to Miniconda)
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -65,63 +72,121 @@ This section documents the **ts-module**. The ts-object is initialized with the 
                       start_time='2000-01-01', end_time='2000-03-31' , 
                       product='NORA3_wind_wave') 
 
+
+Available Datasets in metocean-api
+=====================================
+
 Several options for **product** are available. Please check the data catalog for the time coverage:
 
-* For wind NORA3 hourly data in 10, 20, 50, 100, 250, 500, 750m (Nordic Area) developed by MET Norway: product='NORA3_wind_sub'
+* For wind NORA3 hourly data in 10, 20, 50, 100, 250, 500, 750m (Nordic Area) developed by MET Norway:
+
+.. code-block:: python
+  
+   product='NORA3_wind_sub'
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
 
-* For atmospheric (pressure,temperature,precipitation,humidity, radiation) NORA3 hourly surface data (Nordic Area) developed by MET Norway: product='NORA3_atm_sub'
+* For atmospheric (pressure,temperature,precipitation,humidity, radiation) NORA3 hourly surface data (Nordic Area) developed by MET Norway:
+
+.. code-block:: python
+
+   product='NORA3_atm_sub'
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_hourly/catalog.html
 
-* For SST and atmospheric (wind, temperature, relative humidity, tke, air density) NORA3 3-hourly data in 50, 100, 150, 200, 300m (Nordic Area) developed by MET Norway: product='NORA3_atm3hr_sub'
+* For SST and atmospheric (wind, temperature, relative humidity, tke, air density) NORA3 3-hourly data in 50, 100, 150, 200, 300m (Nordic Area) developed by MET Norway: 
+
+.. code-block:: python
+  
+   product='NORA3_atm3hr_sub'
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html
 
-* For wave NORA3 sub data (Nordic Seas) developed by MET Norway: product='NORA3_wave_sub' 
+* For wave NORA3 sub data (Nordic Seas) developed by MET Norway: 
+
+.. code-block:: python
+
+   product='NORA3_wave_sub' 
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_wave/wave_tser/catalog.html
 
-* For combined wind and wave NORA3 sub data (Nordic Seas) developed by MET Norway: product='NORA3_wind_wave'
+* For combined wind and wave NORA3 sub data (Nordic Seas) developed by MET Norway: 
 
-* For wave NORA3 data (Nordic Seas + Arctic) developed by MET Norway: product='NORA3_wave'
+.. code-block:: python
+
+   product='NORA3_wind_wave'
+
+* For wave NORA3 data (Nordic Seas + Arctic) developed by MET Norway: 
+
+.. code-block:: python
+  
+   product='NORA3_wave'
 
   Dataset: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_files/catalog.html
 
-* For sea level NORA3 data (Nordic Seas) developed by MET Norway: product='NORA3_stormsurge'
+* For sea level NORA3 data (Nordic Seas) developed by MET Norway: 
+
+.. code-block:: python
+   product='NORA3_stormsurge'
 
   Dataset: https://thredds.met.no/thredds/catalog/stormrisk/catalog.html
 
-* For coastal wave NORA3 data developed by MET Norway: product='NORAC_wave'
+* For coastal wave NORA3 data developed by MET Norway: 
+
+.. code-block:: python
+  
+   product='NORAC_wave'
 
   Dataset: https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
 
-* For ocean data (sea level, temperature, currents, salinity over depth ) Norkyst800 data (from 2016-09-14 to today) developed by MET Norway: product='NORKYST800'
+* For ocean data (sea level, temperature, currents, salinity over depth ) Norkyst800 data (from 2016-09-14 to today) developed by MET Norway: 
+
+.. code-block:: python
+
+   product='NORKYST800'
 
   Dataset: https://thredds.met.no/thredds/fou-hi/norkyst800v2.html
 
-* For ocean data (sea level, temperature, currents, salinity over depth ) NorkystDA data (for 2017-2018) developed by MET Norway: product='NorkystDA_zdepth' or product='NorkystDA_surface' (for only surface data) 
+* For ocean data (sea level, temperature, currents, salinity over depth ) NorkystDA data (for 2017-2018) developed by MET Norway: 
+
+.. code-block:: python
+  
+   product='NorkystDA_zdepth' or product='NorkystDA_surface' (for only surface data) 
 
   Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_ocean/catalog.html
 
-* For global reanalysis ERA5 (wind and waves) developed by ECMWF: product='ERA5' 
+* For global reanalysis ERA5 (wind and waves) developed by ECMWF: 
+
+.. code-block:: python
+ 
+   product='ERA5' 
 
   The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
   
   Dataset: https://doi.org/10.24381/cds.adbb2d47
 
-* For Global Tide and Surge Model (storm surge, tidal elevation, total water level) developed by Deltares : product='GTSM' 
+* For Global Tide and Surge Model (storm surge, tidal elevation, total water level) developed by Deltares : 
+
+.. code-block:: python
+   product='GTSM' 
 
   The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
   
   Dataset: https://doi.org/10.24381/cds.a6d42d60
 
-* For ECHOWAVE (European COasts High Resolution Ocean WAVEs Hindcast) developed by Marine Renewable Energies Lab (MREL), TU Delft: product='ECHOWAVE' 
+* For ECHOWAVE (European COasts High Resolution Ocean WAVEs Hindcast) developed by Marine Renewable Energies Lab (MREL), TU Delft: 
+
+.. code-block:: python
+
+   product='ECHOWAVE' 
   
   Dataset: https://doi.org/10.4121/f359cd0f-d135-416c-9118-e79dccba57b9.v1, Publication: https://doi.org/10.1016/j.renene.2024.121391
 
-* For wave buoy observations (Statens vegvesen - E39): product='E39_letter_location_wave', e.g,  product='E39_B_Sulafjorden_wave'
+* For wave buoy observations (Statens vegvesen - E39): product='E39_letter_location_wave', e.g,  
+
+.. code-block:: python
+
+   product='E39_B_Sulafjorden_wave'
 
   The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
   
