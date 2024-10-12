@@ -127,9 +127,10 @@ Several options for **product** are available. Please check the data catalog for
 * For sea level NORA3 data (Nordic Seas) developed by MET Norway: 
 
   .. code-block:: python
+
     product='NORA3_stormsurge'
 
-    Dataset: https://thredds.met.no/thredds/catalog/stormrisk/catalog.html
+  Dataset: https://thredds.met.no/thredds/catalog/stormrisk/catalog.html
 
 * For coastal wave NORA3 data developed by MET Norway: 
 
