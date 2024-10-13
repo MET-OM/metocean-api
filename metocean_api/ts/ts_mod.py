@@ -1,5 +1,3 @@
-from __future__ import annotations # For TYPE_CHECKING
-
 from .read_metno import *
 from .read_ec import *
 from .read_tudelft import *
@@ -44,29 +42,28 @@ class TimeSeries:
     self.depth = depth
     self.datafile = product+'_lon'+str(self.lon)+'_lat'+str(self.lat)+'_'+self.start_time.replace('-','')+'_'+self.end_time.replace('-','')+'.csv'
     self.data = data
-    return
 
-  def import_data(self, save_csv = True, save_nc = False):
+  def import_data(self, save_csv = True, save_nc = False,use_cache =False):
     if ((self.product=='NORA3_wave_sub') or (self.product=='NORA3_wave')):
       if self.variable == []:
         self.variable =  ['hs','tp','fpI','tm1','tm2','tmp','Pdir','thq', 'hs_sea','tp_sea','thq_sea' ,'hs_swell','tp_swell','thq_swell']
       else:
         pass
-      self.data = NORA3_wind_wave_ts(self, save_csv = save_csv, save_nc = save_nc)
+      self.data = NORA3_wind_wave_ts(self, save_csv, save_nc, use_cache)
     elif self.product == 'NORA3_wind_sub':
       if self.variable == []:       
         self.variable =  ['wind_speed','wind_direction']
       else:
        pass
-      self.data = NORA3_wind_wave_ts(self, save_csv = save_csv,save_nc = save_nc)
+      self.data = NORA3_wind_wave_ts(self, save_csv, save_nc, use_cache)
     elif self.product == 'NORA3_wind_wave':
-      self.data = NORA3_combined_ts(self, save_csv = save_csv,save_nc = save_nc)
+      self.data = NORA3_combined_ts(self, save_csv, save_nc, use_cache)
     elif self.product == 'NORAC_wave':
       if self.variable == []:
         self.variable =  ['hs','tp','fpI','t0m1','t02','t01','dp','dir', 'phs0','ptp0','pdir0' ,'phs1','ptp0','pdir1']
       else:
         pass
-      self.data = NORAC_ts(self, save_csv = save_csv,save_nc = save_nc) 
+      self.data = NORAC_ts(self, save_csv, save_nc, use_cache) 
     elif self.product == 'ERA5':
       if self.variable == []:
         self.variable = [
@@ -90,40 +87,36 @@ class TimeSeries:
       self.data = GTSM_ts(self, save_csv = save_csv,save_nc = save_nc) 
     elif self.product == 'NORA3_stormsurge':
       self.variable =  ['zeta']
-      self.data = NORA3_stormsurge_ts(self, save_csv = save_csv,save_nc = save_nc) 
+      self.data = NORA3_stormsurge_ts(self, save_csv, save_nc, use_cache) 
     elif self.product == 'NORA3_atm_sub':
       if self.variable == []:
         self.variable =  ['air_pressure_at_sea_level', 'air_temperature_2m', 'relative_humidity_2m', 
                         'surface_net_longwave_radiation', 'surface_net_shortwave_radiation',
                         'precipitation_amount_hourly','fog']
-      else:
-        pass
-      self.data = NORA3_atm_ts(self, save_csv = save_csv,save_nc = save_nc) 
+      self.data = NORA3_atm_ts(self, save_csv, save_nc, use_cache) 
     elif self.product == 'NORA3_atm3hr_sub':
       self.height = [50, 100, 150, 200, 300]
       self.variable =  ['wind_speed', 'wind_direction', 'air_temperature', 'relative_humidity', 'density', 'tke'] 
-      self.data = NORA3_atm3hr_ts(self, save_csv = save_csv,save_nc = save_nc) 
+      self.data = NORA3_atm3hr_ts(self, save_csv, save_nc, use_cache)
     elif self.product == 'NORKYST800':
       self.height = [ 0.,    3.,   10.,   15.,   25.,   50.,   75.,  100.,  150.,  200.,
         250.,  300.,  500., 1000., 2000., 3000.]
       if self.variable == []:
-        self.variable =  ['salinity','temperature', 'u','v','zeta'] 
-      self.data = NORKYST800_ts(self, save_csv = save_csv,save_nc = save_nc) 
+        self.variable =  ['salinity','temperature', 'u','v','zeta']
+      self.data = NORKYST800_ts(self, save_csv, save_nc, use_cache)
     elif self.product.startswith('E39'):
       if self.variable == []:
         self.variable =  ['Hm0'] 
-      self.data = OBS_E39(self, save_csv = save_csv,save_nc = save_nc)       
+      self.data = OBS_E39(self, save_csv, save_nc, use_cache)
     elif self.product == 'NorkystDA_surface':
       self.variable = ['u', 'v', 'zeta', 'temp','salt']
-      self.data = NorkystDA_surface_ts(self, save_csv = save_csv, save_nc = save_nc)      
+      self.data = NorkystDA_surface_ts(self, save_csv, save_nc, use_cache)
     elif self.product == 'NorkystDA_zdepth':
       self.variable = ['u', 'v', 'zeta', 'temp','salt', 'AKs']
-      self.data = NorkystDA_zdepth_ts(self, save_csv = save_csv, save_nc = save_nc)   
+      self.data = NorkystDA_zdepth_ts(self, save_csv, save_nc, use_cache) 
     elif self.product == 'ECHOWAVE':
       self.variable = [ 'ucur', 'vcur', 'uwnd', 'vwnd', 'wlv', 'ice', 'hs', 'lm', 't02', 't01', 'fp', 'dir', 'spr', 'dp', 'phs0', 'phs1', 'phs2', 'ptp0', 'ptp1', 'ptp2', 'pdir0', 'pdir1']
-      self.data = ECHOWAVE_ts(self, save_csv = save_csv, save_nc = save_nc)   
-
-      
+      self.data = ECHOWAVE_ts(self, save_csv, save_nc, use_cache)    
 
     return
 

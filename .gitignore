@@ -1,0 +1,10 @@
+venv/
+build/
+*.egg-info/
+.vscode/
+.eggs/
+cache/
+__pycache__
+*.nc
+*.csv
+.coverage
