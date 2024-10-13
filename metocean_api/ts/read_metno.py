@@ -48,15 +48,6 @@ def NORAC_ts(ts: TimeSeries, save_csv = False, save_nc = False, use_cache =False
 
     return df
 
-
-def __clean_cache(tempfiles):
-    for tmpfile in tempfiles:
-        try:
-            os.remove(tmpfile)
-        except PermissionError:
-            print(f"Skipping deletion of {tmpfile} due to PermissionError")
-
-
 def NORA3_wind_wave_ts(ts: TimeSeries, save_csv = False, save_nc = False, use_cache =False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
@@ -400,21 +391,6 @@ def NorkystDA_zdepth_ts(ts: TimeSeries, save_csv = False,save_nc = False, use_ca
 
     return df
 
-def __tempfile_dir(product,lon,lat, date_list,dirName):
-    tempfile = [None] *len(date_list)
-    # Create directory
-    try:
-        # Create target Directory
-        os.mkdir(dirName)
-        print("Directory " , dirName ,  " Created ")
-    except FileExistsError:
-        print("Directory " , dirName ,  " already exists")
-    
-    for i in range(len(date_list)):
-        tempfile[i] = str(Path(dirName+"/"+product+"_"+"lon"+str(lon)+"lat"+str(lat)+"_"+date_list.strftime('%Y%m%d')[i]+".nc"))
-
-    return tempfile
-
 
 def OBS_E39(ts: TimeSeries, save_csv = False, save_nc = False, use_cache =False):
     """
@@ -452,3 +428,26 @@ def OBS_E39(ts: TimeSeries, save_csv = False, save_nc = False, use_cache =False)
     print('Data saved at: ' +ts.datafile)
 
     return df
+
+
+def __clean_cache(tempfiles):
+    for tmpfile in tempfiles:
+        try:
+            os.remove(tmpfile)
+        except PermissionError:
+            print(f"Skipping deletion of {tmpfile} due to PermissionError")
+
+def __tempfile_dir(product,lon,lat, date_list,dirName):
+    tempfile = [None] *len(date_list)
+    # Create directory
+    try:
+        # Create target Directory
+        os.mkdir(dirName)
+        print("Directory " , dirName ,  " Created ")
+    except FileExistsError:
+        print("Directory " , dirName ,  " already exists")
+    
+    for i in range(len(date_list)):
+        tempfile[i] = str(Path(dirName+"/"+product+"_"+"lon"+str(lon)+"lat"+str(lat)+"_"+date_list.strftime('%Y%m%d')[i]+".nc"))
+
+    return tempfile
