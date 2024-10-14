@@ -162,7 +162,7 @@ Several options for **product** are available. Please check the data catalog for
   
     product='ERA5' 
 
-  The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
+  The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/how-to-api ,
   Dataset: https://doi.org/10.24381/cds.adbb2d47
 
 * For Global Tide and Surge Model (storm surge, tidal elevation, total water level) developed by Deltares : 
