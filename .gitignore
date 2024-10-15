@@ -8,3 +8,4 @@ __pycache__
 *.nc
 *.csv
 .coverage
+.idea

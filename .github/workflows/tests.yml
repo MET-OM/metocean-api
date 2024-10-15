@@ -27,10 +27,16 @@ jobs:
           environment-file: environment.yml
           miniforge-version: latest
           miniforge-variant: Miniforge3
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
           conda activate test
           pytest -vs --log-cli-level=debug --cov=metocean_api --cov-report=html
+       # Upload the coverage report as an artifact
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: html-coverage-report
+          path: htmlcov  # This is the default directory where the HTML report is generated
 
 
       - name: Build wheels
