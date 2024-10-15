@@ -1,53 +1,66 @@
-from abc import ABC, abstractmethod
-
+import os 
+import subprocess
 import pandas as pd
 import xarray as xr
 import numpy as np
-import subprocess
-import os 
 
-from .aux_funcs import *
+from .aux_funcs import (
+    get_dates,
+    create_dataframe
+)
 
 
-def ERA5_ts(self, save_csv=False, save_nc=False):
+
+def era5_ts(self, save_csv=False, save_nc=False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     ERA5 reanalysis and save it as netcdf.
     """
-    filename_list = download_era5_from_cds(self.start_time, self.end_time, self.lon, self.lat,self.variable, folder='cache')
+    filenames = download_era5_from_cds(self.start_time, self.end_time, self.lon, self.lat,self.variable, folder='cache')
 
     df_res = None
     ds_res = None
     variable_info = []
 
-    for filename in filename_list:
-        ds = xr.open_mfdataset(filename)
-        df = create_dataframe(product=self.product,ds=ds, lon_near=ds.longitude.values[0], lat_near=ds.latitude.values[0], outfile=self.datafile, variable=self.variable, start_time = self.start_time, end_time = self.end_time, save_csv=False, save_nc=False, height=self.height)
-        df.drop(columns=['number', 'expver'], inplace=True)
-        variable = df.columns[0]
-        try:
-            standard_name = ds[variable].standard_name
-        except AttributeError:
-            standard_name = '-'
-        try:
-            long_name = ds[variable].long_name
-        except AttributeError:
-            long_name = '-'
-        variable_info.append(f'#{variable};{standard_name};{long_name};{ds[variable].units}\n')
+    for filename in filenames:
+        with xr.open_mfdataset(filename) as ds:
+            df = create_dataframe(
+                product=self.product,
+                ds=ds,
+                lon_near=ds.longitude.values[0],
+                lat_near=ds.latitude.values[0],
+                outfile=self.datafile,
+                variable=self.variable,
+                start_time=self.start_time,
+                end_time=self.end_time,
+                save_csv=False,
+                height=self.height,
+            )
+            df.drop(columns=['number', 'expver'], inplace=True)
+            variable = df.columns[0]
+            try:
+                standard_name = ds[variable].standard_name
+            except AttributeError:
+                standard_name = '-'
+            try:
+                long_name = ds[variable].long_name
+            except AttributeError:
+                long_name = '-'
+            variable_info.append(f'#{variable};{standard_name};{long_name};{ds[variable].units}\n')
 
-        if df_res is None:
-            df_res = df
-            ds_res = ds
-        else:
-            df_res = df_res.join(df)
-            ds_res = ds_res.merge(ds, compat='override')
+            if df_res is None:
+                df_res = df
+                ds_res = ds
+            else:
+                df_res = df_res.join(df)
+                ds_res = ds_res.merge(ds, compat='override')
 
     if save_csv:
         lon_near = ds.longitude.values[0]
         lat_near = ds.latitude.values[0]
         top_header = f'#{self.product};LONGITUDE:{lon_near:0.4f};LATITUDE:{lat_near:0.4f}\n'
         header = [top_header, '#Variable_name;standard_name;long_name;units\n'] + variable_info
-        with open(self.datafile, 'w') as f:
+        with open(self.datafile, 'w', encoding="utf8") as f:
             f.writelines(header)
             df_res.to_csv(f, index_label='time')
 
@@ -57,7 +70,7 @@ def ERA5_ts(self, save_csv=False, save_nc=False):
     return df_res
 
 
-def GTSM_ts(self, save_csv=False, save_nc=False):
+def gtsm_ts(self, save_csv=False, save_nc=False):
     """
     Extract times series of the nearest grid point (lon, lat) from
     GTSM water level and save it as netcdf.
@@ -90,9 +103,11 @@ def GTSM_ts(self, save_csv=False, save_nc=False):
 
 
 def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='cache', use_cache=True) -> str:
+    """
+    Downloads ERA5 data from the Copernicus Climate Data Store for a
+    given point and time period
+    """
     import cdsapi
-    """Downloads ERA5 data from the Copernicus Climate Data Store for a
-    given point and time period"""
     start_time = pd.Timestamp(start_time)
     end_time = pd.Timestamp(end_time)
     c = cdsapi.Client()
@@ -106,7 +121,7 @@ def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
     except FileExistsError:
         print("Directory " , folder ,  " already exists")
 
-    days = get_date_list('ERA5',start_time, end_time)
+    days = get_dates('ERA5',start_time, end_time)
     # Create string for dates
     dates = [days[0].strftime('%Y-%m-%d'), days[-1].strftime('%Y-%m-%d')]
     dates = '/'.join(dates)
@@ -143,16 +158,18 @@ def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
 
 
 def download_gtsm_from_cds(start_time, end_time, lon, lat, variable,  folder='cache') -> str:
+    """
+    Downloads GTSM model water level data from the Copernicus Climate Data Store for a
+    given point and time period
+    """
     import cdsapi
-    """Downloads GTSM model water level data from the Copernicus Climate Data Store for a
-    given point and time period"""
     filename = []
     filename_list = []
     start_time = pd.Timestamp(start_time)
     end_time = pd.Timestamp(end_time)
     c = cdsapi.Client()
 
-    days = get_date_list('ERA5',start_time, end_time)
+    days = get_dates('ERA5',start_time, end_time)
     years = days.year
     years = years.unique()
     years = [str(year) for year in years]
@@ -160,7 +177,7 @@ def download_gtsm_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
     months = days.month
     months = months.unique()
     months = [f'{month:02}'  for month in months]
-    
+
     # Create directory
     try:
         # Create target Directory
@@ -184,10 +201,9 @@ def download_gtsm_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
                 'month': months,
                 'temporal_aggregation' : '10_min',
                 #'model': 'CMCC-CM2-VHR4',
-            
+
             }
-            print(f'Download variable:',var, year)
+            print('Download variable:',var, year)
             c.retrieve('sis-water-level-change-timeseries-cmip6', cds_command, filename)
             filename_list.append(filename)          
     return filename_list
-
