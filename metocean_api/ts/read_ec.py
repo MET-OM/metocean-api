@@ -36,7 +36,7 @@ def era5_ts(self, save_csv=False, save_nc=False):
                 save_csv=False,
                 height=self.height,
             )
-            df.drop(columns=['number', 'expver'], inplace=True)
+            df.drop(columns=['number', 'expver'], inplace=True, errors='ignore')
             variable = df.columns[0]
             try:
                 standard_name = ds[variable].standard_name
