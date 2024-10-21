@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 import xarray as xr
+from tqdm import tqdm
 from .aux_funcs import get_dates, get_url_info, get_near_coord, create_dataframe, get_tempfiles
 if TYPE_CHECKING:
     from .ts_mod import TimeSeries  # Only imported for type checking
@@ -23,18 +24,20 @@ def echowave_ts(ts: TimeSeries, save_csv = False, save_nc = False, use_cache =Fa
     lat_near = None
 
     # extract point and create temp files
-    for i in range(len(dates)):
+    for i in tqdm(range(len(dates))):
         url = get_url_info(ts.product, dates[i])
 
-        if i==0:
+        if i == 0:
             selection, lon_near, lat_near = get_near_coord(
                 url, ts.lon, ts.lat, ts.product
             )
+            tqdm.write(f'Nearest point to lat.={ts.lat:.3f},lon.={ts.lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}')
 
         if use_cache and os.path.exists(tempfiles[i]):
-            print(f"Found cached file {tempfiles[i]}. Using this instead")
+            tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead")
         else:
             with xr.open_dataset(url) as dataset:
+                tqdm.write(f"Downloading {url}.")
                 # Reduce to the wanted variables and coordinates
                 dataset = dataset[ts.variable]
                 dataset = dataset.sel(selection).squeeze(drop=True)
@@ -46,7 +49,8 @@ def echowave_ts(ts: TimeSeries, save_csv = False, save_nc = False, use_cache =Fa
     with xr.open_mfdataset(tempfiles) as ds:
         if save_nc:
             # Save the unaltered structure
-            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
+            ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
+            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"), format='NETCDF3_64BIT') # add format to avoid *** AttributeError: NetCDF: String match to name in use
         df = create_dataframe(
             product=ts.product,
             ds=ds,

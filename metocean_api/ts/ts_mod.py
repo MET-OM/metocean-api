@@ -116,8 +116,6 @@ class TimeSeries:
                     "ptp0",
                     "pdir1",
                 ]
-            else:
-                pass
             self.data = metno.norac_ts(self, save_csv, save_nc, use_cache)
         elif self.product == "ERA5":
             if self.variable == []:
@@ -139,8 +137,6 @@ class TimeSeries:
                     "significant_height_of_total_swell",
                     "significant_height_of_wind_waves",
                 ]
-            else:
-                pass
             self.data = ec.era5_ts(self, save_csv=save_csv, save_nc=save_nc)
         elif self.product == "GTSM":
             if self.variable == []:
@@ -149,8 +145,6 @@ class TimeSeries:
                     "tidal_elevation",
                     "total_water_level",
                 ]
-            else:
-                pass
             self.data = ec.gtsm_ts(self, save_csv=save_csv, save_nc=save_nc)
         elif self.product == "NORA3_stormsurge":
             self.variable = ["zeta"]
@@ -214,8 +208,6 @@ class TimeSeries:
         elif self.product == 'ECHOWAVE':
             self.variable = [ 'ucur', 'vcur', 'uwnd', 'vwnd', 'wlv', 'ice', 'hs', 'lm', 't02', 't01', 'fp', 'dir', 'spr', 'dp', 'phs0', 'phs1', 'phs2', 'ptp0', 'ptp1', 'ptp2', 'pdir0', 'pdir1']
             self.data = tudelft.echowave_ts(self, save_csv, save_nc, use_cache)
-
-        return
 
     def load_data(self, local_file):
         import pandas as pd
