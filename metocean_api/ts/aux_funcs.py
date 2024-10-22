@@ -102,6 +102,10 @@ def get_url_info(product, date) -> str:
         return 'https://thredds.met.no/thredds/dodsC/nora3_subset_ocean/zdepth/{}/ocean_zdepth_2_4km-{}.nc'.format(date.strftime('%Y/%m'), date.strftime('%Y%m%d'))
     elif product == 'ECHOWAVE':
         return 'https://opendap.4tu.nl/thredds/dodsC/data2/djht/f359cd0f-d135-416c-9118-e79dccba57b9/1/{}/TU-MREL_EU_ATL-2M_{}.nc'.format(date.strftime('%Y'),date.strftime('%Y%m'))
+    elif product == "NORA3_wave_spec":
+        return 'https://thredds.met.no/thredds/dodsC/windsurfer/mywavewam3km_spectra/'+date.strftime('%Y')+'/'+date.strftime('%m')+'/'+'SPC'+date.strftime('%Y%m%d')+'00.nc'
+    elif product == "NORAC_wave_spec":
+        return 'https://thredds.met.no/thredds/dodsC/norac_wave/spec/ww3_spec.'+date.strftime('%Y%m')+'.nc'
 
     raise ValueError(f'Product not handled {product}')
 
@@ -122,6 +126,11 @@ def get_dates(product, start_date, end_date):
         return pd.date_range(start=start_date , end=end_date, freq='D')
     elif product.startswith('E39'):
         return pd.date_range(start=start_date , end=end_date, freq='MS')
+    elif product == 'NORA3_wave_spec':
+        return pd.date_range(start=start_date , end=end_date, freq='D')
+    elif product == "NORAC_wave_spec":
+        return pd.date_range(start=datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y-%m'),
+                end=datetime.strptime(end_date, '%Y-%m-%d').strftime('%Y-%m'), freq='MS')    
     raise ValueError(f'Product not found {product}')
 
 def __drop_variables(product: str):
@@ -190,11 +199,21 @@ def get_near_coord(infile, lon, lat, product):
             lon_near = ds.lon.sel(Y=y, X=x).values[0][0]
             lat_near = ds.lat.sel(Y=y, X=x).values[0][0]
             return {'X': x, 'Y': y}, lon_near, lat_near
-        elif product=='NorkystDA_surface' or 'NorkystDA_zdepth':
+        elif product=='NorkystDA_surface' or product=='NorkystDA_zdepth':
             x, y = __find_nearest_cart_coord(ds.lon, ds.lat, lon, lat)
             lon_near = ds.lon.sel(y=y, x=x).values[0][0]
             lat_near = ds.lat.sel(y=y, x=x).values[0][0]
             return {'x': x.values[0], 'y': y.values[0]}, lon_near, lat_near
+        elif product == "NORA3_wave_spec":
+            station = __distance_2points(ds.latitude.values,ds.longitude.values,lat,lon).argmin()
+            lon_near = ds.longitude.values[0,station]
+            lat_near = ds.latitude.values[0,station]
+            return {'x':station}, lon_near, lat_near
+        elif product == "NORAC_wave_spec":
+            station = __distance_2points(ds.latitude.values,ds.longitude.values,lat,lon).argmin()
+            lon_near = ds.longitude.values[0,station]
+            lat_near = ds.latitude.values[0,station]
+            return {'station':station}, lon_near, lat_near
         else:
             raise ValueError(f'Product not found {product}')
 
