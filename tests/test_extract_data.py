@@ -60,3 +60,15 @@ def test_echowave():
     # Import data from https://data.4tu.nl/datasets/
     df_ts.import_data(save_csv=False,save_nc=False)
     assert df_ts.data.shape == (48, 22)
+
+def test_extract_nora3_wave_spectra():
+    df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2017-01-29',end_time='2017-02-02',product='NORA3_wave_spec')
+    # Import data from thredds.met.no
+    df_ts.import_data(save_csv=False,save_nc=False)
+    assert df_ts.data.shape == (120,30,24)
+    
+def test_extract_norac_wave_spectra():
+    df_ts = ts.TimeSeries(lon=8, lat=64,start_time='2017-01-01',end_time='2017-01-04',product='NORAC_wave_spec')
+    # Import data from thredds.met.no
+    df_ts.import_data(save_csv=False,save_nc=False)
+    assert df_ts.data.shape == (744,45,36)

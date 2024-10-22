@@ -208,7 +208,14 @@ class TimeSeries:
         elif self.product == 'ECHOWAVE':
             self.variable = [ 'ucur', 'vcur', 'uwnd', 'vwnd', 'wlv', 'ice', 'hs', 'lm', 't02', 't01', 'fp', 'dir', 'spr', 'dp', 'phs0', 'phs1', 'phs2', 'ptp0', 'ptp1', 'ptp2', 'pdir0', 'pdir1']
             self.data = tudelft.echowave_ts(self, save_csv, save_nc, use_cache)
-
+        elif self.product == 'NORA3_wave_spec':
+            self.variable = ['SPEC']
+            self.data = metno.nora3_wave_spec(self,save_csv,save_nc,use_cache)
+        elif self.product == 'NORAC_wave_spec':
+            self.variable = ['efth']
+            self.data = metno.norac_wave_spec(self,save_csv,save_nc,use_cache)
+        else:
+            raise ValueError("Product not found.")
     def load_data(self, local_file):
         import pandas as pd
 

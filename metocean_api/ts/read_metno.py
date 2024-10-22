@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import os
 import xarray as xr
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 from .aux_funcs import (
     get_dates,
@@ -317,6 +318,113 @@ def __combine_temporary_files(ts: TimeSeries, save_csv, save_nc, use_cache,tempf
         __clean_cache(tempfiles)
 
     return df
+
+def nora3_wave_spec(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
+    """
+    Extract NORA3 wave spectra timeseries.
+    """
+    ts.variable.append("longitude")  # keep info of regular lon
+    ts.variable.append("latitude")  # keep info of regular lat
+    dates = get_dates(ts.product, ts.start_time, ts.end_time)
+    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
+
+    selection = None
+    lon_near = None
+    lat_near = None
+
+    # extract point and create temp files
+    for i in range(len(dates)):
+        url = get_url_info(ts.product, dates[i])
+
+        if i == 0:
+            station, lon_near, lat_near = get_near_coord(
+                url, ts.lon, ts.lat, ts.product
+            )
+
+        if use_cache and os.path.exists(tempfiles[i]):
+            print(f"Found cached file {tempfiles[i]}. Using this instead")
+        else:
+            with xr.open_dataset(url) as dataset:
+                # Reduce to the wanted variables and coordinates
+                dataset = dataset[ts.variable]
+                dataset = dataset.sel(station).squeeze(drop=True)
+                dataset.to_netcdf(tempfiles[i])
+
+    __remove_if_datafile_exists(ts.datafile)
+    # merge temp files and create combined result
+    with xr.open_mfdataset(tempfiles) as ds:
+        da = ds["SPEC"]
+        da.attrs["longitude"] = float(ds["longitude"][0].values)
+        da.attrs["latitude"] = float(ds["latitude"][0].values)
+    
+    if save_csv:
+        s = da.shape
+        csv_data = {"time": da["time"].values.repeat(s[1]*s[2]),
+            "frequency": np.tile(da["freq"].values.repeat(s[2]),s[0]),
+            "direction": np.tile(da["direction"].values,s[0]*s[1]),
+            "value": da.values.flatten()}
+        csv_data = pd.DataFrame(csv_data,columns=["time","frequency","direction","value"])
+        csv_data.to_csv(ts.datafile,index=False)
+    
+    if save_nc:
+        # Save the unaltered structure
+        da.to_netcdf(ts.datafile.replace(".csv", ".nc"))
+
+    return da
+
+def norac_wave_spec(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False) -> xr.DataArray:
+    """
+    Extract NORAC wave spectra timeseries.
+    """
+    ts.variable.append("longitude")  # keep info of regular lon
+    ts.variable.append("latitude")  # keep info of regular lat
+    dates = get_dates(ts.product, ts.start_time, ts.end_time)
+    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
+
+    selection = None
+    lon_near = None
+    lat_near = None
+
+    # extract point and create temp files
+    for i in range(len(dates)):
+        url = get_url_info(ts.product, dates[i])
+
+        if i == 0:
+            station, lon_near, lat_near = get_near_coord(
+                url, ts.lon, ts.lat, ts.product
+            )
+
+        if use_cache and os.path.exists(tempfiles[i]):
+            print(f"Found cached file {tempfiles[i]}. Using this instead")
+        else:
+            with xr.open_dataset(url) as dataset:
+                # Reduce to the wanted variables and coordinates
+                dataset = dataset[ts.variable]
+                dataset = dataset.sel(station).squeeze(drop=True)
+                dataset.to_netcdf(tempfiles[i])
+
+    __remove_if_datafile_exists(ts.datafile)
+    # merge temp files and create combined result
+    with xr.open_mfdataset(tempfiles) as ds:
+        da = ds["efth"]
+        da.attrs["longitude"] = float(ds["longitude"][0].values)
+        da.attrs["latitude"] = float(ds["latitude"][0].values)
+
+    if save_csv:
+        s = da.shape
+        csv_data = {"time": da["time"].values.repeat(s[1]*s[2]),
+            "frequency": np.tile(da["frequency"].values.repeat(s[2]),s[0]),
+            "direction": np.tile(da["direction"].values,s[0]*s[1]),
+            "value": da.values.flatten()}
+        csv_data = pd.DataFrame(csv_data,columns=["time","frequency","direction","value"])
+        csv_data.to_csv(ts.datafile,index=False)
+            
+    if save_nc:
+        # Save the unaltered structure
+        da.to_netcdf(ts.datafile.replace(".csv", ".nc"))
+    
+    return da
+
 
 def __clean_cache(tempfiles):
     for tmpfile in tempfiles:
