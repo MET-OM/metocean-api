@@ -145,7 +145,7 @@ def __drop_variables(product: str):
     elif product == 'NORA3_atm_sub':
         return ['projection_lambert','longitude','latitude','x','y']
     elif product == 'NORA3_atm3hr_sub':
-        return  ['projection_lambert','longitude','latitude','x','y','height']
+        return  ['air_temperature','relative_humidity','projection_lambert','longitude','latitude','x','y','height']
     elif product == 'NORAC_wave':
         drop_var = ['longitude','latitude']
     elif product == 'ERA5':
@@ -167,7 +167,6 @@ def __drop_variables(product: str):
     return []
 
 def get_near_coord(infile, lon, lat, product):
-    print('Find nearest point to lon.='+str(lon)+','+'lat.='+str(lat))
     with xr.open_dataset(infile) as ds:
         if ((product=='NORA3_wave_sub') or (product=='NORA3_wave')) :
             rlon, rlat = __find_nearest_rot_coord(ds.longitude, ds.latitude, lon, lat)
@@ -217,8 +216,8 @@ def get_near_coord(infile, lon, lat, product):
         else:
             raise ValueError(f'Product not found {product}')
 
-def create_dataframe(product,ds: xr.Dataset, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,height=None, depth = None):
-    ds = __flatten_data_structure(ds, product, variable, depth, height)
+def create_dataframe(product,ds: xr.Dataset, lon_near, lat_near,outfile,variable, start_time, end_time, save_csv=True,**flatten_dims):
+    ds = __flatten_data_structure(ds, product, variable, flatten_dims)
 
     # Check if 'valid_time' (e.g., ERA5) exists in the dataset dimensions, if not, use 'time' (NORA3,...)
     time_dim = 'valid_time' if 'valid_time' in ds.dims else 'time'
@@ -256,23 +255,25 @@ def create_dataframe(product,ds: xr.Dataset, lon_near, lat_near,outfile,variable
     return df
 
 
-def __flatten_data_structure(ds: xr.Dataset, product, variable, depth, height):
+def __flatten_data_structure(ds: xr.Dataset, product, variables_to_flatten, flatten_dims):
+    depth = flatten_dims.get('depth',None)
+    height = flatten_dims.get('height',None)
     # Flatten the data to make it more suitable for tabular formats such as csv-files
     if product == 'NORA3_wind_sub':
         for i in range(len(height)):
-            variable_height = [k + '_' + str(height[i]) + 'm' for k in variable]
-            ds[variable_height] = ds[variable].sel(height=height[i])
+            variable_height = [k + '_' + str(height[i]) + 'm' for k in variables_to_flatten]
+            ds[variable_height] = ds[variables_to_flatten].sel(height=height[i])
 
-        ds = ds.drop_vars([variable[0]])
-        ds = ds.drop_vars([variable[1]])
+        ds = ds.drop_vars([variables_to_flatten[0]])
+        ds = ds.drop_vars([variables_to_flatten[1]])
         ds = ds.drop_vars('height')
         ds = ds.drop_vars(['x', 'y'])
         ds = ds.drop_vars('latitude')
         ds = ds.drop_vars('longitude')
     elif product == 'NORA3_atm3hr_sub':
         for i in range(len(height)):
-            variable_height = [k + '_' + str(height[i]) + 'm' for k in variable]
-            ds[variable_height] = ds[variable].sel(height=height[i])
+            variable_height = [k + '_' + str(height[i]) + 'm' for k in variables_to_flatten]
+            ds[variable_height] = ds[variables_to_flatten].sel(height=height[i])
 
         ds = ds.drop_vars("x")
         ds = ds.drop_vars("y")
@@ -293,8 +294,8 @@ def __flatten_data_structure(ds: xr.Dataset, product, variable, depth, height):
         angle = __proj_rotation_angle(crs, ds)
 
         for i in range(len(depth)):
-            variable_height = [k + '_' + str(depth[i]) + 'm' for k in variable]
-            ds[variable_height] = ds[variable].sel(depth=depth[i])
+            variable_height = [k + '_' + str(depth[i]) + 'm' for k in variables_to_flatten]
+            ds[variable_height] = ds[variables_to_flatten].sel(depth=depth[i])
             # zeta is surface elevation, no point in adding for each depth.
             if np.abs(depth[i]) > 0 and 'zeta_{}m'.format(depth[i]) in ds.keys():
                 ds = ds.drop_vars('zeta_{}m'.format(depth[i]))
@@ -311,7 +312,7 @@ def __flatten_data_structure(ds: xr.Dataset, product, variable, depth, height):
 
         drop_var = __drop_variables(product=product)
         ds = ds.drop_vars(drop_var, errors="ignore")
-        ds = ds.drop_vars(variable, errors="ignore")
+        ds = ds.drop_vars(variables_to_flatten, errors="ignore")
 
     elif product == 'NorkystDA_surface':
         crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60, false_easting=0,
@@ -334,7 +335,7 @@ def __flatten_data_structure(ds: xr.Dataset, product, variable, depth, height):
             ds['zeta'] = ds.zeta.sel(depth=0)
 
         var_list = []
-        for var_name in variable:
+        for var_name in variables_to_flatten:
             # Check if 'depth' is not in the dimensions of the variable
             if 'depth' in ds[var_name].dims:
                 # Append variable name to the list
@@ -370,7 +371,8 @@ def get_tempfiles(product, lon, lat, dates):
         os.mkdir(dir_name)
         print("Directory ", dir_name, " Created ")
     except FileExistsError:
-        print("Directory ", dir_name, " already exists")
+        #Ignore the error
+        pass
 
     for date in dates:
         tempfiles.append(str(Path(dir_name+"/"+product+"_"+"lon"+str(lon)+"lat"+str(lat)+"_"+date.strftime('%Y%m%d')+".nc")))

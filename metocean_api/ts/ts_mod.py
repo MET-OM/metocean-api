@@ -116,8 +116,6 @@ class TimeSeries:
                     "ptp0",
                     "pdir1",
                 ]
-            else:
-                pass
             self.data = metno.norac_ts(self, save_csv, save_nc, use_cache)
         elif self.product == "ERA5":
             if self.variable == []:
@@ -139,8 +137,6 @@ class TimeSeries:
                     "significant_height_of_total_swell",
                     "significant_height_of_wind_waves",
                 ]
-            else:
-                pass
             self.data = ec.era5_ts(self, save_csv=save_csv, save_nc=save_nc)
         elif self.product == "GTSM":
             if self.variable == []:
@@ -149,8 +145,6 @@ class TimeSeries:
                     "tidal_elevation",
                     "total_water_level",
                 ]
-            else:
-                pass
             self.data = ec.gtsm_ts(self, save_csv=save_csv, save_nc=save_nc)
         elif self.product == "NORA3_stormsurge":
             self.variable = ["zeta"]
@@ -222,8 +216,6 @@ class TimeSeries:
             self.data = metno.norac_wave_spec(self,save_csv,save_nc,use_cache)
         else:
             raise ValueError("Product not found.")
-        return
-
     def load_data(self, local_file):
         import pandas as pd
 

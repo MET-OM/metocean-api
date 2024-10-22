@@ -4,6 +4,7 @@ import os
 import xarray as xr
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from .aux_funcs import (
     get_dates,
     get_url_info,
@@ -24,57 +25,8 @@ def norac_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
     """
     ts.variable.append("longitude")  # keep info of regular lon
     ts.variable.append("latitude")  # keep info of regular lat
-    dates = get_dates(ts.product, ts.start_time, ts.end_time)
-
-    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
-
-    selection = None
-    lon_near = None
-    lat_near = None
-
-    # extract point and create temp files
-    for i in range(len(dates)):
-        url = get_url_info(ts.product, dates[i])
-
-        if i == 0:
-            selection, lon_near, lat_near = get_near_coord(
-                url, ts.lon, ts.lat, ts.product
-            )
-
-        if use_cache and os.path.exists(tempfiles[i]):
-            print(f"Found cached file {tempfiles[i]}. Using this instead")
-        else:
-            with xr.open_dataset(url) as dataset:
-                # Reduce to the wanted variables and coordinates
-                dataset = dataset[ts.variable]
-                dataset = dataset.sel(selection).squeeze(drop=True)
-                dataset.to_netcdf(tempfiles[i])
-
-    __remove_if_datafile_exists(ts.datafile)
-    # merge temp files and create combined result
-    with xr.open_mfdataset(tempfiles) as ds:
-        if save_nc:
-            # Save the unaltered structure
-            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
-
-        df = create_dataframe(
-            product=ts.product,
-            ds=ds,
-            lon_near=lon_near,
-            lat_near=lat_near,
-            outfile=ts.datafile,
-            variable=ts.variable[:2],
-            start_time=ts.start_time,
-            end_time=ts.end_time,
-            save_csv=save_csv,
-            height=ts.height,
-        )
-
-    if not use_cache:
-        # remove temp/cache files
-        __clean_cache(tempfiles)
-
-    return df
+    tempfiles, lon_near,lat_near = __download_temporary_files(ts, use_cache)
+    return __combine_temporary_files(ts,save_csv,save_nc,use_cache,tempfiles,lon_near,lat_near,ts.variable[:2],height=ts.height)
 
 
 def nora3_wind_wave_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
@@ -84,59 +36,8 @@ def nora3_wind_wave_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=
     """
     ts.variable.append("longitude")  # keep info of regular lon
     ts.variable.append("latitude")  # keep info of regular lat
-    dates = get_dates(ts.product, ts.start_time, ts.end_time)
-
-    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
-
-    selection = None
-    lon_near = None
-    lat_near = None
-
-    # extract point and create temp files
-    for i in range(len(dates)):
-        url = get_url_info(ts.product, dates[i])
-
-        if i == 0:
-            # FIXME: Use the cache to find these values
-            selection, lon_near, lat_near = get_near_coord(
-                url, ts.lon, ts.lat, ts.product
-            )
-
-        if use_cache and os.path.exists(tempfiles[i]):
-            print(f"Found cached file {tempfiles[i]}. Using this instead")
-        else:
-            with xr.open_dataset(url) as dataset:
-                # Reduce to the wanted variables and coordinates
-                dataset = dataset[ts.variable]
-                dataset = dataset.sel(selection).squeeze(drop=True)
-                dataset.to_netcdf(tempfiles[i])
-
-    __remove_if_datafile_exists(ts.datafile)
-    # merge temp files and create combined result
-    with xr.open_mfdataset(tempfiles) as ds:
-        if save_nc:
-            # Save the unaltered structure
-            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
-
-        df = create_dataframe(
-            product=ts.product,
-            ds=ds,
-            lon_near=lon_near,
-            lat_near=lat_near,
-            outfile=ts.datafile,
-            variable=ts.variable[:2],
-            start_time=ts.start_time,
-            end_time=ts.end_time,
-            save_csv=save_csv,
-            height=ts.height,
-        )
-
-    if not use_cache:
-        # remove temp/cache files
-        __clean_cache(tempfiles)
-
-    return df
-
+    tempfiles, lon_near,lat_near = __download_temporary_files(ts, use_cache)
+    return __combine_temporary_files(ts,save_csv,save_nc,use_cache,tempfiles,lon_near,lat_near,ts.variable[:2],height=ts.height)
 
 def nora3_atm_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
     """
@@ -145,56 +46,10 @@ def nora3_atm_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False)
     """
     ts.variable.append("longitude")  # keep info of regular lon
     ts.variable.append("latitude")  # keep info of regular lat
-    dates = get_dates(ts.product, ts.start_time, ts.end_time)
 
-    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
-    selection = None
-    lon_near = None
-    lat_near = None
+    tempfiles, lon_near,lat_near = __download_temporary_files(ts, use_cache)
 
-    # extract point and create temp files
-    for i in range(len(dates)):
-        url = get_url_info(ts.product, dates[i])
-
-        if i == 0:
-            selection, lon_near, lat_near = get_near_coord(
-                url, ts.lon, ts.lat, ts.product
-            )
-
-        if use_cache and os.path.exists(tempfiles[i]):
-            print(f"Found cached file {tempfiles[i]}. Using this instead")
-        else:
-            with xr.open_dataset(url) as dataset:
-                # Reduce to the wanted variables and coordinates
-                dataset = dataset[ts.variable]
-                dataset = dataset.sel(selection).squeeze(drop=True)
-                dataset.to_netcdf(tempfiles[i])
-
-    __remove_if_datafile_exists(ts.datafile)
-    # merge temp files and create combined result
-    with xr.open_mfdataset(tempfiles) as ds:
-        if save_nc:
-            # Save the unaltered structure
-            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
-
-        df = create_dataframe(
-            product=ts.product,
-            ds=ds,
-            lon_near=lon_near,
-            lat_near=lat_near,
-            outfile=ts.datafile,
-            variable=ts.variable[:2],
-            start_time=ts.start_time,
-            end_time=ts.end_time,
-            save_csv=save_csv,
-            height=ts.height,
-        )
-
-    if not use_cache:
-        # remove temp/cache files
-        __clean_cache(tempfiles)
-
-    return df
+    return __combine_temporary_files(ts,save_csv,save_nc,use_cache,tempfiles,lon_near,lat_near,ts.variable[:2],height=ts.height)
 
 
 def nora3_atm3hr_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
@@ -204,60 +59,8 @@ def nora3_atm3hr_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=Fal
     """
     ts.variable.append("longitude")  # keep info of regular lon
     ts.variable.append("latitude")  # keep info of regular lat
-    dates = get_dates(
-        product=ts.product, start_date=ts.start_time, end_date=ts.end_time
-    )
-
-    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
-
-    selection = None
-    lon_near = None
-    lat_near = None
-
-    # extract point and create temp files
-    for i in range(len(dates)):
-        url = get_url_info(ts.product, dates[i])
-
-        if i == 0:
-            selection, lon_near, lat_near = get_near_coord(
-                url, ts.lon, ts.lat, ts.product
-            )
-
-        if use_cache and os.path.exists(tempfiles[i]):
-            print(f"Found cached file {tempfiles[i]}. Using this instead")
-        else:
-            with xr.open_dataset(url) as dataset:
-                # Reduce to the wanted variables and coordinates
-                dataset = dataset[ts.variable]
-                dataset = dataset.sel(selection).squeeze(drop=True)
-                dataset.to_netcdf(tempfiles[i])
-
-    __remove_if_datafile_exists(ts.datafile)
-    # merge temp files
-    with xr.open_mfdataset(tempfiles) as ds:
-        if save_nc:
-            # Save the unaltered structure
-            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
-
-        # Save in csv format
-        df = create_dataframe(
-            product=ts.product,
-            ds=ds,
-            lon_near=lon_near,
-            lat_near=lat_near,
-            outfile=ts.datafile,
-            variable=ts.variable[:-2],
-            start_time=ts.start_time,
-            end_time=ts.end_time,
-            save_csv=save_csv,
-            height=ts.height,
-        )
-
-    if not use_cache:
-        # remove temp/cache files
-        __clean_cache(tempfiles)
-
-    return df
+    tempfiles, lon_near,lat_near = __download_temporary_files(ts, use_cache)
+    return __combine_temporary_files(ts,save_csv,save_nc,use_cache,tempfiles,lon_near,lat_near,ts.variable[:-2],height=ts.height)
 
 
 def nora3_stormsurge_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
@@ -265,31 +68,7 @@ def nora3_stormsurge_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache
     Extract times series of  the nearest gird point (lon,lat) from
     nora3 sea level dataset and save it as netcdf.
     """
-    dates = get_dates(ts.product, ts.start_time, ts.end_time)
-
-    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
-
-    selection = None
-    lon_near = None
-    lat_near = None
-
-    # extract point and create temp files
-    for i in range(len(dates)):
-        url = get_url_info(ts.product, dates[i])
-
-        if i == 0:
-            selection, lon_near, lat_near = get_near_coord(
-                url, ts.lon, ts.lat, ts.product
-            )
-
-        if use_cache and os.path.exists(tempfiles[i]):
-            print(f"Found cached file {tempfiles[i]}. Using this instead")
-        else:
-            with xr.open_dataset(url) as dataset:
-                # Reduce to the wanted variables and coordinates
-                dataset = dataset[ts.variable]
-                dataset = dataset.sel(selection).squeeze(drop=True)
-                dataset.to_netcdf(tempfiles[i])
+    tempfiles, lon_near,lat_near = __download_temporary_files(ts, use_cache)
 
     __remove_if_datafile_exists(ts.datafile)
 
@@ -300,6 +79,7 @@ def nora3_stormsurge_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache
 
         if save_nc:
             # Save the unaltered structure
+            ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
             ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
 
         df = create_dataframe(
@@ -358,30 +138,7 @@ def norkyst_800_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=Fals
                 dataset = dataset.sel(selection).squeeze(drop=True)
                 dataset.to_netcdf(tempfiles[i])
 
-    __remove_if_datafile_exists(ts.datafile)
-    # merge temp files
-    with xr.open_mfdataset(tempfiles) as ds:
-        if save_nc:
-            # Save the unaltered structure
-            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
-        df = create_dataframe(
-            product=ts.product,
-            ds=ds,
-            lon_near=lon_near,
-            lat_near=lat_near,
-            outfile=ts.datafile,
-            variable=ts.variable[:-2],
-            start_time=ts.start_time,
-            end_time=ts.end_time,
-            save_csv=save_csv,
-            height=ts.height,
-        )
-
-    if not use_cache:
-        # remove temp/cache files
-        __clean_cache(tempfiles)
-
-    return df
+    return __combine_temporary_files(ts,save_csv,save_nc,use_cache,tempfiles,lon_near,lat_near,ts.variable[:-2],height=ts.height)
 
 
 def nora3_combined_ts(ts: TimeSeries, save_csv = True,save_nc = False, use_cache =False):
@@ -423,57 +180,8 @@ def norkyst_da_surface_ts(
     Extract times series of  the nearest gird point (lon,lat) from
     norkystDA surface dataset and save it as netcdf or csv.
     """
-    dates = get_dates(ts.product, ts.start_time, ts.end_time)
-
-    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
-
-    selection = None
-    lon_near = None
-    lat_near = None
-
-    # extract point and create temp files
-    for i in range(len(dates)):
-        url = get_url_info(ts.product, dates[i])
-
-        if i == 0:
-            selection, lon_near, lat_near = get_near_coord(
-                url, ts.lon, ts.lat, ts.product
-            )
-
-        if use_cache and os.path.exists(tempfiles[i]):
-            print(f"Found cached file {tempfiles[i]}. Using this instead")
-        else:
-            with xr.open_dataset(url) as dataset:
-                # Reduce to the wanted variables and coordinates
-                dataset = dataset[ts.variable]
-                dataset = dataset.sel(selection).squeeze(drop=True)
-                dataset.to_netcdf(tempfiles[i])
-
-    __remove_if_datafile_exists(ts.datafile)
-
-    # merge temp files
-    with xr.open_mfdataset(tempfiles) as ds:
-        if save_nc:
-            # Save the unaltered structure
-            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
-        df = create_dataframe(
-            product=ts.product,
-            ds=ds,
-            lon_near=lon_near,
-            lat_near=lat_near,
-            outfile=ts.datafile,
-            variable=ts.variable,
-            start_time=ts.start_time,
-            end_time=ts.end_time,
-            save_csv=save_csv,
-            height=ts.height,
-        )
-
-    if not use_cache:
-        # remove temp/cache files
-        __clean_cache(tempfiles)
-
-    return df
+    tempfiles, lon_near,lat_near = __download_temporary_files(ts, use_cache)
+    return __combine_temporary_files(ts,save_csv,save_nc,use_cache,tempfiles,lon_near,lat_near,ts.variable,height=ts.height)
 
 
 def norkyst_da_zdepth_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
@@ -481,58 +189,8 @@ def norkyst_da_zdepth_ts(ts: TimeSeries, save_csv=False, save_nc=False, use_cach
     Extract times series of  the nearest gird point (lon,lat) from
     norkystDA surface dataset and save it as netcdf or csv.
     """
-    dates = get_dates(ts.product, ts.start_time, ts.end_time)
-
-    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
-
-    selection = None
-    lon_near = None
-    lat_near = None
-
-    # extract point and create temp files
-    for i in range(len(dates)):
-        url = get_url_info(ts.product, dates[i])
-
-        if i == 0:
-            selection, lon_near, lat_near = get_near_coord(
-                url, ts.lon, ts.lat, ts.product
-            )
-
-        if use_cache and os.path.exists(tempfiles[i]):
-            print(f"Found cached file {tempfiles[i]}. Using this instead")
-        else:
-            with xr.open_dataset(url) as dataset:
-                # Reduce to the wanted variables and coordinates
-                dataset = dataset[ts.variable]
-                dataset = dataset.sel(selection).squeeze(drop=True)
-                dataset.to_netcdf(tempfiles[i])
-
-    __remove_if_datafile_exists(ts.datafile)
-
-    # merge temp files
-    with xr.open_mfdataset(tempfiles) as ds:
-        if save_nc:
-            # Save the unaltered structure
-            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
-        df = create_dataframe(
-            product=ts.product,
-            ds=ds,
-            lon_near=lon_near,
-            lat_near=lat_near,
-            outfile=ts.datafile,
-            variable=ts.variable,
-            start_time=ts.start_time,
-            end_time=ts.end_time,
-            save_csv=save_csv,
-            height=ts.height,
-            depth=ts.depth,
-        )
-
-    if not use_cache:
-        # remove temp/cache files
-        __clean_cache(tempfiles)
-
-    return df
+    tempfiles, lon_near,lat_near = __download_temporary_files(ts, use_cache)
+    return __combine_temporary_files(ts,save_csv,save_nc,use_cache,tempfiles,lon_near,lat_near,ts.variable,depth=ts.depth)
 
 
 def obs_e39(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
@@ -570,6 +228,7 @@ def obs_e39(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
         )
         if save_nc:
             # Save the unaltered structure
+            ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
             ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
 
         df = create_dataframe(
@@ -588,7 +247,75 @@ def obs_e39(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
         # remove temp/cache files
         __clean_cache(tempfiles)
 
-    print("Data saved at: " + ts.datafile)
+    return df
+
+def __download_temporary_files(ts: TimeSeries, use_cache: bool = False):
+    dates = get_dates(ts.product, ts.start_time, ts.end_time)
+
+    tempfiles = get_tempfiles(ts.product, ts.lon, ts.lat, dates)
+    selection = None
+    lon_near = None
+    lat_near = None
+
+    # extract point and create temp files
+    for i in tqdm(range(len(dates))):
+        url = get_url_info(ts.product, dates[i])
+
+        if i == 0:
+            selection, lon_near, lat_near = get_near_coord(
+                url, ts.lon, ts.lat, ts.product
+            )
+            tqdm.write(f'Nearest point to lat.={ts.lat:.3f},lon.={ts.lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}')
+
+        if use_cache and os.path.exists(tempfiles[i]):
+            tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead")
+        else:
+            with xr.open_dataset(url) as dataset:
+                tqdm.write(f"Downloading {url}.")
+                # Reduce to the wanted variables and coordinates
+                dataset = dataset[ts.variable]
+                dataset = dataset.sel(selection).squeeze(drop=True)
+                __alter_temporary_file_if_needed(ts.product, dataset)
+                dataset.to_netcdf(tempfiles[i])
+
+
+    return tempfiles,lon_near, lat_near
+
+def __alter_temporary_file_if_needed(product: str, ds: xr.Dataset):
+    match product:
+        case "NORA3_wind_sub":
+            # The encoding of the fill value is not always correct in the netcdf files on the server
+            for var_name in ds.variables:
+                var = ds[var_name]
+                if 'fill_value' in var.attrs:
+                    var.encoding['_FillValue'] =  var.attrs['fill_value']
+
+
+def __combine_temporary_files(ts: TimeSeries, save_csv, save_nc, use_cache,tempfiles, lon_near,lat_near,variables_to_flatten, **flatten_dims):
+    __remove_if_datafile_exists(ts.datafile)
+    # merge temp files
+    with xr.open_mfdataset(tempfiles) as ds:
+        if save_nc:
+            # Save the unaltered structure
+            ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
+            ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
+
+        df = create_dataframe(
+            product=ts.product,
+            ds=ds,
+            lon_near=lon_near,
+            lat_near=lat_near,
+            outfile=ts.datafile,
+            variable=variables_to_flatten,
+            start_time=ts.start_time,
+            end_time=ts.end_time,
+            save_csv=save_csv,
+            **flatten_dims
+        )
+
+    if not use_cache:
+        # remove temp/cache files
+        __clean_cache(tempfiles)
 
     return df
 

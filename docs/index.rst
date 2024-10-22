@@ -7,7 +7,7 @@ Welcome to metocean-api's documentation!
 =====================================
 
 **metocean-api**  is a Python tool designed to extract time series of metocean (meteorological and oceanographic) data from a variety of sources, including global, regional, and coastal hindcasts and reanalysis.
-The extracted data can be saved in CSV format or netCDF for further analysis and usage.
+The extracted data can be saved in CSV format or NetCDF for further analysis and usage.
 Refer to the section below for more information about the available datasets and variables. 
 
 Installing **metocean-api**
@@ -184,6 +184,7 @@ Several options for **product** are available. Please check the data catalog for
 * For Global Tide and Surge Model (storm surge, tidal elevation, total water level) developed by Deltares : 
 
   .. code-block:: python
+
     product='GTSM' 
 
   The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/api-how-to ,
