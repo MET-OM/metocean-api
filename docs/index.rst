@@ -132,6 +132,14 @@ Several options for **product** are available. Please check the data catalog for
 
   Dataset: https://thredds.met.no/thredds/catalog/stormrisk/catalog.html
 
+* For wave spectra from NORA3 (Nordic Seas) developed by MET Norway: 
+
+  .. code-block:: python
+
+    product='NORA3_wave_spec'
+
+  Dataset: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_spectra/catalog.html
+
 * For coastal wave NORA3 data developed by MET Norway: 
 
   .. code-block:: python
@@ -139,6 +147,14 @@ Several options for **product** are available. Please check the data catalog for
     product='NORAC_wave'
 
   Dataset: https://thredds.met.no/thredds/catalog/norac_wave/field/catalog.html
+
+* For coastal wave spectra (Norwegian coast) developed by MET Norway: 
+
+  .. code-block:: python
+    
+    product='NORAC_wave_spec'
+
+  Dataset: https://thredds.met.no/thredds/catalog/norac_wave/spec/catalog.html
 
 * For ocean data (sea level, temperature, currents, salinity over depth ) Norkyst800 data (from 2016-09-14 to today) developed by MET Norway: 
 
