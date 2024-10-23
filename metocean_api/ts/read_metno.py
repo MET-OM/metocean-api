@@ -354,8 +354,8 @@ def nora3_wave_spec(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=Fal
     # merge temp files and create combined result
     with xr.open_mfdataset(tempfiles) as ds:
         da = ds["SPEC"]
-        da.attrs["longitude"] = float(ds["longitude"][0].values)
-        da.attrs["latitude"] = float(ds["latitude"][0].values)
+        da.attrs["longitude"] = lon_near
+        da.attrs["latitude"] = lat_near
     
     if save_csv:
         s = da.shape
@@ -407,8 +407,8 @@ def norac_wave_spec(ts: TimeSeries, save_csv=False, save_nc=False, use_cache=Fal
     # merge temp files and create combined result
     with xr.open_mfdataset(tempfiles) as ds:
         da = ds["efth"]
-        da.attrs["longitude"] = float(ds["longitude"][0].values)
-        da.attrs["latitude"] = float(ds["latitude"][0].values)
+        da.attrs["longitude"] = lon_near
+        da.attrs["latitude"] = lat_near
 
     if save_csv:
         s = da.shape
