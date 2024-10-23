@@ -207,11 +207,13 @@ def get_near_coord(infile, lon, lat, product):
             station = __distance_2points(ds.latitude.values,ds.longitude.values,lat,lon).argmin()
             lon_near = ds.longitude.values[0,station]
             lat_near = ds.latitude.values[0,station]
+            station += 1 # station labels are 1-indexed
             return {'x':station}, lon_near, lat_near
         elif product == "NORAC_wave_spec":
             station = __distance_2points(ds.latitude.values,ds.longitude.values,lat,lon).argmin()
             lon_near = ds.longitude.values[0,station]
             lat_near = ds.latitude.values[0,station]
+            station += 1 # station labels are 1-indexed
             return {'station':station}, lon_near, lat_near
         else:
             raise ValueError(f'Product not found {product}')
