@@ -1,4 +1,6 @@
-import os 
+from __future__ import annotations
+from typing import TYPE_CHECKING, Callable
+import os
 import subprocess
 import pandas as pd
 import xarray as xr
@@ -9,32 +11,64 @@ from .aux_funcs import (
     create_dataframe
 )
 
+if TYPE_CHECKING:
+    from ts.ts_mod import TimeSeries  # Only imported for type checking
 
 
-def era5_ts(self, save_csv=False, save_nc=False):
+def find_importer(product: str) -> Callable:
+    match product:
+        case "ERA5":
+            return __era5_ts
+        case "GTSM":
+            return __gtsm_ts
+    return None
+
+def __era5_ts(ts: TimeSeries, save_csv=False, save_nc=False, download_only=False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     ERA5 reanalysis and save it as netcdf.
     """
-    filenames = download_era5_from_cds(self.start_time, self.end_time, self.lon, self.lat,self.variable, folder='cache')
+    if ts.variable == []:
+        ts.variable = [
+            "100m_u_component_of_wind",
+            "100m_v_component_of_wind",
+            "10m_u_component_of_wind",
+            "10m_v_component_of_wind",
+            "2m_temperature",
+            "instantaneous_10m_wind_gust",
+            "mean_direction_of_total_swell",
+            "mean_direction_of_wind_waves",
+            "mean_period_of_total_swell",
+            "mean_period_of_wind_waves",
+            "mean_wave_direction",
+            "mean_wave_period",
+            "peak_wave_period",
+            "significant_height_of_combined_wind_waves_and_swell",
+            "significant_height_of_total_swell",
+            "significant_height_of_wind_waves",
+        ]
+    filenames = __download_era5_from_cds(ts.start_time, ts.end_time, ts.lon, ts.lat,ts.variable, folder='cache')
 
     df_res = None
     ds_res = None
     variable_info = []
 
+    if download_only:
+        return filenames
+
     for filename in filenames:
         with xr.open_mfdataset(filename) as ds:
             df = create_dataframe(
-                product=self.product,
+                product=ts.product,
                 ds=ds,
                 lon_near=ds.longitude.values[0],
                 lat_near=ds.latitude.values[0],
-                outfile=self.datafile,
-                variable=self.variable,
-                start_time=self.start_time,
-                end_time=self.end_time,
+                outfile=ts.datafile,
+                variable=ts.variable,
+                start_time=ts.start_time,
+                end_time=ts.end_time,
                 save_csv=False,
-                height=self.height,
+                height=ts.height,
             )
             df.drop(columns=['number', 'expver'], inplace=True, errors='ignore')
             variable = df.columns[0]
@@ -58,24 +92,30 @@ def era5_ts(self, save_csv=False, save_nc=False):
     if save_csv:
         lon_near = ds.longitude.values[0]
         lat_near = ds.latitude.values[0]
-        top_header = f'#{self.product};LONGITUDE:{lon_near:0.4f};LATITUDE:{lat_near:0.4f}\n'
+        top_header = f'#{ts.product};LONGITUDE:{lon_near:0.4f};LATITUDE:{lat_near:0.4f}\n'
         header = [top_header, '#Variable_name;standard_name;long_name;units\n'] + variable_info
-        with open(self.datafile, 'w', encoding="utf8") as f:
+        with open(ts.datafile, 'w', encoding="utf8") as f:
             f.writelines(header)
             df_res.to_csv(f, index_label='time')
 
     if save_nc:
-        ds_res.to_netcdf(self.datafile.replace('csv','nc'))
+        ds_res.to_netcdf(ts.datafile.replace('csv','nc'))
 
     return df_res
 
 
-def gtsm_ts(self, save_csv=False, save_nc=False):
+def __gtsm_ts(ts: TimeSeries, save_csv=False, save_nc=False, download_only=False):
     """
     Extract times series of the nearest grid point (lon, lat) from
     GTSM water level and save it as netcdf.
     """
-    filenames = download_gtsm_from_cds(self.start_time, self.end_time, self.lon, self.lat, self.variable, folder='cache')
+    if ts.variable == []:
+        ts.variable = [
+            "storm_surge_residual",
+            "tidal_elevation",
+            "total_water_level",
+        ]
+    filenames = __download_gtsm_from_cds(ts.start_time, ts.end_time, ts.lon, ts.lat, ts.variable, folder='cache')
 
     if not isinstance(filenames, list):
         filenames = [filenames]
@@ -84,25 +124,28 @@ def gtsm_ts(self, save_csv=False, save_nc=False):
     for filename in filenames:
         temppath = os.path.dirname(filename)
         # Unpack the tar.gz file.
-        nc_files = subprocess.run(['tar', '-ztf', filename], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')[0:-1]
+        nc_files = subprocess.run(['tar', '-ztf', filename], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').split('\n')[0:-1]
         nc_files = sorted([ff.strip('\r') for ff in nc_files])
-        subprocess.run(['tar', '-xzvf', filename, '--directory', temppath], stdout=subprocess.PIPE) # Extract tar file
+        subprocess.run(['tar', '-xzvf', filename, '--directory', temppath], stdout=subprocess.PIPE, check=True) # Extract tar file
         all_nc_files.extend([os.path.join(temppath, file) for file in nc_files])
 
+    if download_only:
+        return all_nc_files
+
     # Open multiple netCDF files as a single xarray dataset
-    ds = xr.open_mfdataset(all_nc_files)
-    # Calculate the distance to each station
-    distances = np.sqrt((ds.station_x_coordinate - self.lon)**2 + (ds.station_y_coordinate - self.lat)**2)
-    # Find the index of the nearest station
-    nearest_station_index = distances.argmin().values
-    # Extract the data for the nearest station
-    ds = ds.isel(stations=nearest_station_index)
-    df = create_dataframe(product=self.product, ds=ds, lon_near=ds.stations.station_x_coordinate.values, lat_near=ds.stations.station_y_coordinate.values, outfile=self.datafile, variable=self.variable, start_time=self.start_time, end_time=self.end_time, save_csv=save_csv, height=self.height)
+    with xr.open_mfdataset(all_nc_files) as ds:
+        # Calculate the distance to each station
+        distances = np.sqrt((ds.station_x_coordinate - ts.lon)**2 + (ds.station_y_coordinate - ts.lat)**2)
+        # Find the index of the nearest station
+        nearest_station_index = distances.argmin().values
+        # Extract the data for the nearest station
+        ds = ds.isel(stations=nearest_station_index)
+        df = create_dataframe(product=ts.product, ds=ds, lon_near=ds.stations.station_x_coordinate.values, lat_near=ds.stations.station_y_coordinate.values, outfile=ts.datafile, variable=ts.variable, start_time=ts.start_time, end_time=ts.end_time, save_csv=save_csv, height=ts.height)
 
     return df
 
 
-def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='cache', use_cache=True) -> str:
+def __download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='cache', use_cache=True) -> str:
     """
     Downloads ERA5 data from the Copernicus Climate Data Store for a
     given point and time period
@@ -157,7 +200,7 @@ def download_era5_from_cds(start_time, end_time, lon, lat, variable,  folder='ca
     return filename_list
 
 
-def download_gtsm_from_cds(start_time, end_time, lon, lat, variable,  folder='cache') -> str:
+def __download_gtsm_from_cds(start_time, end_time, lon, lat, variable,  folder='cache') -> str:
     """
     Downloads GTSM model water level data from the Copernicus Climate Data Store for a
     given point and time period

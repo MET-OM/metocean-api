@@ -257,38 +257,40 @@ def create_dataframe(product,ds: xr.Dataset, lon_near, lat_near,outfile,variable
     return df
 
 
+def __get_values_for_dimension(ds: xr.Dataset, flatten_dims, dim):
+    if dim in ds.dims:
+        levels = ds.variables[dim].values
+        values=flatten_dims.get(dim)
+        if values:
+            # Check that all values are in the levels
+            for value in values:
+                if value not in levels:
+                    flevels = [f'{x:.2f}' for x in levels]
+                    raise ValueError(f"Value {value} not found in dimension {dim}. Available values are {flevels}")
+            return values
+        return levels
+    return []
+
 def __flatten_data_structure(ds: xr.Dataset, product, variables_to_flatten, flatten_dims):
-    depth = flatten_dims.get('depth',None)
-    height = flatten_dims.get('height',None)
+    depth = __get_values_for_dimension(ds,flatten_dims,'depth')
+    height = __get_values_for_dimension(ds,flatten_dims,'height')
     # Flatten the data to make it more suitable for tabular formats such as csv-files
     if product == 'NORA3_wind_sub':
         for i in range(len(height)):
-            variable_height = [k + '_' + str(height[i]) + 'm' for k in variables_to_flatten]
-            ds[variable_height] = ds[variables_to_flatten].sel(height=height[i])
+            variable_flattened = [k + '_' + str(height[i]) + 'm' for k in variables_to_flatten]
+            ds[variable_flattened] = ds[variables_to_flatten].sel(height=height[i])
 
-        ds = ds.drop_vars([variables_to_flatten[0]])
-        ds = ds.drop_vars([variables_to_flatten[1]])
-        ds = ds.drop_vars('height')
-        ds = ds.drop_vars(['x', 'y'])
-        ds = ds.drop_vars('latitude')
-        ds = ds.drop_vars('longitude')
+        drop_var = __drop_variables(product=product)
+        drop_var.extend(variables_to_flatten)
+        ds = ds.drop_vars(drop_var, errors="ignore")
+
     elif product == 'NORA3_atm3hr_sub':
         for i in range(len(height)):
-            variable_height = [k + '_' + str(height[i]) + 'm' for k in variables_to_flatten]
-            ds[variable_height] = ds[variables_to_flatten].sel(height=height[i])
-
-        ds = ds.drop_vars("x")
-        ds = ds.drop_vars("y")
-        ds = ds.drop_vars('height')
-        ds = ds.drop_vars('wind_speed')
-        ds = ds.drop_vars('wind_direction')
-        ds = ds.drop_vars('air_temperature')
-        ds = ds.drop_vars('relative_humidity')
-        ds = ds.drop_vars('tke')
-        ds = ds.drop_vars('density')
-        ds = ds.drop_vars('projection_lambert', errors="ignore")
-        ds = ds.drop_vars('latitude')
-        ds = ds.drop_vars('longitude')
+            variable_flattened = [k + '_' + str(height[i]) + 'm' for k in variables_to_flatten]
+            ds[variable_flattened] = ds[variables_to_flatten].sel(height=height[i])
+        drop_var = __drop_variables(product=product)
+        drop_var.extend(variables_to_flatten)
+        ds = ds.drop_vars(drop_var, errors="ignore")
 
     elif product == 'NorkystDA_zdepth':
         crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60, false_easting=0,
@@ -296,8 +298,8 @@ def __flatten_data_structure(ds: xr.Dataset, product, variables_to_flatten, flat
         angle = __proj_rotation_angle(crs, ds)
 
         for i in range(len(depth)):
-            variable_height = [k + '_' + str(depth[i]) + 'm' for k in variables_to_flatten]
-            ds[variable_height] = ds[variables_to_flatten].sel(depth=depth[i])
+            variable_flattened = [k + '_' + str(depth[i]) + 'm' for k in variables_to_flatten]
+            ds[variable_flattened] = ds[variables_to_flatten].sel(depth=depth[i])
             # zeta is surface elevation, no point in adding for each depth.
             if np.abs(depth[i]) > 0 and 'zeta_{}m'.format(depth[i]) in ds.keys():
                 ds = ds.drop_vars('zeta_{}m'.format(depth[i]))
@@ -313,8 +315,8 @@ def __flatten_data_structure(ds: xr.Dataset, product, variables_to_flatten, flat
             ds = ds.drop_vars([f'u_{depth[i]}m', 'v_{}m'.format(depth[i])])
 
         drop_var = __drop_variables(product=product)
+        drop_var.extend(variables_to_flatten)
         ds = ds.drop_vars(drop_var, errors="ignore")
-        ds = ds.drop_vars(variables_to_flatten, errors="ignore")
 
     elif product == 'NorkystDA_surface':
         crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60, false_easting=0,
@@ -343,11 +345,11 @@ def __flatten_data_structure(ds: xr.Dataset, product, variables_to_flatten, flat
                 # Append variable name to the list
                 var_list.append(var_name)
 
-        for i in range(len(height)):
-            variable_height = [k + '_' + str(height[i]) + 'm' for k in var_list]
-            ds[variable_height] = ds0[var_list].sel(depth=height[i], method='nearest')
-        ds = ds.drop_vars(var_list)
-        ds = ds.drop_vars('depth')
+        for i in range(len(depth)):
+            variable_flattened = [k + '_' + str(depth[i]) + 'm' for k in var_list]
+            ds[variable_flattened] = ds0[var_list].sel(depth=depth[i], method='nearest')
+        ds = ds.drop_vars(var_list,errors="ignore")
+        ds = ds.drop_vars('depth',errors="ignore")
         ds = ds.squeeze(drop=True)
 
     else:

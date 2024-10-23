@@ -1,18 +1,26 @@
 from __future__ import annotations
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 import xarray as xr
 from tqdm import tqdm
 from .aux_funcs import get_dates, get_url_info, get_near_coord, create_dataframe, get_tempfiles
 if TYPE_CHECKING:
-    from .ts_mod import TimeSeries  # Only imported for type checking
+    from ts.ts_mod import TimeSeries  # Only imported for type checking
 
-def echowave_ts(ts: TimeSeries, save_csv = False, save_nc = False, use_cache =False):
+
+def find_importer(product: str) -> Callable:
+    match product:
+        case 'ECHOWAVE':
+            return __echowave_ts
+    return None
+
+def __echowave_ts(ts: TimeSeries, save_csv = False, save_nc = False, use_cache =False, download_only=False):
     """
     Extract times series of  the nearest gird point (lon,lat) from
     ECHOWAVE wave hindcast and save it as netcdf.
     source: https://data.4tu.nl/datasets/f359cd0f-d135-416c-9118-e79dccba57b9/1
     """
+    ts.variable = [ 'ucur', 'vcur', 'uwnd', 'vwnd', 'wlv', 'ice', 'hs', 'lm', 't02', 't01', 'fp', 'dir', 'spr', 'dp', 'phs0', 'phs1', 'phs2', 'ptp0', 'ptp1', 'ptp2', 'pdir0', 'pdir1']
     #ts.variable.append('longitude') # keep info of regular lon
     #ts.variable.append('latitude')  # keep info of regular lat
     dates = get_dates(product=ts.product, start_date=ts.start_time, end_date=ts.end_time)
@@ -42,6 +50,9 @@ def echowave_ts(ts: TimeSeries, save_csv = False, save_nc = False, use_cache =Fa
                 dataset = dataset[ts.variable]
                 dataset = dataset.sel(selection).squeeze(drop=True)
                 dataset.to_netcdf(tempfiles[i], format='NETCDF3_64BIT') # add format to avoid *** AttributeError: NetCDF: String match to name in use
+
+    if download_only:
+        return tempfiles
 
     __remove_if_datafile_exists(ts.datafile)
 
