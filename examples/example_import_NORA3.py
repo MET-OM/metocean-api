@@ -18,5 +18,3 @@ df_ts = ts.TimeSeries(lon=6.727, lat=65.064,start_time='2024-01-31', end_time='2
 df_ts.import_data(save_csv=True)
 # Load data from a local csv-file
 df_ts.load_data(local_file=df_ts.datafile)
-
-
