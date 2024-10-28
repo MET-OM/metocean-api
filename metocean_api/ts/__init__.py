@@ -13,3 +13,4 @@ Copyright 2023, Konstantinos Christakos, MET Norway
 """
 
 from .ts_mod import TimeSeries
+from .internal.product import Product
