@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, override, Tuple, List
+from typing import TYPE_CHECKING, Tuple, List
 import os
 import subprocess
 import pandas as pd
@@ -24,7 +24,6 @@ def find_product(name: str) -> Product:
 
 class ERA5(Product):
 
-    @override
     def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
         """
         Extract times series of  the nearest gird point (lon,lat) from
@@ -152,7 +151,6 @@ class ERA5(Product):
 
 class GTSM(Product):
 
-    @override
     def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
         """
         Extract times series of the nearest grid point (lon, lat) from
