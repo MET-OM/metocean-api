@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, override, Tuple,List
+from typing import TYPE_CHECKING, Tuple,List
 import os
 from datetime import datetime
 import xarray as xr
@@ -52,7 +52,6 @@ def find_product(name: str) -> Product:
 
 class Nora3Wave(MetProduct):
 
-    @override
     def get_default_variables(self):
         return [
             "hs",
@@ -71,7 +70,6 @@ class Nora3Wave(MetProduct):
             "thq_swell",
         ]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(start=start_date, end=end_date, freq="D")
 
@@ -99,7 +97,6 @@ class Nora3Wave(MetProduct):
 
 class Nora3WaveSub(Nora3Wave):
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(
             start=datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m"),
@@ -113,11 +110,9 @@ class Nora3WaveSub(Nora3Wave):
 
 class NORA3WindSub(MetProduct):
 
-    @override
     def get_default_variables(self):
         return ["wind_speed", "wind_direction"]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(
             start=datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m"),
@@ -125,11 +120,9 @@ class NORA3WindSub(MetProduct):
             freq="MS",
         )
 
-    @override
     def _get_url_info(self, date: str):
         return "https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/wind_hourly/arome3kmwind_1hr_" + date.strftime("%Y%m") + ".nc"
 
-    @override
     def _get_near_coord(self, url: str, lon: float, lat: float):
         with xr.open_dataset(url) as ds:
             x, y = aux_funcs.find_nearest_cart_coord(ds.longitude, ds.latitude, lon, lat)
@@ -137,7 +130,6 @@ class NORA3WindSub(MetProduct):
             lat_near = ds.latitude.sel(y=y, x=x).values[0][0]
             return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
 
-    @override
     def _alter_temporary_dataset_if_needed(self, dataset: xr.Dataset):
         for var_name in dataset.variables:
             # The encoding of the fill value is not always correct in the netcdf files on the server
@@ -146,7 +138,6 @@ class NORA3WindSub(MetProduct):
                 var.encoding["_FillValue"] = var.attrs["fill_value"]
         return dataset
 
-    @override
     def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
         variables_to_flatten = ["wind_speed", "wind_direction"]
         height = self._get_values_for_dimension(ds, flatten_dims, "height")
@@ -161,23 +152,18 @@ class NORA3WindSub(MetProduct):
 
 class NORA3WindWaveCombined(MetProduct):
 
-    @override
     def get_default_variables(self):
         raise NotImplementedError("This method should not be called")
 
-    @override
     def _get_url_info(self, date: str):
         raise NotImplementedError("This method should not be called")
 
-    @override
     def _get_near_coord(self, url: str, lon: float, lat: float):
         raise NotImplementedError("This method should not be called")
 
-    @override
     def get_dates(self, start_date, end_date):
         raise NotImplementedError("This method should not be called")
-    
-    @override
+
     def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
         product = ts.product
 
@@ -240,8 +226,7 @@ class NORA3WindWaveCombined(MetProduct):
             self._clean_cache(tempfiles)
 
         return df
-    
-    @override
+
     def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
         raise NotImplementedError(f"Not implemented for product {self.name}")
 
@@ -266,7 +251,6 @@ class NORACWave(MetProduct):
             "pdir1",
         ]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(
             start=datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m"),
@@ -274,11 +258,9 @@ class NORACWave(MetProduct):
             freq="MS",
         )
 
-    @override
     def _get_url_info(self, date: str):
         return "https://thredds.met.no/thredds/dodsC/norac_wave/field/ww3." + date.strftime("%Y%m") + ".nc"
 
-    @override
     def _get_near_coord(self, url: str, lon: float, lat: float):
         with xr.open_dataset(url) as ds:
             node_id = aux_funcs.distance_2points(ds.latitude.values, ds.longitude.values, lat, lon).argmin()
@@ -289,7 +271,6 @@ class NORACWave(MetProduct):
 
 class NORA3AtmSub(MetProduct):
 
-    @override
     def get_default_variables(self):
         return [
             "air_pressure_at_sea_level",
@@ -301,7 +282,6 @@ class NORA3AtmSub(MetProduct):
             "fog",
         ]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(
             start=datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m"),
@@ -325,7 +305,6 @@ class NORA3AtmSub(MetProduct):
 
 class NORA3Atm3hrSub(MetProduct):
 
-    @override
     def get_default_variables(self):
         return [
             "wind_speed",
@@ -336,7 +315,6 @@ class NORA3Atm3hrSub(MetProduct):
             "tke",
         ]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(
             start=datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m"),
@@ -368,11 +346,9 @@ class NORA3Atm3hrSub(MetProduct):
 
 class NORA3StormSurge(MetProduct):
 
-    @override
     def get_default_variables(self):
         return ["zeta"]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(start=start_date, end=end_date, freq="YS")
 
@@ -390,7 +366,6 @@ class NORA3StormSurge(MetProduct):
         dataset = dataset.rename_dims({"ocean_time": "time"})
         return dataset.rename_vars({"ocean_time": "time"})
 
-    @override
     def import_data(self, ts: TimeSeries, save_csv=False, save_nc=False, use_cache=False):
         """
         Extract times series of  the nearest gird point (lon,lat) from
@@ -433,11 +408,9 @@ class NORA3StormSurge(MetProduct):
 
 class Norkyst800(MetProduct):
 
-    @override
     def get_default_variables(self):
         return ["salinity", "temperature", "u", "v", "zeta"]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(start=start_date, end=end_date, freq="D")
 
@@ -570,7 +543,6 @@ class NorkystDAZdepth(MetProduct):
             lat_near = ds.lat.sel(y=y, x=x).values[0][0]
             return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
 
-    @override
     def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
         depth = self._get_values_for_dimension(ds, flatten_dims, "depth")
         variables_to_flatten = ["u", "v", "temp", "salt", "AKs"]
@@ -598,11 +570,9 @@ class NorkystDAZdepth(MetProduct):
 
 class NORA3WaveSpectrum(MetProduct):
 
-    @override
     def get_default_variables(self):
         return ["SPEC"]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(start=start_date, end=end_date, freq="D")
 
@@ -626,7 +596,6 @@ class NORA3WaveSpectrum(MetProduct):
             station += 1  # station labels are 1-indexed
             return {"x": station}, lon_near, lat_near
 
-    @override
     def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
         """
         Extract NORA3 wave spectra timeseries.
@@ -669,11 +638,9 @@ class NORA3WaveSpectrum(MetProduct):
 
 class NORACWaveSpectrum(MetProduct):
 
-    @override
     def get_default_variables(self):
         return ["efth"]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(
             start=datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m"),
@@ -733,11 +700,9 @@ class NORACWaveSpectrum(MetProduct):
 
 class E39Observations(MetProduct):
 
-    @override
     def get_default_variables(self):
         return ["Hm0"]
 
-    @override
     def get_dates(self, start_date, end_date):
         return pd.date_range(start=start_date, end=end_date, freq="MS")
 
