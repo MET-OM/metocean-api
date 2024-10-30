@@ -462,6 +462,9 @@ class Norkyst800(MetProduct):
                     dataset = dataset[ts.variable]
                     dataset = dataset.sel(selection).squeeze(drop=True)
                     dataset.to_netcdf(tempfiles[i])
+                    
+        ts.lat_data = lat_near
+        ts.lon_data = lon_near
 
         return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height)
 
