@@ -22,7 +22,7 @@ setuptools.setup(
         'dask',
         'pip',
         'netcdf4',
-        'cdsapi',
+        'cartopy',
     ],
     packages = setuptools.find_packages(),
     include_package_data = True,

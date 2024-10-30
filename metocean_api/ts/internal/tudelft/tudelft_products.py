@@ -1,6 +1,6 @@
 from __future__ import annotations
 import os
-from typing import TYPE_CHECKING,override
+from typing import TYPE_CHECKING
 from datetime import datetime
 import pandas as pd
 import xarray as xr
@@ -20,7 +20,6 @@ def find_product(name: str) -> Product:
 
 class EchoWave(Product):
 
-    @override
     def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
         """
         Extract times series of  the nearest gird point (lon,lat) from
@@ -52,7 +51,6 @@ class EchoWave(Product):
             self.__clean_cache(tempfiles)
         return df
 
-    @override
     def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False):
         ts.variable = [ 'ucur', 'vcur', 'uwnd', 'vwnd', 'wlv', 'ice', 'hs', 'lm', 't02', 't01', 'fp', 'dir', 'spr', 'dp', 'phs0', 'phs1', 'phs2', 'ptp0', 'ptp1', 'ptp2', 'pdir0', 'pdir1']
         dates = self.__get_dates(start_date=ts.start_time, end_date=ts.end_time)
