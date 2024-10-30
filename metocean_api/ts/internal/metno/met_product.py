@@ -35,6 +35,10 @@ class MetProduct(Product):
     def get_dates(self, start_date, end_date):
         raise NotImplementedError(f"Not implemented for {self.name}")
 
+    def get_url_for_dates(self, start_date, end_date):
+        """Returns the necessary files to download to support the given date range"""
+        return [self._get_url_info(date) for date in self.get_dates(start_date, end_date)]
+
     def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
         tempfiles, lon_near, lat_near = self.download_temporary_files(ts, use_cache)
         return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height, depth=ts.depth)
@@ -67,6 +71,7 @@ class MetProduct(Product):
             else:
                 with xr.open_dataset(url) as dataset:
                     tqdm.write(f"Downloading {url}.")
+                    dataset.attrs["url"] = url
                     # Reduce to the wanted variables and coordinates
                     dataset = dataset[ts.variable]
                     dataset = dataset.sel(selection).squeeze(drop=True)
