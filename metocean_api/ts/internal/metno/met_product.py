@@ -133,7 +133,24 @@ class MetProduct(Product):
         return []
 
     def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
-        return ds.drop_vars(self._drop_variables(), errors="ignore")
+        # Drop selected variables before flattening
+        ds = ds.drop_vars(self._drop_variables(), errors="ignore")
+        drop_vars = set()
+        # Now flattend all the variables that have dimensions that are not time
+        for var_name, var in ds.variables.items():
+            if len(var.dims) == 0:
+                # Drop all scalars
+                drop_vars.add(var_name)
+            dims_to_flatten = [dim for dim in var.dims if dim != "time" and dim !=var_name]
+            if len(dims_to_flatten) > 0:
+                for dim in dims_to_flatten:
+                    values = self._get_values_for_dimension(ds, flatten_dims, dim)
+                    for i in range(len(values)):
+                        ds[var_name + "_" + str(values[i]) + "m"] = ds[var_name].sel({dim: values[i]})
+                    drop_vars.add(dim)
+                drop_vars.add(var_name)
+
+        return ds.drop_vars(drop_vars, errors="ignore").squeeze(drop=True)
 
     def _drop_variables(self):
         return ["longitude", "latitude"]

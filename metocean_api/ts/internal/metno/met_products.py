@@ -91,8 +91,6 @@ class Nora3Wave(MetProduct):
             lat_near = ds.latitude.sel(rlat=rlat, rlon=rlon).values[0][0]
             return {"rlon": rlon, "rlat": rlat}, lon_near, lat_near
 
-    def _drop_variables(self):
-        return ["projection_ob_tran", "longitude", "latitude", "rlat", "rlon"]
 
 
 class Nora3WaveSub(Nora3Wave):
@@ -137,18 +135,6 @@ class NORA3WindSub(MetProduct):
             if "fill_value" in var.attrs:
                 var.encoding["_FillValue"] = var.attrs["fill_value"]
         return dataset
-
-    def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
-        variables_to_flatten = ["wind_speed", "wind_direction"]
-        height = self._get_values_for_dimension(ds, flatten_dims, "height")
-        for i in range(len(height)):
-            variable_flattened = [k + "_" + str(height[i]) + "m" for k in variables_to_flatten]
-            ds[variable_flattened] = ds[variables_to_flatten].sel(height=height[i])
-
-        drop_var = ["projection_lambert", "longitude", "latitude", "x", "y", "height"]
-        drop_var.extend(variables_to_flatten)
-        return ds.drop_vars(drop_var, errors="ignore")
-
 
 class NORA3WindWaveCombined(MetProduct):
 
@@ -299,8 +285,6 @@ class NORA3AtmSub(MetProduct):
             lat_near = ds.latitude.sel(y=y, x=x).values[0][0]
             return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
 
-    def _drop_variables(self):
-        return ["projection_lambert", "longitude", "latitude", "x", "y"]
 
 
 class NORA3Atm3hrSub(MetProduct):
@@ -331,17 +315,6 @@ class NORA3Atm3hrSub(MetProduct):
             lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
             lat_near = ds.latitude.sel(y=y, x=x).values[0][0]
             return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
-
-    def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
-        # TODO: Do this automatically. Just find the dimensions that are not time and flatten them
-        variables_to_flatten = ["wind_speed", "wind_direction", "density", "tke", "air_temperature", "relative_humidity"]
-        height = self._get_values_for_dimension(ds, flatten_dims, "height")
-        for i in range(len(height)):
-            variable_flattened = [k + "_" + str(height[i]) + "m" for k in variables_to_flatten]
-            ds[variable_flattened] = ds[variables_to_flatten].sel(height=height[i])
-        drop_var = ["projection_lambert", "longitude", "latitude", "x", "y", "height"]
-        drop_var.extend(variables_to_flatten)
-        return ds.drop_vars(drop_var, errors="ignore")
 
 
 class NORA3StormSurge(MetProduct):
@@ -469,26 +442,12 @@ class Norkyst800(MetProduct):
         return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height)
 
     def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
-        variables_to_flatten = ["salinity", "temperature", "u", "v"]
-        depth = self._get_values_for_dimension(ds, flatten_dims, "depth")
-        ds0 = ds
-        if "depth" in ds["zeta"].dims:
-            ds["zeta"] = ds.zeta.sel(depth=0)
+        if "zeta" in ds.variables:
+            # Just use the surface value
+            if "depth" in ds["zeta"].dims:
+                ds["zeta"] = ds.zeta.sel(depth=0)
 
-        var_list = []
-        for var_name in variables_to_flatten:
-            # Check if 'depth' is not in the dimensions of the variable
-            if "depth" in ds[var_name].dims:
-                # Append variable name to the list
-                var_list.append(var_name)
-
-        for i in range(len(depth)):
-            variable_flattened = [k + "_" + str(depth[i]) + "m" for k in var_list]
-            ds[variable_flattened] = ds0[var_list].sel(depth=depth[i], method="nearest")
-
-        ds = ds.drop_vars(var_list, errors="ignore")
-        ds = ds.drop_vars(["lon", "lat", "depth"], errors="ignore")
-        return ds.squeeze(drop=True)
+        return super()._flatten_data_structure(ds, **flatten_dims)
 
 
 class NorkystDASurface(MetProduct):
@@ -511,20 +470,25 @@ class NorkystDASurface(MetProduct):
             lat_near = ds.lat.sel(y=y, x=x).values[0][0]
             return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
 
-    def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
-        crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60, false_easting=0, false_northing=0)
-        angle = aux_funcs.proj_rotation_angle(crs, ds)
-        u, v = aux_funcs.rotate_vectors_tonorth(angle, ds["u"].values, ds["v"].values)
-        spd, direction = aux_funcs.uv2spddir(u, v)
-        ds["current_speed"] = xr.DataArray(spd, dims=("time"), attrs={"standard_name": "sea_water_speed", "units": "meter seconds-1"})
-        ds["current_direction"] = xr.DataArray(
-            direction, dims=("time"), attrs={"standard_name": "sea_water_velocity_from_direction", "units": "degrees"}
-        )
-        ds = ds.drop_vars(["u", "v"])
+    def _alter_temporary_dataset_if_needed(self, dataset: xr.Dataset) -> xr.Dataset:
+        # Convert u and v to current_speed and current_direction
+        if "u" in dataset.variables and "v" in dataset.variables:
+            crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60, false_easting=0, false_northing=0)
+            angle = aux_funcs.proj_rotation_angle(crs, dataset)
+            u = dataset["u"]
+            v = dataset["v"]
+            u_rot, v_rot = aux_funcs.rotate_vectors_tonorth(angle, u.values, v.values)
+            spd, direction = aux_funcs.uv2spddir(u_rot, v_rot)
+            dataset["current_speed"] = xr.DataArray(
+                spd, dims=("time"), attrs={"standard_name": "sea_water_speed", "units": "meter seconds-1"}
+            )
+            dataset["current_direction"] = xr.DataArray(
+                direction, dims=("time"), attrs={"standard_name": "sea_water_velocity_from_direction", "units": "degrees"}
+            )
+        return dataset
 
-        drop_var = ["lon", "lat", "x", "y", "zdepth"]
-        return ds.drop_vars(drop_var, errors="ignore")
-
+    def _drop_variables(self):
+        return ["u","v"]
 
 class NorkystDAZdepth(MetProduct):
 
@@ -546,29 +510,25 @@ class NorkystDAZdepth(MetProduct):
             lat_near = ds.lat.sel(y=y, x=x).values[0][0]
             return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
 
-    def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
-        depth = self._get_values_for_dimension(ds, flatten_dims, "depth")
-        variables_to_flatten = ["u", "v", "temp", "salt", "AKs"]
-        crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60, false_easting=0, false_northing=0)
-        angle = aux_funcs.proj_rotation_angle(crs, ds)
-
-        # TODO: Should be simplified..
-        for i in range(len(depth)):
-            variable_flattened = [k + "_" + str(depth[i]) + "m" for k in variables_to_flatten]
-            ds[variable_flattened] = ds[variables_to_flatten].sel(depth=depth[i])
-            u, v = aux_funcs.rotate_vectors_tonorth(angle, ds["u_{}m".format(depth[i])].values, ds["v_{}m".format(depth[i])].values)
-            spd, direction = aux_funcs.uv2spddir(u, v)
-            ds[f"current_speed_{depth[i]}m"] = xr.DataArray(
-                spd, dims=("time"), attrs={"standard_name": "sea_water_speed", "units": "meter seconds-1"}
+    def _alter_temporary_dataset_if_needed(self, dataset: xr.Dataset) -> xr.Dataset:
+        # Convert u and v to current_speed and current_direction
+        if "u" in dataset.variables and "v" in dataset.variables:
+            crs = ccrs.Stereographic(central_latitude=90, central_longitude=70, true_scale_latitude=60, false_easting=0, false_northing=0)
+            angle = aux_funcs.proj_rotation_angle(crs, dataset)
+            u = dataset["u"]
+            v = dataset["v"]
+            u_rot, v_rot = aux_funcs.rotate_vectors_tonorth(angle, u.values, v.values)
+            spd, direction = aux_funcs.uv2spddir(u_rot, v_rot)
+            dataset["current_speed"] = xr.DataArray(
+                spd, dims=("time","depth"), attrs={"standard_name": "sea_water_speed", "units": "meter seconds-1"}
             )
-            ds[f"current_direction_{depth[i]}m"] = xr.DataArray(
-                direction, dims=("time"), attrs={"standard_name": "sea_water_velocity_from_direction", "units": "degrees"}
+            dataset["current_direction"] = xr.DataArray(
+                direction, dims=("time","depth"), attrs={"standard_name": "sea_water_velocity_from_direction", "units": "degrees"}
             )
-            ds = ds.drop_vars([f"u_{depth[i]}m", "v_{}m".format(depth[i])])
+        return dataset
 
-        drop_var = ["lon", "lat", "x", "y", "depth"]
-        drop_var.extend(variables_to_flatten)
-        return ds.drop_vars(drop_var, errors="ignore")
+    def _drop_variables(self):
+        return ["u","v"]
 
 
 class NORA3WaveSpectrum(MetProduct):
