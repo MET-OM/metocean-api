@@ -55,6 +55,8 @@ class ERA5(Product):
 
         for filename in filenames:
             with xr.open_mfdataset(filename) as ds:
+                # Rename the dimensions and variables to match the required format
+                ds = ds.rename_dims({"valid_time": "time"}).rename_vars({"valid_time": "time"})
                 lon_near=ds.longitude.values[0]
                 lat_near=ds.latitude.values[0]
                 ds = ds.drop_vars(['longitude','latitude'], errors="ignore")
@@ -83,9 +85,9 @@ class ERA5(Product):
             lat_near = ds.latitude.values[0]
             top_header = f'#{ts.product};LONGITUDE:{lon_near:0.4f};LATITUDE:{lat_near:0.4f}\n'
             header = [top_header, '#Variable_name;standard_name;long_name;units\n'] + variable_info
-            with open(ts.datafile, 'w', encoding="utf8") as f:
+            with open(ts.datafile, "w", encoding="utf8", newline="") as f:
                 f.writelines(header)
-                df_res.to_csv(f, index_label='time')
+                df_res.to_csv(f, header=False, encoding=f.encoding, index_label="time")
 
         if save_nc:
             ds_res.to_netcdf(ts.datafile.replace('csv','nc'))
@@ -242,7 +244,6 @@ class GTSM(Product):
                 c.retrieve('sis-water-level-change-timeseries-cmip6', cds_command, filename)
                 filename_list.append(filename)          
         return filename_list
-
 
     def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
         raise NotImplementedError(f"Not implemented for {self.name}")
