@@ -121,7 +121,7 @@ class NORA3WindSub(MetProduct):
         )
 
     def _get_url_info(self, date: str):
-        return "https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/wind_hourly/arome3kmwind_1hr_" + date.strftime("%Y%m") + ".nc"
+        return "https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/wind_hourly_v2/arome3kmwind_1hr_" + date.strftime("%Y%m") + ".nc"
 
     def _get_near_coord(self, url: str, lon: float, lat: float):
         with xr.open_dataset(url) as ds:
