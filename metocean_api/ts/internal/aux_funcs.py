@@ -79,17 +79,12 @@ def create_dataframe(product, ds: xr.Dataset, lon_near, lat_near, outfile, start
 
     header_lines = ["#" + product + ";LONGITUDE:" + str(lon_near.round(4)) + ";LATITUDE:" + str(lat_near.round(4))]
     header_lines.append("#Variable_name;standard_name;long_name;units")
-    for var in ds.data_vars:
-        try:
-            standard_name = ds[var].standard_name
-        except AttributeError:
-            standard_name = "-"
-        try:
-            long_name = ds[var].long_name
-        except AttributeError:
-            long_name = "-"
-
-        header_lines.append("#" + var + ";" + standard_name + ";" + long_name + ";" + ds[var].units)
+    for name,vardata in ds.data_vars.items():
+        varattr = vardata.attrs
+        standard_name =varattr.get("standard_name", "-")
+        long_name = varattr.get("long_name", "-")
+        units = varattr.get("units", "-")
+        header_lines.append("#" + name + ";" + standard_name + ";" + long_name + ";" + units)
 
     header = "\n".join(header_lines) + "\n"
 

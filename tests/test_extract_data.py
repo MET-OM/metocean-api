@@ -113,3 +113,14 @@ def test_extract_norac_wave_spectra():
     df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
     assert (df_ts.lat_data, df_ts.lon_data) == (64.03120422363281, 7.936006546020508)
     assert df_ts.data.shape == (744,45,36)
+    
+def test_url_by_date():
+    product = products.find_product("NORA3_atm_sub")
+    urls = product.get_url_for_dates("2020-01-01","2020-12-31")
+    assert len(urls) == 12
+    for i in range(1,13):
+        if i < 10:
+            month = f"0{i}"
+        else:
+            month = i
+        assert urls[i-1] == f"https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_hourly/arome3km_1hr_2020{month}.nc"
