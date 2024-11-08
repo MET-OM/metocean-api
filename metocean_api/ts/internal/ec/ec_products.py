@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple, List
 import os
-import subprocess
+import tarfile
 import pandas as pd
 import xarray as xr
 import numpy as np
@@ -99,7 +99,7 @@ class ERA5(Product):
         Downloads ERA5 data from the Copernicus Climate Data Store for a
         given point and time period
         """
-        import cdsapi
+        import cdsapi #Optional dependency
         start_time = pd.Timestamp(start_time)
         end_time = pd.Timestamp(end_time)
         c = cdsapi.Client()
@@ -164,19 +164,15 @@ class GTSM(Product):
                 "tidal_elevation",
                 "total_water_level",
             ]
-        filenames = self.__download_gtsm_from_cds(ts.start_time, ts.end_time, ts.variable, folder='cache')
+        filenames = self.__download_gtsm_from_cds(ts.start_time, ts.end_time, ts.variable, folder='cache',use_cache=use_cache)
 
         if not isinstance(filenames, list):
             filenames = [filenames]
 
         all_nc_files = []
         for filename in filenames:
-            temppath = os.path.dirname(filename)
             # Unpack the tar.gz file.
-            nc_files = subprocess.run(['tar', '-ztf', filename], stdout=subprocess.PIPE, check=True).stdout.decode('utf-8').split('\n')[0:-1]
-            nc_files = sorted([ff.strip('\r') for ff in nc_files])
-            subprocess.run(['tar', '-xzvf', filename, '--directory', temppath], stdout=subprocess.PIPE, check=True) # Extract tar file
-            all_nc_files.extend([os.path.join(temppath, file) for file in nc_files])
+            all_nc_files.extend(self.__unpack_files(filename,use_cache))
 
         # Open multiple netCDF files as a single xarray dataset
         with xr.open_mfdataset(all_nc_files) as ds:
@@ -193,18 +189,36 @@ class GTSM(Product):
 
         return df
 
-    def __download_gtsm_from_cds(self,start_time, end_time, variable,  folder='cache') -> str:
+    def __unpack_files(self, filename,use_cache) -> List[str]:
+        temppath = os.path.dirname(filename)
+        with tarfile.open(filename, "r:*") as tar:
+            try:
+                files_from_tar = []
+                for file in tar.getmembers():
+                    if file.name.endswith(".nc"):
+                        nc_file = os.path.join(temppath, file.name)
+                        if use_cache and os.path.exists(nc_file):
+                            print(f"Reusing cached file {nc_file}")
+                        else:
+                            print(f"Extracting {file.name} from {filename}")
+                            tar.extract(file, path=temppath)
+                        files_from_tar.append(nc_file)
+                return files_from_tar
+            except Exception as e:
+                # Seen with corrupted tar files from CDS
+                raise RuntimeError(f"Error extracting {filename}: {e}, consider deleting the file to download it again") from e
+
+    def __download_gtsm_from_cds(self,start_time, end_time, variable,  folder='cache',use_cache=True) -> List[str]:
         """
         Downloads GTSM model water level data from the Copernicus Climate Data Store for a
         given point and time period
         """
-        import cdsapi
+        import cdsapi #Optional dependency
         filename = []
         filename_list = []
         start_time = pd.Timestamp(start_time)
         end_time = pd.Timestamp(end_time)
         c = cdsapi.Client()
-
 
         days = pd.date_range(start=start_time , end=end_time, freq='D')
         years = days.year
@@ -241,8 +255,12 @@ class GTSM(Product):
 
                 }
                 print('Download variable:',var, year)
-                c.retrieve('sis-water-level-change-timeseries-cmip6', cds_command, filename)
-                filename_list.append(filename)          
+                if use_cache and os.path.exists(filename):
+                    print(f'Reusing cached file {filename}')
+                else:
+                    print(f'Download variable {var} for year {year}')
+                    c.retrieve('sis-water-level-change-timeseries-cmip6', cds_command, filename)
+                filename_list.append(filename)
         return filename_list
 
     def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
