@@ -1,6 +1,7 @@
 import xarray as xr
 from metocean_api import ts
 from metocean_api.ts.internal import products
+from metocean_api.ts.internal.convention import Convention
 
 # Switches useful for local testing
 USE_CACHE = False
@@ -10,6 +11,10 @@ SAVE_NC = True
 def test_extract_nora3_wind():
     df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-31', product='NORA3_wind_sub')
     # Import data from thredds.met.no
+    product = products.find_product(df_ts.product)
+    assert product.name == df_ts.product
+    assert product.convention == Convention.METEOROLOGICAL
+
     df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
     assert (df_ts.lat_data, df_ts.lon_data) == (53.32374838481946, 1.3199893172215793)
     assert df_ts.data.shape == (744,14)

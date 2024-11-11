@@ -3,6 +3,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple, List
 from abc import ABC, abstractmethod
+from .convention import Convention
 
 if TYPE_CHECKING:
     from ts.ts_mod import TimeSeries  # Only imported for type checking
@@ -13,6 +14,10 @@ class Product(ABC):
 
     def __init__(self, name: str):
         self.name = name
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.NONE
 
     @abstractmethod
     def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):

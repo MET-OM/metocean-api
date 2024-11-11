@@ -6,6 +6,7 @@ import pandas as pd
 import xarray as xr
 import numpy as np
 from ..product import Product
+from ..convention import Convention
 
 from .. import aux_funcs
 
@@ -23,6 +24,10 @@ def find_product(name: str) -> Product:
 
 
 class ERA5(Product):
+    
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
 
     def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
         """
