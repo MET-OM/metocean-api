@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from .. import aux_funcs
 from ..product import Product
+from ..convention import Convention
 if TYPE_CHECKING:
     from ts.ts_mod import TimeSeries  # Only imported for type checking
 
@@ -19,6 +20,10 @@ def find_product(name: str) -> Product:
     return None
 
 class EchoWave(Product):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
 
     def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
         """

@@ -10,6 +10,7 @@ import cartopy.crs as ccrs
 from .met_product import MetProduct
 
 from ..product import Product
+from ..convention import Convention
 from .. import aux_funcs
 
 if TYPE_CHECKING:
@@ -51,6 +52,10 @@ def find_product(name: str) -> Product:
     return None
 
 class Nora3Wave(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.OCEANIC
 
     def get_default_variables(self):
         return [
@@ -108,6 +113,10 @@ class Nora3WaveSub(Nora3Wave):
 
 class NORA3WindSub(MetProduct):
 
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
+
     def get_default_variables(self):
         return ["wind_speed", "wind_direction"]
 
@@ -137,6 +146,11 @@ class NORA3WindSub(MetProduct):
         return dataset
 
 class NORA3WindWaveCombined(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        # This is a combined product, so we cannot determine the convention
+        return Convention.NONE
 
     def get_default_variables(self):
         raise NotImplementedError("This method should not be called")
@@ -218,6 +232,10 @@ class NORA3WindWaveCombined(MetProduct):
 
 
 class NORACWave(MetProduct):
+    
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
 
     def get_default_variables(self):
         return [
@@ -257,6 +275,10 @@ class NORACWave(MetProduct):
 
 class NORA3AtmSub(MetProduct):
 
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
+
     def get_default_variables(self):
         return [
             "air_pressure_at_sea_level",
@@ -289,6 +311,10 @@ class NORA3AtmSub(MetProduct):
 
 class NORA3Atm3hrSub(MetProduct):
 
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
+
     def get_default_variables(self):
         return [
             "wind_speed",
@@ -318,6 +344,10 @@ class NORA3Atm3hrSub(MetProduct):
 
 
 class NORA3StormSurge(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.NONE
 
     def get_default_variables(self):
         return ["zeta"]
@@ -380,6 +410,11 @@ class NORA3StormSurge(MetProduct):
 
 
 class Norkyst800(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.OCEANIC
+
 
     def get_default_variables(self):
         return ["salinity", "temperature", "u", "v", "zeta"]
@@ -452,6 +487,11 @@ class Norkyst800(MetProduct):
 
 class NorkystDASurface(MetProduct):
 
+    @property
+    def convention(self) -> Convention:
+        return Convention.OCEANIC
+
+
     def get_default_variables(self):
         return ["u", "v", "zeta", "temp", "salt"]
 
@@ -491,6 +531,11 @@ class NorkystDASurface(MetProduct):
         return ["u","v"]
 
 class NorkystDAZdepth(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.OCEANIC
+
 
     def get_default_variables(self):
         return ["u", "v", "zeta", "temp", "salt", "AKs"]
@@ -532,6 +577,10 @@ class NorkystDAZdepth(MetProduct):
 
 
 class NORA3WaveSpectrum(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.OCEANIC
 
     def get_default_variables(self):
         return ["SPEC"]
@@ -601,6 +650,10 @@ class NORA3WaveSpectrum(MetProduct):
 
 class NORACWaveSpectrum(MetProduct):
 
+    @property
+    def convention(self) -> Convention:
+        return Convention.OCEANIC
+
     def get_default_variables(self):
         return ["efth"]
 
@@ -662,6 +715,10 @@ class NORACWaveSpectrum(MetProduct):
 
 
 class E39Observations(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
 
     def get_default_variables(self):
         return ["Hm0"]
