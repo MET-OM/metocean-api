@@ -4,6 +4,7 @@ import os
 from abc import abstractmethod
 from tqdm import tqdm
 import xarray as xr
+import pandas as pd
 from .. import aux_funcs
 from ..product import Product
 
@@ -20,11 +21,11 @@ class MetProduct(Product):
     """
 
     @abstractmethod
-    def get_default_variables(self):
+    def get_default_variables(self) -> List[str]:
         raise NotImplementedError(f"Not implemented for {self.name}")
 
     @abstractmethod
-    def _get_url_info(self, date: str):
+    def _get_url_info(self, date: str) -> str:
         raise NotImplementedError(f"Not implemented for {self.name}")
 
     @abstractmethod
@@ -35,7 +36,7 @@ class MetProduct(Product):
     def get_dates(self, start_date, end_date):
         raise NotImplementedError(f"Not implemented for {self.name}")
 
-    def get_url_for_dates(self, start_date, end_date):
+    def get_url_for_dates(self, start_date, end_date) -> List[str]:
         """Returns the necessary files to download to support the given date range"""
         return [self._get_url_info(date) for date in self.get_dates(start_date, end_date)]
 
@@ -115,7 +116,7 @@ class MetProduct(Product):
 
         return df
 
-    def create_dataframe(self, ds: xr.Dataset, lon_near, lat_near, outfile, start_time, end_time, save_csv=True, **flatten_dims):
+    def create_dataframe(self, ds: xr.Dataset, lon_near, lat_near, outfile, start_time, end_time, save_csv=True, **flatten_dims) -> pd.DataFrame:
         ds = self._flatten_data_structure(ds, **flatten_dims)
         return aux_funcs.create_dataframe(self.name, ds, lon_near, lat_near, outfile, start_time, end_time, save_csv)
 

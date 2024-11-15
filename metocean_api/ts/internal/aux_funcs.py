@@ -86,6 +86,9 @@ def create_dataframe(product, ds: xr.Dataset, lon_near, lat_near, outfile, start
         units = varattr.get("units", "-")
         header_lines.append("#" + name + ";" + standard_name + ";" + long_name + ";" + units)
 
+    # Add column names last
+    header_lines.append("time," + ",".join(df.columns))
+
     header = "\n".join(header_lines) + "\n"
 
     if save_csv:
