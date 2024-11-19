@@ -3,6 +3,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple, List
 from abc import ABC, abstractmethod
+import pandas as pd
 from .convention import Convention
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ class Product(ABC):
         return Convention.NONE
 
     @abstractmethod
-    def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
+    def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False) -> pd.DataFrame:
         """Import data specified by the TimeSeries object"""
         raise NotImplementedError(f"import_data method not implemented for product {self.name}")
 
