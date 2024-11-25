@@ -5,7 +5,7 @@
 
 
 ## Purpose
-Extract time series of metocean data based on hindcast data
+Extract time series of metocean data based on hindcast data. The tool is compatible with WEkEO Jupyter Lab, allowing seamless integration and use. For instructions on how to install metocean-api in WEkEO, please refer [here](https://docs.google.com/document/d/1sRFJH6371QZ239qK2XZH1naZcSML0ml4BqoTKc0hIOM/edit?usp=sharing).
 
 ## Quick Installation
 $ pip install metocean-api 
