@@ -12,13 +12,13 @@ Extract time series of metocean data based on hindcast data. The tool is compati
 To get started with metocean-stats, you can install it with pip or conda:
 
 ```shell
-$ pip install metocean-stats 
+$ pip install metocean-api 
 ```
 
 or
 
 ```shell
-$ conda install conda-forge::metocean-stats
+$ conda install conda-forge::metocean-api
 ```
 
 
