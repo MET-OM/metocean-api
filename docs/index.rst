@@ -6,9 +6,9 @@
 Welcome to metocean-api's documentation!
 =====================================
 
-**metocean-api**  is a Python tool designed to extract time series of metocean (meteorological and oceanographic) data from a variety of sources, including global, regional, and coastal hindcasts and reanalysis.
+**metocean-api**  is a Python tool designed to extract time series of metocean (meteorological and oceanographic) data from various sources, including global, regional, and coastal hindcasts and reanalysis.
 The extracted data can be saved in CSV format or NetCDF for further analysis and usage.
-Refer to the section below for more information about the available datasets and variables. 
+Please look at the section below for more information about the available datasets and variables. 
 
 Installing **metocean-api**
 =============================================
@@ -53,7 +53,7 @@ Alternative 2: Using Mambaforge (alternative to Miniconda) and Git
   $ conda activate metocean-api
   $ pip install --no-deps -e .
 
-This installs the metocean-api as an editable package. Therefore, you can directly make changes to the repository or fetch the newest changes with :code:`git pull`. 
+This installs the metocean-api as an editable package. Therefore, you can directly change the repository or fetch the newest changes with :code:`git pull`. 
 
 To update the local conda environment in case of new dependencies added to environment.yml:
 
@@ -77,6 +77,8 @@ Available Datasets in metocean-api
 =====================================
 
 Several options for **product** are available. Please check the data catalog for the time coverage:
+
+:warning: Parallel downloading should be avoided for NORA3 data.
 
 * For wind NORA3 hourly data in 10, 20, 50, 100, 250, 500, 750m (Nordic Area) developed by MET Norway:
 
