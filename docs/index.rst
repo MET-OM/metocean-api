@@ -78,7 +78,7 @@ Available Datasets in metocean-api
 
 Several options for **product** are available. Please check the data catalog for the time coverage:
 
-:warning: Parallel downloading should be avoided for NORA3 data.
+:warning: Parallel downloading is not allowed for NORA3 data. It's a breach of the terms of service for thredds.met.no and may result in the blocking of your computer.
 
 * For wind NORA3 hourly data in 10, 20, 50, 100, 250, 500, 750m (Nordic Area) developed by MET Norway:
 
