@@ -45,8 +45,8 @@ def find_product(name: str) -> Product:
             return NORA3WaveSpectrum(name)
         case "NORAC_wave_spec":
             return NORACWaveSpectrum(name)
-        case "NORA3_full_product":
-            return NORA3FullProduct(name)
+        case "NORA3_fp":
+            return NORA3fp(name)
 
     if name.startswith("E39"):
         return E39Observations(name)
@@ -795,7 +795,7 @@ class E39Observations(MetProduct):
         return df
 
 
-class NORA3FullProduct(MetProduct):
+class NORA3fp(MetProduct):
 
     @property
     def convention(self) -> Convention:
@@ -803,11 +803,70 @@ class NORA3FullProduct(MetProduct):
 
     def get_default_variables(self):
         return [
-            ## Add Variables Here When Dataset is online
-        ]
+ 'longitude',
+ 'latitude',
+ 'air_temperature_0m',
+ 'surface_geopotential',
+ 'liquid_water_content_of_surface_snow',
+ 'downward_northward_momentum_flux_in_air',
+ 'downward_eastward_momentum_flux_in_air',
+ 'integral_of_toa_net_downward_shortwave_flux_wrt_time',
+ 'integral_of_surface_net_downward_shortwave_flux_wrt_time',
+ 'integral_of_toa_outgoing_longwave_flux_wrt_time',
+ 'integral_of_surface_net_downward_longwave_flux_wrt_time',
+ 'integral_of_surface_downward_latent_heat_evaporation_flux_wrt_time',
+ 'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time',
+ 'water_evaporation_amount',
+ 'surface_snow_sublimation_amount_acc',
+ 'integral_of_surface_downward_sensible_heat_flux_wrt_time',
+ 'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time',
+ 'integral_of_surface_downwelling_longwave_flux_in_air_wrt_time',
+ 'rainfall_amount',
+ 'snowfall_amount',
+ 'graupelfall_amount_acc',
+ 'air_temperature_2m',
+ 'relative_humidity_2m',
+ 'specific_humidity_2m',
+ 'x_wind_10m',
+ 'y_wind_10m',
+ 'cloud_area_fraction',
+ 'x_wind_gust_10m',
+ 'y_wind_gust_10m',
+ 'air_temperature_max',
+ 'air_temperature_min',
+ 'convective_cloud_area_fraction',
+ 'high_type_cloud_area_fraction',
+ 'medium_type_cloud_area_fraction',
+ 'low_type_cloud_area_fraction',
+ 'atmosphere_boundary_layer_thickness',
+ 'hail_diagnostic',
+ 'graupelfall_amount',
+    
+ 'air_temperature_pl',
+ 'cloud_area_fraction_pl',
+ 'geopotential_pl',
+ 'relative_humidity_pl',
+ 'upward_air_velocity_pl',
+ 'x_wind_pl',
+ 'y_wind_pl',
+    
+ 'air_pressure_at_sea_level',
+ 'lwe_thickness_of_atmosphere_mass_content_of_water_vapor',
+ 'x_wind_z',
+ 'y_wind_z',
+ 'surface_air_pressure',
+ 'lifting_condensation_level',
+ 'atmosphere_level_of_free_convection',
+ 'atmosphere_level_of_neutral_buoyancy',
+ 'wind_direction',
+ 'wind_speed',
+ 'precipitation_amount_acc',
+ 'snowfall_amount_acc']
 
     def get_dates(self, start_date, end_date):
-        pd.date_range(start=start_date, end=end_date, freq="h")
+        date_range = pd.date_range(start=start_date, end=end_date, freq="h")
+        adjusted_dates = date_range - pd.Timedelta(hours=3)
+        return adjusted_dates
 
     def _generate_time_info(self, dt : str):
         run_start_hours = [0, 6, 12, 18]
@@ -826,7 +885,7 @@ class NORA3FullProduct(MetProduct):
         month = date.strftime("%m")
         day = date.strftime("%d")
         hour, lead = self._generate_time_info(date)
-        return f"https://thredds.met.no/thredds/dodsC/nora3/{year:04}/{month:02}/{day:02}/{hour}/fc{year:04}{month:02}{day:02}{hour}_00{lead:1}_fp.nc"
+        return f"https://thredds.met.no/thredds/dodsC/nora3/{year:04}/{month:02}/{day:02}/{hour:02}/fc{year:04}{month:02}{day:02}{hour:02}_00{lead:1}_fp.nc"
 
     def _get_near_coord(self, url: str, lon: float, lat: float):
         with xr.open_dataset(url) as ds:
