@@ -947,7 +947,6 @@ class NORA3_(MetProduct):
             'b',
             'x',
             'y',
-            'forecast_reference_time',
             'longitude',
             'latitude',
             'land_area_fraction',
