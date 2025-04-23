@@ -148,7 +148,7 @@ Several options for **product** are available. Please check the data catalog for
 
     product='NORA3_full_product'
 
-  Dataset: https://thredds.met.no/thredds/dodsC/nora3/catalog.html (*_fp files using [3-8] to avoid time overlap)
+  Dataset: https://thredds.met.no/thredds/dodsC/nora3/catalog.html (*_fp files using [3-8] time lead to avoid time overlap)
 
 * For coastal wave NORA3 data developed by MET Norway: 
 
