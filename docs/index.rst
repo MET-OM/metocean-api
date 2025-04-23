@@ -142,6 +142,22 @@ Several options for **product** are available. Please check the data catalog for
 
   Dataset: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_spectra/catalog.html
 
+* For hourly raw output from NORA3 developed by MET Norway: 
+
+  .. code-block:: python
+
+    product='NORA3_fp'
+
+  Dataset: https://thredds.met.no/thredds/dodsC/nora3/catalog.html (fc<YYYYMMDDHH>_<leadtime>_fp.nc files using [3-8] time lead to avoid time overlap)
+
+* For 3hourly raw output product from NORA3 developed by MET Norway: 
+
+  .. code-block:: python
+
+    product='NORA3_'
+
+  Dataset: https://thredds.met.no/thredds/dodsC/nora3/catalog.html (fc<YYYYMMDDHH>_<leadtime>.nc files using [3,6] time lead to avoid time overlap)
+
 * For coastal wave NORA3 data developed by MET Norway: 
 
   .. code-block:: python
