@@ -146,7 +146,7 @@ Several options for **product** are available. Please check the data catalog for
 
   .. code-block:: python
 
-    product='NORA3_full_product'
+    product='NORA3_fp'
 
   Dataset: https://thredds.met.no/thredds/dodsC/nora3/catalog.html (*_fp files using [3-8] time lead to avoid time overlap)
 
