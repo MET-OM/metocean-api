@@ -45,6 +45,8 @@ def find_product(name: str) -> Product:
             return NORA3WaveSpectrum(name)
         case "NORAC_wave_spec":
             return NORACWaveSpectrum(name)
+        case "NORA3_full_product":
+            return NORA3FullProduct(name)
 
     if name.startswith("E39"):
         return E39Observations(name)
@@ -791,3 +793,79 @@ class E39Observations(MetProduct):
             self._clean_cache(tempfiles)
 
         return df
+
+
+class NORA3FullProduct(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
+
+    def get_default_variables(self):
+        return [
+            ## Add Variables Here When Dataset is online
+        ]
+
+    def get_dates(self, start_date, end_date):
+        pd.date_range(start=start_date, end=end_date, freq="h")
+
+    def _generate_time_info(self, dt : str):
+        run_start_hours = [0, 6, 12, 18]
+
+        # Find the closest preceding run start hour
+        hour = dt.hour
+        run_start = max([h for h in run_start_hours if h <= hour])
+
+        # Calculate the file number
+        file_number = 3 + (hour - run_start)
+
+        return run_start, file_number
+
+    def _get_url_info(self, date: str):
+        year = date.strftime("%Y")
+        month = date.strftime("%m")
+        day = date.strftime("%d")
+        hour, lead = self._generate_time_info(date)
+        return f"https://thredds.met.no/thredds/dodsC/nora3/{year:04}/{month:02}/{day:02}/{hour}/fc{year:04}{month:02}{day:02}{hour}_00{lead:1}_fp.nc"
+
+    def _get_near_coord(self, url: str, lon: float, lat: float):
+        with xr.open_dataset(url) as ds:
+            x, y = aux_funcs.find_nearest_cart_coord(ds.longitude, ds.latitude, lon, lat)
+            lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
+            lat_near = ds.latitude.sel(y=y, x=x).values[0][0]
+            return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
+    
+    def _alter_temporary_dataset_if_needed(self, dataset: xr.Dataset):
+        # Override this method in subclasses to alter the dataset before saving it to a temporary file
+        # Renaming variables that does not follow the standard names should also be done here
+        
+        dataset = dataset.rename({'height2' : 'height', 'height3':'height_clouds', 'pressure0':'pressure_level'})
+        dataset['wind_speed'] = np.sqrt(dataset['x_wind_z']**2 + dataset['y_wind_z']**2)
+        dataset['wind_from_direction'] = (270 - np.arctan2(dataset['y_wind_z'], dataset['x_wind_z']) * 180 / np.pi) % 360
+
+
+        air_temperature_0m = dataset['air_temperature_0m'].expand_dims({'standard_height': [0]})
+        air_temperature_2m = dataset['air_temperature_2m'].expand_dims({'standard_height': [2]})
+        relative_humidity_2m = dataset['relative_humidity_2m'].expand_dims({'standard_height': [2]})
+        specific_humidity_2m = dataset['specific_humidity_2m'].expand_dims({'standard_height': [2]})
+        x_wind_10m = dataset['x_wind_10m'].expand_dims({'standard_height': [10]})
+        y_wind_10m = dataset['y_wind_10m'].expand_dims({'standard_height': [10]})
+        x_wind_gust_10m = dataset['x_wind_gust_10m'].expand_dims({'standard_height': [10]})
+        y_wind_gust_10m = dataset['y_wind_gust_10m'].expand_dims({'standard_height': [10]})
+
+        air_temperature = xr.concat([air_temperature_0m, air_temperature_2m], dim='standard_height')
+        relative_humidity = relative_humidity_2m
+        specific_humidity = specific_humidity_2m
+        x_wind = x_wind_10m
+        y_wind = y_wind_10m
+        x_wind_gust = x_wind_gust_10m
+        y_wind_gust = y_wind_gust_10m
+
+        dataset = dataset.drop_vars(['air_temperature_0m', 'air_temperature_2m', 'relative_humidity_2m', 'specific_humidity_2m',
+                        'x_wind_10m', 'y_wind_10m', 'x_wind_gust_10m', 'y_wind_gust_10m'])
+
+        dataset = xr.merge([dataset, air_temperature.rename('air_temperature'), relative_humidity.rename('relative_humidity'),
+                    specific_humidity.rename('specific_humidity'), x_wind.rename('x_wind'), y_wind.rename('y_wind'),
+                    x_wind_gust.rename('x_wind_gust'), y_wind_gust.rename('y_wind_gust')])
+        
+        return dataset
