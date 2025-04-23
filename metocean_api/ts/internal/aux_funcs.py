@@ -120,6 +120,6 @@ def get_tempfiles(product, lon, lat, dates):
         pass
 
     for date in dates:
-        tempfiles.append(str(Path(dir_name+"/"+product+"_"+"lon"+str(lon)+"lat"+str(lat)+"_"+date.strftime('%Y%m%d')+".nc")))
+        tempfiles.append(str(Path(dir_name+"/"+product+"_"+"lon"+str(lon)+"lat"+str(lat)+"_"+date.strftime('%Y%m%d%H%M')+".nc")))
 
     return tempfiles
