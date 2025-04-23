@@ -47,6 +47,8 @@ def find_product(name: str) -> Product:
             return NORACWaveSpectrum(name)
         case "NORA3_fp":
             return NORA3fp(name)
+        case "NORA3_":
+            return NORA3_(name)
 
     if name.startswith("E39"):
         return E39Observations(name)
