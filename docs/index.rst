@@ -142,6 +142,14 @@ Several options for **product** are available. Please check the data catalog for
 
   Dataset: https://thredds.met.no/thredds/catalog/windsurfer/mywavewam3km_spectra/catalog.html
 
+* For full output product from NORA3 developed by MET Norway: 
+
+  .. code-block:: python
+
+    product='NORA3_full_product'
+
+  Dataset: https://thredds.met.no/thredds/dodsC/nora3/catalog.html (*_fp files using [3-8] to avoid time overlap)
+
 * For coastal wave NORA3 data developed by MET Norway: 
 
   .. code-block:: python
