@@ -45,6 +45,10 @@ def find_product(name: str) -> Product:
             return NORA3WaveSpectrum(name)
         case "NORAC_wave_spec":
             return NORACWaveSpectrum(name)
+        case "NORA3_fp":
+            return NORA3fp(name)
+        case "NORA3_":
+            return NORA3_(name)
 
     if name.startswith("E39"):
         return E39Observations(name)
@@ -791,3 +795,213 @@ class E39Observations(MetProduct):
             self._clean_cache(tempfiles)
 
         return df
+
+
+class NORA3fp(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
+
+    def get_default_variables(self):
+        return [
+            'longitude',
+            'latitude',
+            'air_temperature_0m',
+            'surface_geopotential',
+            'liquid_water_content_of_surface_snow',
+            'downward_northward_momentum_flux_in_air',
+            'downward_eastward_momentum_flux_in_air',
+            'integral_of_toa_net_downward_shortwave_flux_wrt_time',
+            'integral_of_surface_net_downward_shortwave_flux_wrt_time',
+            'integral_of_toa_outgoing_longwave_flux_wrt_time',
+            'integral_of_surface_net_downward_longwave_flux_wrt_time',
+            'integral_of_surface_downward_latent_heat_evaporation_flux_wrt_time',
+            'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time',
+            'water_evaporation_amount',
+            'surface_snow_sublimation_amount_acc',
+            'integral_of_surface_downward_sensible_heat_flux_wrt_time',
+            'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time',
+            'integral_of_surface_downwelling_longwave_flux_in_air_wrt_time',
+            'rainfall_amount',
+            'snowfall_amount',
+            'graupelfall_amount_acc',
+            'air_temperature_2m',
+            'relative_humidity_2m',
+            'specific_humidity_2m',
+            'x_wind_10m',
+            'y_wind_10m',
+            'cloud_area_fraction',
+            'x_wind_gust_10m',
+            'y_wind_gust_10m',
+            'air_temperature_max',
+            'air_temperature_min',
+            'convective_cloud_area_fraction',
+            'high_type_cloud_area_fraction',
+            'medium_type_cloud_area_fraction',
+            'low_type_cloud_area_fraction',
+            'atmosphere_boundary_layer_thickness',
+            'hail_diagnostic',
+            'graupelfall_amount',
+                
+            'air_temperature_pl',
+            'cloud_area_fraction_pl',
+            'geopotential_pl',
+            'relative_humidity_pl',
+            'upward_air_velocity_pl',
+            'x_wind_pl',
+            'y_wind_pl',
+                
+            'air_pressure_at_sea_level',
+            'lwe_thickness_of_atmosphere_mass_content_of_water_vapor',
+            'x_wind_z',
+            'y_wind_z',
+            'surface_air_pressure',
+            'lifting_condensation_level',
+            'atmosphere_level_of_free_convection',
+            'atmosphere_level_of_neutral_buoyancy',
+            'wind_direction',
+            'wind_speed',
+            'precipitation_amount_acc',
+            'snowfall_amount_acc']
+
+    def get_dates(self, start_date, end_date):
+        date_range = pd.date_range(start=start_date, end=end_date, freq="h")
+        adjusted_dates = date_range - pd.Timedelta(hours=3)
+        return adjusted_dates
+
+    def _generate_time_info(self, dt : str):
+        run_start_hours = [0, 6, 12, 18]
+
+        # Find the closest preceding run start hour
+        hour = dt.hour
+        run_start = max([h for h in run_start_hours if h <= hour])
+
+        # Calculate the file number
+        file_number = 3 + (hour - run_start)
+
+        return run_start, file_number
+
+    def _get_url_info(self, date: str):
+        year = date.strftime("%Y")
+        month = date.strftime("%m")
+        day = date.strftime("%d")
+        hour, lead = self._generate_time_info(date)
+        return f"https://thredds.met.no/thredds/dodsC/nora3/{year:04}/{month:02}/{day:02}/{hour:02}/fc{year:04}{month:02}{day:02}{hour:02}_00{lead:1}_fp.nc"
+
+    def _get_near_coord(self, url: str, lon: float, lat: float):
+        with xr.open_dataset(url) as ds:
+            x, y = aux_funcs.find_nearest_cart_coord(ds.longitude, ds.latitude, lon, lat)
+            lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
+            lat_near = ds.latitude.sel(y=y, x=x).values[0][0]
+            return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
+    
+    def _alter_temporary_dataset_if_needed(self, dataset: xr.Dataset):
+        # Override this method in subclasses to alter the dataset before saving it to a temporary file
+        # Renaming variables that does not follow the standard names should also be done here
+        
+        dataset = dataset.rename({'height2' : 'height', 'height3':'height_clouds', 'pressure0':'pressure_level'})
+        dataset['wind_speed'] = np.sqrt(dataset['x_wind_z']**2 + dataset['y_wind_z']**2)
+        dataset['wind_from_direction'] = (270 - np.arctan2(dataset['y_wind_z'], dataset['x_wind_z']) * 180 / np.pi) % 360
+
+
+        air_temperature_0m = dataset['air_temperature_0m'].expand_dims({'standard_height': [0]})
+        air_temperature_2m = dataset['air_temperature_2m'].expand_dims({'standard_height': [2]})
+        relative_humidity_2m = dataset['relative_humidity_2m'].expand_dims({'standard_height': [2]})
+        specific_humidity_2m = dataset['specific_humidity_2m'].expand_dims({'standard_height': [2]})
+        x_wind_10m = dataset['x_wind_10m'].expand_dims({'standard_height': [10]})
+        y_wind_10m = dataset['y_wind_10m'].expand_dims({'standard_height': [10]})
+        x_wind_gust_10m = dataset['x_wind_gust_10m'].expand_dims({'standard_height': [10]})
+        y_wind_gust_10m = dataset['y_wind_gust_10m'].expand_dims({'standard_height': [10]})
+
+        air_temperature = xr.concat([air_temperature_0m, air_temperature_2m], dim='standard_height')
+        relative_humidity = relative_humidity_2m
+        specific_humidity = specific_humidity_2m
+        x_wind = x_wind_10m
+        y_wind = y_wind_10m
+        x_wind_gust = x_wind_gust_10m
+        y_wind_gust = y_wind_gust_10m
+
+        dataset = dataset.drop_vars(['air_temperature_0m', 'air_temperature_2m', 'relative_humidity_2m', 'specific_humidity_2m',
+                        'x_wind_10m', 'y_wind_10m', 'x_wind_gust_10m', 'y_wind_gust_10m'])
+
+        dataset = xr.merge([dataset, air_temperature.rename('air_temperature'), relative_humidity.rename('relative_humidity'),
+                    specific_humidity.rename('specific_humidity'), x_wind.rename('x_wind'), y_wind.rename('y_wind'),
+                    x_wind_gust.rename('x_wind_gust'), y_wind_gust.rename('y_wind_gust')])
+        
+        dataset = dataset.drop_vars(['x', 'y'])
+        
+        return dataset
+
+
+class NORA3_(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
+
+    def get_default_variables(self):
+        return [
+            'p0',
+            'ap',
+            'b',
+            'x',
+            'y',
+            'longitude',
+            'latitude',
+            'land_area_fraction',
+            'specific_humidity_ml',
+            'turbulent_kinetic_energy_ml',
+            'cloud_area_fraction_ml',
+            'toa_net_downward_shortwave_flux',
+            'surface_downwelling_shortwave_flux_in_air',
+            'toa_outgoing_longwave_flux',
+            'surface_downwelling_longwave_flux_in_air',
+            'atmosphere_boundary_layer_thickness',
+            'pressure_departure',
+            'surface_air_pressure',
+            'air_temperature_ml',
+            'surface_geopotential',
+            'x_wind_ml',
+            'y_wind_ml',
+            'air_pressure_at_sea_level',
+            'precipitation_amount_acc']
+
+    def get_dates(self, start_date, end_date):
+        date_range = pd.date_range(start=start_date, end=end_date, freq="3h")
+        adjusted_dates = date_range - pd.Timedelta(hours=3)
+        return adjusted_dates
+
+    def _generate_time_info(self, dt : str):
+        run_start_hours = [0, 6, 12, 18]
+
+        # Find the closest preceding run start hour
+        hour = dt.hour
+        run_start = max([h for h in run_start_hours if h <= hour])
+
+        # Calculate the file number
+        file_number = 3 + (hour - run_start)
+
+        return run_start, file_number
+
+    def _get_url_info(self, date: str):
+        year = date.strftime("%Y")
+        month = date.strftime("%m")
+        day = date.strftime("%d")
+        hour, lead = self._generate_time_info(date)
+        return f"https://thredds.met.no/thredds/dodsC/nora3/{year:04}/{month:02}/{day:02}/{hour:02}/fc{year:04}{month:02}{day:02}{hour:02}_00{lead:1}.nc"
+
+    def _get_near_coord(self, url: str, lon: float, lat: float):
+        with xr.open_dataset(url) as ds:
+            x, y = aux_funcs.find_nearest_cart_coord(ds.longitude, ds.latitude, lon, lat)
+            lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
+            lat_near = ds.latitude.sel(y=y, x=x).values[0][0]
+            return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
+    
+    def _alter_temporary_dataset_if_needed(self, dataset: xr.Dataset):
+        # Override this method in subclasses to alter the dataset before saving it to a temporary file
+        # Renaming variables that does not follow the standard names should also be done here
+        
+        dataset = dataset.drop_vars(['x', 'y'])
+        
+        return dataset

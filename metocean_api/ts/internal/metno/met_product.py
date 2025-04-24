@@ -75,7 +75,9 @@ class MetProduct(Product):
                     dataset.attrs["url"] = url
                     # Reduce to the wanted variables and coordinates
                     dataset = dataset[ts.variable]
-                    dataset = dataset.sel(selection).squeeze(drop=True)
+                    dataset = dataset.sel(selection)
+                    dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
+                    dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
                     dataset = self._alter_temporary_dataset_if_needed(dataset)
                     dataset.to_netcdf(tempfiles[i])
 
