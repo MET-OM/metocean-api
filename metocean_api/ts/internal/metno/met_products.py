@@ -958,7 +958,7 @@ class NORA3fp(MetProduct):
         return new_url1 == new_url2
     
     def _correct_fluxes(self, tempfiles):
-        fluxes = [
+        fluxes_base = [
             'integral_of_surface_downward_sensible_heat_flux_wrt_time',
             'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time',
             'integral_of_surface_downwelling_longwave_flux_in_air_wrt_time',
@@ -970,9 +970,15 @@ class NORA3fp(MetProduct):
             'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time'
         ]
 
+        ds_prec = xr.open_dataset(tempfiles[0], mode='a')
+        valid_keys = set(ds_prec.variables.keys())
+        fluxes = [flux for flux in fluxes_base if flux in valid_keys]
+
+        if not fluxes:
+            return -1
+        
         rename_dict = {flux: flux.replace('integral_of_', '').replace('_wrt_time', '') for flux in fluxes}
 
-        ds_prec = xr.open_dataset(tempfiles[0], mode='a')
         try:
             for i in range(1, len(tempfiles)):
                 ds = xr.open_dataset(tempfiles[i], mode='a')
