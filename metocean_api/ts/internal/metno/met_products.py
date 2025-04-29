@@ -869,6 +869,10 @@ class NORA3fp(MetProduct):
     def get_dates(self, start_date, end_date):
         date_range = pd.date_range(start=start_date, end=end_date, freq="h")
         adjusted_dates = date_range - pd.Timedelta(hours=3)
+        _, leadtime = self._generate_time_info(adjusted_dates[0])
+        if leadtime == 3:
+            extra_time_step = adjusted_dates[0] - pd.Timedelta(hours=1)
+            adjusted_dates = pd.DatetimeIndex([extra_time_step]).append(adjusted_dates)
         return adjusted_dates
 
     def _generate_time_info(self, dt : str):
