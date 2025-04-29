@@ -991,9 +991,6 @@ class NORA3fp(MetProduct):
                     raise
         finally:
             ds_prec.close()
-        
-        if tempfiles[0] == Path('cache/temp.nc'):
-            os.remove(Path('cache/temp.nc'))
 
     def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
         if ts.variable == [] or ts.variable is None:
@@ -1019,34 +1016,30 @@ class NORA3fp(MetProduct):
                 selection, lon_near, lat_near = self._get_near_coord(url, lon, lat)
                 tqdm.write(f"Nearest point to lat.={lat:.3f},lon.={lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}")
 
-            if use_cache and os.path.exists(tempfiles[i]) and os.path.exists(tempfiles[i+1]):
-                tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead and getting the raw file for next step fluxes calculation")
-                continue
+            _, lead_time = self._generate_time_info(dates[i])
 
-            elif use_cache and os.path.exists(tempfiles[i]) and not os.path.exists(tempfiles[i+1]):
-                with xr.open_dataset(url) as dataset:
-                    tqdm.write(f"Downloading {url}.")
-                    dataset.attrs["url"] = url
-                    # Reduce to the wanted variables and coordinates
-                    dataset = dataset[ts.variable]
-                    dataset = dataset.sel(selection)
-                    dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
-                    dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
-                    dataset = self._alter_temporary_dataset_if_needed(dataset)
-                    dataset.to_netcdf(Path('cache/temp.nc'))
-                same_forecast.append(Path('cache/temp.nc'))
+            if use_cache and os.path.exists(tempfiles[i]):
+                _, lead_time = self._generate_time_info(dates[i])
+                forecast_ok = True
+                for j in range(9-lead_time):
+                    forecast_ok = forecast_ok and os.path.exists(tempfiles[i + j])
+                if forecast_ok:
+                    tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead.")
+                    continue
+                else:
+                    tqdm.write(f"Found cached file {tempfiles[i]}. The current forecast is not complete, restarting it")
 
-            else:
-                with xr.open_dataset(url) as dataset:
-                    tqdm.write(f"Downloading {url}.")
-                    dataset.attrs["url"] = url
-                    # Reduce to the wanted variables and coordinates
-                    dataset = dataset[ts.variable]
-                    dataset = dataset.sel(selection)
-                    dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
-                    dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
-                    dataset = self._alter_temporary_dataset_if_needed(dataset)
-                    dataset.to_netcdf(tempfiles[i])
+
+            with xr.open_dataset(url) as dataset:
+                tqdm.write(f"Downloading {url}.")
+                dataset.attrs["url"] = url
+                # Reduce to the wanted variables and coordinates
+                dataset = dataset[ts.variable]
+                dataset = dataset.sel(selection)
+                dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
+                dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
+                dataset = self._alter_temporary_dataset_if_needed(dataset)
+                dataset.to_netcdf(tempfiles[i])
 
             if self._is_same_forecast(dates[i], dates[i+1]):
                 same_forecast.append(tempfiles[i])
