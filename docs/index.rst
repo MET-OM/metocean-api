@@ -146,9 +146,10 @@ Several options for **product** are available. Please check the data catalog for
 
   .. code-block:: python
 
-    product='NORA3_fp'
+    product='NORA3_fpc'
 
   Dataset: https://thredds.met.no/thredds/dodsC/nora3/catalog.html (fc<YYYYMMDDHH>_<leadtime>_fp.nc files using [3-8] time lead to avoid time overlap)
+  As the fluxes are accumulated overtime, we are taking the discrete time derivative from two consecutive forecasts ([acc_Hs(..._004_fp.nc) - acc_Hs(..._003_fp.nc)] / 3600s) 
 
 * For 3hourly raw output product from NORA3 developed by MET Norway: 
 
