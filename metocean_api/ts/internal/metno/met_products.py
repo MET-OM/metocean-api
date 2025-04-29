@@ -973,7 +973,7 @@ class NORA3fp(MetProduct):
 
         ds_prec = xr.open_dataset(tempfiles[0], mode='a')
         try:
-            for i in tqdm(range(1, len(tempfiles)), desc="Processing files"):
+            for i in range(1, len(tempfiles)):
                 ds = xr.open_dataset(tempfiles[i], mode='a')
                 try:
                     for flux in fluxes:
@@ -985,7 +985,7 @@ class NORA3fp(MetProduct):
                     ds_prec.close()
                     ds_prec = ds
                 except Exception as e:
-                    print(f"Error processing file {tempfiles[i]}: {e}")
+                    tqdm.write(f"Error processing file {tempfiles[i]}: {e}")
                     ds.close()
                     raise
         finally:
