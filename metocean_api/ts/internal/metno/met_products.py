@@ -938,7 +938,7 @@ class NORA3fp(MetProduct):
         
         return dataset
 
-    def is_same_forecast(self, date1, date2):
+    def _is_same_forecast(self, date1, date2):
         def generate_modified_url(date):
             url = self._get_url_info(date)
             parts = url.split('/')
@@ -956,7 +956,7 @@ class NORA3fp(MetProduct):
         # Compare the two URLs
         return new_url1 == new_url2
     
-    def _correct_fluxes(tempfiles):
+    def _correct_fluxes(self, tempfiles):
         fluxes = [
             'integral_of_surface_downward_sensible_heat_flux_wrt_time',
             'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time',
@@ -968,7 +968,28 @@ class NORA3fp(MetProduct):
             'integral_of_surface_downward_latent_heat_evaporation_flux_wrt_time',
             'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time'
         ]
-        print("Test")
+
+        rename_dict = {flux: flux.replace('integral_of_', '').replace('_wrt_time', '') for flux in fluxes}
+
+        ds_prec = xr.open_dataset(tempfiles[0], mode='a')
+        try:
+            for i in tqdm(range(1, len(tempfiles)), desc="Processing files"):
+                ds = xr.open_dataset(tempfiles[i], mode='a')
+                try:
+                    for flux in fluxes:
+                        ds[flux] = (ds[flux] - ds_prec[flux]) / 3600
+                        ds[flux].attrs['units'] = "W/m^2"
+                        ds[flux].attrs['standard_name'] = rename_dict[flux]
+
+                    ds_prec = ds.rename(rename_dict)
+                    ds_prec.close()
+                    ds_prec = ds
+                except Exception as e:
+                    print(f"Error processing file {tempfiles[i]}: {e}")
+                    ds.close()
+                    raise
+        finally:
+            ds_prec.close()
 
     def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
         if ts.variable == [] or ts.variable is None:
@@ -996,6 +1017,8 @@ class NORA3fp(MetProduct):
 
             if use_cache and os.path.exists(tempfiles[i]):
                 tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead")
+                continue
+
             else:
                 with xr.open_dataset(url) as dataset:
                     tqdm.write(f"Downloading {url}.")
@@ -1008,14 +1031,13 @@ class NORA3fp(MetProduct):
                     dataset = self._alter_temporary_dataset_if_needed(dataset)
                     dataset.to_netcdf(tempfiles[i])
 
-            if self.is_same_forecast(dates[i], dates[i+1]):
+            if self._is_same_forecast(dates[i], dates[i+1]):
                 same_forecast.append(tempfiles[i])
             
             else:
                 same_forecast.append(tempfiles[i])
                 tqdm.write("Calculation of the hourly fluxes")
-                print(same_forecast)
-
+                self._correct_fluxes(same_forecast)
                 same_forecast = []
 
 
