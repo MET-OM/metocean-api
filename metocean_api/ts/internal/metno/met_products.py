@@ -6,6 +6,7 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 import cartopy.crs as ccrs
+from tqdm import tqdm
 
 from .met_product import MetProduct
 
@@ -45,7 +46,7 @@ def find_product(name: str) -> Product:
             return NORA3WaveSpectrum(name)
         case "NORAC_wave_spec":
             return NORACWaveSpectrum(name)
-        case "NORA3_fp":
+        case "NORA3_fpc":
             return NORA3fp(name)
         case "NORA3_":
             return NORA3_(name)
@@ -932,6 +933,91 @@ class NORA3fp(MetProduct):
         dataset = dataset.drop_vars(['x', 'y'])
         
         return dataset
+
+    def is_same_forecast(self, date1, date2):
+        def generate_modified_url(date):
+            url = self._get_url_info(date)
+            parts = url.split('/')
+            filename = parts[-1]
+            filename_parts = filename.split('_')
+            filename_parts[1] = '003'
+            new_filename = '_'.join(filename_parts)
+            parts[-1] = new_filename
+            return '/'.join(parts)
+
+        # Generate the modified URLs for both dates
+        new_url1 = generate_modified_url(date1)
+        new_url2 = generate_modified_url(date2)
+
+        # Compare the two URLs
+        return new_url1 == new_url2
+    
+    def _correct_fluxes(tempfiles):
+        fluxes = [
+            'integral_of_surface_downward_sensible_heat_flux_wrt_time',
+            'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time',
+            'integral_of_surface_downwelling_longwave_flux_in_air_wrt_time',
+            'integral_of_toa_net_downward_shortwave_flux_wrt_time',
+            'integral_of_surface_net_downward_shortwave_flux_wrt_time',
+            'integral_of_toa_outgoing_longwave_flux_wrt_time',
+            'integral_of_surface_net_downward_longwave_flux_wrt_time',
+            'integral_of_surface_downward_latent_heat_evaporation_flux_wrt_time',
+            'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time'
+        ]
+        print("Test")
+
+    def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
+        if ts.variable == [] or ts.variable is None:
+            ts.variable = self.get_default_variables()
+        start_time = ts.start_time
+        end_time = ts.end_time
+        lat = ts.lat
+        lon = ts.lon
+
+        dates = self.get_dates(start_time, end_time)
+
+        tempfiles = aux_funcs.get_tempfiles(self.name, lon, lat, dates)
+        selection = None
+        lon_near = None
+        lat_near = None
+        same_forecast = []
+
+        # extract point and create temp files
+        for i in tqdm(range(len(dates))):
+            url = self._get_url_info(dates[i])
+
+            if i == 0:
+                selection, lon_near, lat_near = self._get_near_coord(url, lon, lat)
+                tqdm.write(f"Nearest point to lat.={lat:.3f},lon.={lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}")
+
+            if use_cache and os.path.exists(tempfiles[i]):
+                tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead")
+            else:
+                with xr.open_dataset(url) as dataset:
+                    tqdm.write(f"Downloading {url}.")
+                    dataset.attrs["url"] = url
+                    # Reduce to the wanted variables and coordinates
+                    dataset = dataset[ts.variable]
+                    dataset = dataset.sel(selection)
+                    dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
+                    dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
+                    dataset = self._alter_temporary_dataset_if_needed(dataset)
+                    dataset.to_netcdf(tempfiles[i])
+
+            if self.is_same_forecast(dates[i], dates[i+1]):
+                same_forecast.append(tempfiles[i])
+            
+            else:
+                same_forecast.append(tempfiles[i])
+                tqdm.write("Calculation of the hourly fluxes")
+                print(same_forecast)
+
+                same_forecast = []
+
+
+        ts.lat_data = lat_near
+        ts.lon_data = lon_near
+        return tempfiles, lon_near, lat_near
 
 
 class NORA3_(MetProduct):
