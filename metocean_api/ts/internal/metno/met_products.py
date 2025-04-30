@@ -8,6 +8,7 @@ import numpy as np
 import cartopy.crs as ccrs
 from tqdm import tqdm
 from pathlib import Path
+import netCDF4 as nc4
 
 from .met_product import MetProduct
 
@@ -970,7 +971,7 @@ class NORA3fp(MetProduct):
             'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time'
         ]
 
-        ds_prec = xr.open_dataset(tempfiles[0], mode='a')
+        ds_prec = nc4.Dataset(tempfiles[0], mode="r+")
         valid_keys = set(ds_prec.variables.keys())
         fluxes = [flux for flux in fluxes_base if flux in valid_keys]
 
@@ -979,22 +980,41 @@ class NORA3fp(MetProduct):
         
         rename_dict = {flux: flux.replace('integral_of_', '').replace('_wrt_time', '') for flux in fluxes}
 
+        for flux in fluxes:
+            newvar = ds_prec.createVariable(
+                    rename_dict[flux],
+                    ds_prec.variables[flux].datatype,
+                    ds_prec.variables[flux].dimensions
+                )
+            newvar[:] = ds_prec.variables[flux][:]
+            newvar.units = "W/m^2"
+            newvar.standard_name = rename_dict[flux]
+            newvar.long_name = ds_prec[flux].long_name.replace('Accumulated ', '')
+            newvar.grid_mapping = ds_prec[flux].grid_mapping
+
         try:
             for i in range(1, len(tempfiles)):
-                ds = xr.open_dataset(tempfiles[i], mode='a')
+                ds = nc4.Dataset(tempfiles[i], mode="r+")
                 try:
                     for flux in fluxes:
-                        ds[flux] = (ds[flux] - ds_prec[flux]) / 3600
-                        ds[flux].attrs['units'] = "W/m^2"
-                        ds[flux].attrs['standard_name'] = rename_dict[flux]
+                        newvar = ds.createVariable(
+                            rename_dict[flux],
+                            ds.variables[flux].datatype,
+                            ds.variables[flux].dimensions
+                        )
+                        newvar[:] = (ds.variables[flux][:] - ds_prec.variables[flux][:]) / 3600
+                        newvar.units = "W/m^2"
+                        newvar.standard_name = rename_dict[flux]
+                        newvar.long_name = ds[flux].long_name.replace('Accumulated ', '')
+                        newvar.grid_mapping = ds[flux].grid_mapping
 
-                    ds_prec = ds.rename(rename_dict)
                     ds_prec.close()
                     ds_prec = ds
                 except Exception as e:
                     tqdm.write(f"Error processing file {tempfiles[i]}: {e}")
                     ds.close()
                     raise
+
         finally:
             ds_prec.close()
 
@@ -1023,7 +1043,7 @@ class NORA3fp(MetProduct):
                 tqdm.write(f"Nearest point to lat.={lat:.3f},lon.={lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}")
 
             _, lead_time = self._generate_time_info(dates[i])
-
+            a = True
             if use_cache and os.path.exists(tempfiles[i]):
                 _, lead_time = self._generate_time_info(dates[i])
                 forecast_ok = True
@@ -1031,21 +1051,22 @@ class NORA3fp(MetProduct):
                     forecast_ok = forecast_ok and os.path.exists(tempfiles[i + j])
                 if forecast_ok:
                     tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead.")
-                    continue
+                    #continue
+                    a=False
                 else:
                     tqdm.write(f"Found cached file {tempfiles[i]}. The current forecast is not complete, restarting it")
 
-
-            with xr.open_dataset(url) as dataset:
-                tqdm.write(f"Downloading {url}.")
-                dataset.attrs["url"] = url
-                # Reduce to the wanted variables and coordinates
-                dataset = dataset[ts.variable]
-                dataset = dataset.sel(selection)
-                dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
-                dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
-                dataset = self._alter_temporary_dataset_if_needed(dataset)
-                dataset.to_netcdf(tempfiles[i])
+            if a:
+                with xr.open_dataset(url) as dataset:
+                    tqdm.write(f"Downloading {url}.")
+                    dataset.attrs["url"] = url
+                    # Reduce to the wanted variables and coordinates
+                    dataset = dataset[ts.variable]
+                    dataset = dataset.sel(selection)
+                    dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
+                    dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
+                    dataset = self._alter_temporary_dataset_if_needed(dataset)
+                    dataset.to_netcdf(tempfiles[i])
 
             if self._is_same_forecast(dates[i], dates[i+1]):
                 same_forecast.append(tempfiles[i])
@@ -1053,7 +1074,8 @@ class NORA3fp(MetProduct):
             else:
                 same_forecast.append(tempfiles[i])
                 tqdm.write("Calculation of the hourly fluxes")
-                self._correct_fluxes(same_forecast)
+                #self._correct_fluxes(same_forecast)
+                print(same_forecast)
                 same_forecast = []
 
 
