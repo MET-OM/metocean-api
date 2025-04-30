@@ -1013,8 +1013,7 @@ class NORA3fp(MetProduct):
                 continue
                 
             tqdm.write(f"Fetching forecast data {forecast.strftime('%Y-%m-%d %H:00')}")
-            forecast_files = []
-            #for lead_time in tqdm(range(3, 10), desc=f"Hindcast {forecast.strftime('%Y-%m-%d %H:00')}", leave=False):
+            forecast_files = []:
             for lead_time in range(3, 10):
                 url = self._get_url_info(forecast, lead_time)
                 file = Path("cache/nora_"+ url.split('/')[-1])
