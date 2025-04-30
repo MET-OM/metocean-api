@@ -8,7 +8,6 @@ import numpy as np
 import cartopy.crs as ccrs
 from tqdm import tqdm
 from pathlib import Path
-import netCDF4 as nc4
 
 from .met_product import MetProduct
 
@@ -869,32 +868,18 @@ class NORA3fp(MetProduct):
             'snowfall_amount_acc']
 
     def get_dates(self, start_date, end_date):
-        date_range = pd.date_range(start=start_date, end=end_date, freq="h")
-        adjusted_dates = date_range - pd.Timedelta(hours=3)
-        _, leadtime = self._generate_time_info(adjusted_dates[0])
-        if leadtime == 3:
-            extra_time_step = adjusted_dates[0] - pd.Timedelta(hours=1)
-            adjusted_dates = pd.DatetimeIndex([extra_time_step]).append(adjusted_dates)
-        return adjusted_dates
+        start_date = pd.to_datetime(start_date) - pd.Timedelta(hours=6)
+        end_date = pd.to_datetime(end_date) + pd.Timedelta(hours=23, minutes=59, seconds=59)
+        date_range = pd.date_range(start=start_date, end=end_date, freq="6h")
+        return date_range
 
-    def _generate_time_info(self, dt : str):
-        run_start_hours = [0, 6, 12, 18]
-
-        # Find the closest preceding run start hour
-        hour = dt.hour
-        run_start = max([h for h in run_start_hours if h <= hour])
-
-        # Calculate the file number
-        file_number = 3 + (hour - run_start)
-
-        return run_start, file_number
-
-    def _get_url_info(self, date: str):
+    def _get_url_info(self, date, lead_time):
         year = date.strftime("%Y")
         month = date.strftime("%m")
         day = date.strftime("%d")
-        hour, lead = self._generate_time_info(date)
-        return f"https://thredds.met.no/thredds/dodsC/nora3/{year:04}/{month:02}/{day:02}/{hour:02}/fc{year:04}{month:02}{day:02}{hour:02}_00{lead:1}_fp.nc"
+        hour = date.strftime("%H")
+        return f"https://thredds.met.no/thredds/dodsC/nora3/{year:04}/{month:02}/{day:02}/{hour:02}/fc{year:04}{month:02}{day:02}{hour:02}_00{lead_time:1}_fp.nc"
+    
 
     def _get_near_coord(self, url: str, lon: float, lat: float):
         with xr.open_dataset(url) as ds:
@@ -958,7 +943,7 @@ class NORA3fp(MetProduct):
         # Compare the two URLs
         return new_url1 == new_url2
     
-    def _correct_fluxes(self, tempfiles):
+    def _process_fluxes(self, ds):
         fluxes_base = [
             'integral_of_surface_downward_sensible_heat_flux_wrt_time',
             'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time',
@@ -968,55 +953,36 @@ class NORA3fp(MetProduct):
             'integral_of_toa_outgoing_longwave_flux_wrt_time',
             'integral_of_surface_net_downward_longwave_flux_wrt_time',
             'integral_of_surface_downward_latent_heat_evaporation_flux_wrt_time',
-            'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time'
+            'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time',
+            'downward_northward_momentum_flux_in_air',
+            'downward_eastward_momentum_flux_in_air',
         ]
 
-        ds_prec = nc4.Dataset(tempfiles[0], mode="r+")
-        valid_keys = set(ds_prec.variables.keys())
-        fluxes = [flux for flux in fluxes_base if flux in valid_keys]
+        fluxes = [flux for flux in fluxes_base if flux in ds.variables.keys()]
 
         if not fluxes:
-            return -1
-        
-        rename_dict = {flux: flux.replace('integral_of_', '').replace('_wrt_time', '') for flux in fluxes}
+            return ds
 
         for flux in fluxes:
-            newvar = ds_prec.createVariable(
-                    rename_dict[flux],
-                    ds_prec.variables[flux].datatype,
-                    ds_prec.variables[flux].dimensions
-                )
-            newvar[:] = ds_prec.variables[flux][:]
-            newvar.units = "W/m^2"
-            newvar.standard_name = rename_dict[flux]
-            newvar.long_name = ds_prec[flux].long_name.replace('Accumulated ', '')
-            newvar.grid_mapping = ds_prec[flux].grid_mapping
+            attr = ds[flux].attrs
+            
+            if 'integral' in flux:
+                ds[flux] = ds[flux].diff('time') / 3600
+                attr['units'] = 'W/m^2'
+            else:
+                ds[flux] = ds[flux].diff('time')
+            attr['long_name'] = attr['long_name'].replace('Accumulated ', '')
+            attr['long_name'] = attr['long_name'][0].upper() + attr['long_name'][1:]
+            if 'metno_name' in attr:
+                attr['standard_name'] = attr['metno_name'].replace('integral_of_', '').replace('_wrt_time','')
+                attr.pop('metno_name', None)
+            else:
+                attr['standard_name'] = attr['standard_name'].replace('integral_of_', '').replace('_wrt_time','')
+            ds[flux].attrs = attr
+        
+        return ds.rename({f : f.replace('integral_of_', '').replace('_wrt_time','') for f in fluxes}).isel(time=slice(1, None))
 
-        try:
-            for i in range(1, len(tempfiles)):
-                ds = nc4.Dataset(tempfiles[i], mode="r+")
-                try:
-                    for flux in fluxes:
-                        newvar = ds.createVariable(
-                            rename_dict[flux],
-                            ds.variables[flux].datatype,
-                            ds.variables[flux].dimensions
-                        )
-                        newvar[:] = (ds.variables[flux][:] - ds_prec.variables[flux][:]) / 3600
-                        newvar.units = "W/m^2"
-                        newvar.standard_name = rename_dict[flux]
-                        newvar.long_name = ds[flux].long_name.replace('Accumulated ', '')
-                        newvar.grid_mapping = ds[flux].grid_mapping
 
-                    ds_prec.close()
-                    ds_prec = ds
-                except Exception as e:
-                    tqdm.write(f"Error processing file {tempfiles[i]}: {e}")
-                    ds.close()
-                    raise
-
-        finally:
-            ds_prec.close()
 
     def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
         if ts.variable == [] or ts.variable is None:
@@ -1028,35 +994,38 @@ class NORA3fp(MetProduct):
 
         dates = self.get_dates(start_time, end_time)
 
-        tempfiles = aux_funcs.get_tempfiles(self.name, lon, lat, dates)
+        tempfiles = aux_funcs.get_tempfiles(self.name, lon, lat, dates + pd.Timedelta(hours=4))
         selection = None
         lon_near = None
         lat_near = None
         same_forecast = []
 
         # extract point and create temp files
-        for i in tqdm(range(len(dates))):
-            url = self._get_url_info(dates[i])
 
-            if i == 0:
-                selection, lon_near, lat_near = self._get_near_coord(url, lon, lat)
-                tqdm.write(f"Nearest point to lat.={lat:.3f},lon.={lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}")
+        selection, lon_near, lat_near = self._get_near_coord(self._get_url_info(dates[0], 3), lon, lat)
+        tqdm.write(f"Nearest point to lat.={lat:.3f},lon.={lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}")
 
-            _, lead_time = self._generate_time_info(dates[i])
-            a = True
+        pbar = tqdm(total=len(dates), desc="Downloading NORA3 raw hindcast")
+        for i, forecast in enumerate(dates):
             if use_cache and os.path.exists(tempfiles[i]):
-                _, lead_time = self._generate_time_info(dates[i])
-                forecast_ok = True
-                for j in range(9-lead_time):
-                    forecast_ok = forecast_ok and os.path.exists(tempfiles[i + j])
-                if forecast_ok:
-                    tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead.")
-                    #continue
-                    a=False
-                else:
-                    tqdm.write(f"Found cached file {tempfiles[i]}. The current forecast is not complete, restarting it")
+                tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead")
+                pbar.update(1)
+                continue
+                
+            tqdm.write(f"Fetching forecast data {forecast.strftime('%Y-%m-%d %H:00')}")
+            forecast_files = []
+            #for lead_time in tqdm(range(3, 10), desc=f"Hindcast {forecast.strftime('%Y-%m-%d %H:00')}", leave=False):
+            for lead_time in range(3, 10):
+                url = self._get_url_info(forecast, lead_time)
+                file = Path("cache/nora_"+ url.split('/')[-1])
 
-            if a:
+
+                if use_cache and os.path.exists(file):
+                    tqdm.write(f"Found cached file {file}. Using this instead")
+                    forecast_files.append(file)
+                    continue
+
+
                 with xr.open_dataset(url) as dataset:
                     tqdm.write(f"Downloading {url}.")
                     dataset.attrs["url"] = url
@@ -1065,20 +1034,23 @@ class NORA3fp(MetProduct):
                     dataset = dataset.sel(selection)
                     dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
                     dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
-                    dataset = self._alter_temporary_dataset_if_needed(dataset)
-                    dataset.to_netcdf(tempfiles[i])
-
-            if self._is_same_forecast(dates[i], dates[i+1]):
-                same_forecast.append(tempfiles[i])
+                    dataset.to_netcdf(file)
+                    forecast_files.append(file)
             
-            else:
-                same_forecast.append(tempfiles[i])
-                tqdm.write("Calculation of the hourly fluxes")
-                #self._correct_fluxes(same_forecast)
-                print(same_forecast)
-                same_forecast = []
 
+            tqdm.write(f"Processing forecast data {forecast.strftime('%Y-%m-%d %H:00')}")
+            with xr.open_mfdataset(forecast_files) as ds:
+                ds = self._process_fluxes(ds)
+                ds = self._alter_temporary_dataset_if_needed(ds)
+                ds.to_netcdf(tempfiles[i])
+                
 
+            #Clean the tempory forecast files
+            if not use_cache:
+                self._clean_cache(forecast_files)
+            
+            pbar.update(1)
+        
         ts.lat_data = lat_near
         ts.lon_data = lon_near
         return tempfiles, lon_near, lat_near
