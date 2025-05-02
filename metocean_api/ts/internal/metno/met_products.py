@@ -944,21 +944,21 @@ class NORA3fp(MetProduct):
         return new_url1 == new_url2
     
     def _process_fluxes(self, ds):
-        fluxes_base = [
-            'integral_of_surface_downward_sensible_heat_flux_wrt_time',
-            'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time',
-            'integral_of_surface_downwelling_longwave_flux_in_air_wrt_time',
-            'integral_of_toa_net_downward_shortwave_flux_wrt_time',
-            'integral_of_surface_net_downward_shortwave_flux_wrt_time',
-            'integral_of_toa_outgoing_longwave_flux_wrt_time',
-            'integral_of_surface_net_downward_longwave_flux_wrt_time',
-            'integral_of_surface_downward_latent_heat_evaporation_flux_wrt_time',
-            'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time',
-            'downward_northward_momentum_flux_in_air',
-            'downward_eastward_momentum_flux_in_air',
-        ]
+        fluxes_base = {
+            'integral_of_surface_downward_sensible_heat_flux_wrt_time' : 'W/m^2',
+            'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time' : 'W/m^2',
+            'integral_of_surface_downwelling_longwave_flux_in_air_wrt_time' : 'W/m^2',
+            'integral_of_toa_net_downward_shortwave_flux_wrt_time' : 'W/m^2',
+            'integral_of_surface_net_downward_shortwave_flux_wrt_time' : 'W/m^2',
+            'integral_of_toa_outgoing_longwave_flux_wrt_time' : 'W/m^2',
+            'integral_of_surface_net_downward_longwave_flux_wrt_time' : 'W/m^2',
+            'integral_of_surface_downward_latent_heat_evaporation_flux_wrt_time' : 'W/m^2',
+            'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time' : 'W/m^2',
+            'downward_northward_momentum_flux_in_air' : 'N/m^2',
+            'downward_eastward_momentum_flux_in_air' : 'N/m^2'
+        }
 
-        fluxes = [flux for flux in fluxes_base if flux in ds.variables.keys()]
+        fluxes = [flux for flux in fluxes_base.keys() if flux in ds.variables.keys()]
 
         if not fluxes:
             return ds
@@ -966,11 +966,10 @@ class NORA3fp(MetProduct):
         for flux in fluxes:
             attr = ds[flux].attrs
             
-            if 'integral' in flux:
-                ds[flux] = ds[flux].diff('time') / 3600
-                attr['units'] = 'W/m^2'
-            else:
-                ds[flux] = ds[flux].diff('time')
+
+            ds[flux] = ds[flux].diff('time') / 3600
+            attr['units'] = fluxes_base[flux]
+
             attr['long_name'] = attr['long_name'].replace('Accumulated ', '')
             attr['long_name'] = attr['long_name'][0].upper() + attr['long_name'][1:]
             if 'metno_name' in attr:
@@ -1013,7 +1012,7 @@ class NORA3fp(MetProduct):
                 continue
                 
             tqdm.write(f"Fetching forecast data {forecast.strftime('%Y-%m-%d %H:00')}")
-            forecast_files = []:
+            forecast_files = []
             for lead_time in range(3, 10):
                 url = self._get_url_info(forecast, lead_time)
                 file = Path("cache/nora_"+ url.split('/')[-1])
