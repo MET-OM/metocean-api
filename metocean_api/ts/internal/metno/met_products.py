@@ -944,21 +944,145 @@ class NORA3fp(MetProduct):
         return new_url1 == new_url2
     
     def _process_fluxes(self, ds):
-        fluxes_base = {
-            'integral_of_surface_downward_sensible_heat_flux_wrt_time' : 'W/m^2',
-            'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time' : 'W/m^2',
-            'integral_of_surface_downwelling_longwave_flux_in_air_wrt_time' : 'W/m^2',
-            'integral_of_toa_net_downward_shortwave_flux_wrt_time' : 'W/m^2',
-            'integral_of_surface_net_downward_shortwave_flux_wrt_time' : 'W/m^2',
-            'integral_of_toa_outgoing_longwave_flux_wrt_time' : 'W/m^2',
-            'integral_of_surface_net_downward_longwave_flux_wrt_time' : 'W/m^2',
-            'integral_of_surface_downward_latent_heat_evaporation_flux_wrt_time' : 'W/m^2',
-            'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time' : 'W/m^2',
-            'downward_northward_momentum_flux_in_air' : 'N/m^2',
-            'downward_eastward_momentum_flux_in_air' : 'N/m^2'
+
+        working_dict = {
+            'liquid_water_content_of_surface_snow': {
+                'long_name': 'Instantaneous Liquid Water Content of Surface Snow',
+                'standard_name': 'liquid_water_content_of_surface_snow',
+                'units': 'kg m-2', 
+                '_multiplier': 1,  # No conversion needed if already instantaneous
+                '_rename': 'liquid_water_content_of_surface_snow'
+            },
+            'downward_northward_momentum_flux_in_air': {
+                'long_name': 'Instantaneous Downward Northward Momentum Flux in Air',
+                'standard_name': 'downward_northward_momentum_flux_in_air',
+                'units': 'N m-2',  
+                '_multiplier': 1/3600, #Needed to fit ERA5 values
+                '_rename': 'downward_northward_momentum_flux_in_air'
+            },
+            'downward_eastward_momentum_flux_in_air': {
+                'long_name': 'Instantaneous Downward Eastward Momentum Flux in Air',
+                'standard_name': 'downward_eastward_momentum_flux_in_air',
+                'units': 'N m-2',  
+                '_multiplier': 1/3600, #Needed to fit ERA5 values
+                '_rename': 'downward_eastward_momentum_flux_in_air'
+            },
+            'integral_of_toa_net_downward_shortwave_flux_wrt_time': {
+                'long_name': 'Instantaneous TOA Net Downward Shortwave Flux',
+                'standard_name': 'toa_net_downward_shortwave_flux',
+                'units': 'W m-2',
+                '_multiplier': 1/3600,
+                '_rename': 'toa_net_downward_shortwave_flux'
+            },
+            'integral_of_surface_net_downward_shortwave_flux_wrt_time': {
+                'long_name': 'Instantaneous Surface Net Downward Shortwave Flux',
+                'standard_name': 'surface_net_downward_shortwave_flux',
+                'units': 'W m-2',
+                '_multiplier': 1/3600,
+                '_rename': 'surface_net_downward_shortwave_flux'
+            },
+            'integral_of_toa_outgoing_longwave_flux_wrt_time': {
+                'long_name': 'Instantaneous TOA Outgoing Longwave Flux',
+                'standard_name': 'toa_outgoing_longwave_flux',
+                'units': 'W m-2',
+                '_multiplier': 1/3600,
+                '_rename': 'toa_outgoing_longwave_flux'
+            },
+            'integral_of_surface_net_downward_longwave_flux_wrt_time': {
+                'long_name': 'Instantaneous Surface Net Downward Longwave Flux',
+                'standard_name': 'surface_net_downward_longwave_flux',
+                'units': 'W m-2',
+                '_multiplier': 1/3600,
+                '_rename': 'surface_net_downward_longwave_flux'
+            },
+            'integral_of_surface_downward_latent_heat_evaporation_flux_wrt_time': {
+                'long_name': 'Instantaneous Surface Downward Latent Heat Flux from Evaporation',
+                'standard_name': 'surface_downward_latent_heat_evaporation_flux',
+                'units': 'W m-2',
+                '_multiplier': 1/3600,
+                '_rename': 'surface_downward_latent_heat_evaporation_flux'
+            },
+            'integral_of_surface_downward_latent_heat_sublimation_flux_wrt_time': {
+                'long_name': 'Instantaneous Surface Downward Latent Heat Flux from Sublimation',
+                'standard_name': 'surface_downward_latent_heat_sublimation_flux',
+                'units': 'W m-2',
+                '_multiplier': 1/3600,
+                '_rename': 'surface_downward_latent_heat_sublimation_flux'
+            },
+            'integral_of_surface_downward_sensible_heat_flux_wrt_time' : {
+                'long_name' : 'Instantaneous Surface Downward Sensible Heat Flux in Air',
+                'standard_name' : 'surface_downward_sensible_heat_flux',
+                'units' : 'W m-2',
+                '_multiplier' : 1/3600,
+                '_rename' : 'surface_downward_sensible_heat_flux'
+            },
+            'integral_of_surface_downwelling_shortwave_flux_in_air_wrt_time' : {
+                'long_name' : 'Surface Downwelling Shortwave Flux',
+                'standard_name' : 'surface_downwelling_shortwave_flux_in_air',
+                'units' : 'W m-2',
+                '_multiplier' : 1/3600,
+                '_rename' : 'surface_downwelling_shortwave_flux_in_air'
+            },
+            'integral_of_surface_downwelling_longwave_flux_in_air_wrt_time' : {
+                'long_name' : 'Surface Downwelling Longwave Flux',
+                'standard_name' : 'surface_downwelling_longwave_flux_in_air',
+                'units' : 'W m-2',
+                '_multiplier' : 1/3600,
+                '_rename' : 'surface_downwelling_longwave_flux_in_air'
+            },
+            'rainfall_amount' : {
+                'long_name' : 'Amount of rain precipitation in the current time step',
+                'standard_name' : 'rainfall_amount',
+                'units' : 'kg m-2',
+                '_multiplier' : 1,
+                '_rename' : 'rainfall_amount'
+            },
+            'snowfall_amount' : {
+                'long_name' : 'Amount of snow precipitation in the current time step',
+                'standard_name' : 'snowfall_amount',
+                'units' : 'kg m-2',
+                '_multiplier' : 1,
+                '_rename' : 'snowfall_amount'
+            },
+            'graupelfall_amount_acc' : {
+                'long_name' : 'Amount of graupel fall in the current time step',
+                'standard_name' : 'graupel_precipitation_amount',
+                'units' : 'kg m-2',
+                '_multiplier' : 1,
+                '_rename' : 'graupel_precipitation_amount'
+            },
+            'precipitation_amount_acc' : {
+                'long_name' : 'Amount of precipitation in the current time step',
+                'standard_name' : 'precipitation_amount',
+                'units' : 'kg m-2',
+                '_multiplier' : 1,
+                '_rename' : 'precipitation_amount'
+            },
+            'snowfall_amount_acc' : {
+                'long_name' : 'Amount solid Precipitation (snow+graupel+hail) in the current time step',
+                'standard_name' : 'solid_precipitation_amount',
+                'units' : 'kg m-2',
+                '_multiplier' : 1,
+                '_rename' : 'solid_precipitation_amount'
+            },
+            'surface_snow_sublimation_amount_acc' : {
+                'long_name' : 'Instantaneous Surface Snow Sublimation Mass per Unit Area',
+                'standard_name' : 'surface_snow_sublimation_amount',
+                'units' : 'kg m-2',
+                '_multiplier' : 1,
+                '_rename' : None #Conflict fix
+            },
+            'water_evaporation_amount_acc': {
+                'long_name': 'Accumulated Water Evaporation Mass per Unit Area',
+                'standard_name': 'water_evaporation_amount',
+                'units': 'kg m-2',
+                '_multiplier': 1,
+                '_rename': 'water_evaporation_amount'
+            }
+
         }
 
-        fluxes = [flux for flux in fluxes_base.keys() if flux in ds.variables.keys()]
+        fluxes = [flux for flux in working_dict.keys() if flux in ds.variables.keys()]
 
         if not fluxes:
             return ds
@@ -968,18 +1092,17 @@ class NORA3fp(MetProduct):
             
 
             ds[flux] = ds[flux].diff('time') / 3600
-            attr['units'] = fluxes_base[flux]
-
-            attr['long_name'] = attr['long_name'].replace('Accumulated ', '')
-            attr['long_name'] = attr['long_name'][0].upper() + attr['long_name'][1:]
-            if 'metno_name' in attr:
-                attr['standard_name'] = attr['metno_name'].replace('integral_of_', '').replace('_wrt_time','')
+            for key in working_dict[flux].keys():
+                if not key[0] == "_":
+                    attr[key] = working_dict[flux][key]
+            try:
                 attr.pop('metno_name', None)
-            else:
-                attr['standard_name'] = attr['standard_name'].replace('integral_of_', '').replace('_wrt_time','')
-            ds[flux].attrs = attr
+            except:
+                pass
         
-        return ds.rename({f : f.replace('integral_of_', '').replace('_wrt_time','') for f in fluxes}).isel(time=slice(1, None))
+        rename_dict= { key : working_dict[flux]['_rename'] for key in working_dict.keys() if key in fluxes and working_dict[flux]['_rename'] is not None}
+       
+        return ds.rename_vars(rename_dict).isel(time=slice(1, None))
 
 
 
@@ -997,7 +1120,6 @@ class NORA3fp(MetProduct):
         selection = None
         lon_near = None
         lat_near = None
-        same_forecast = []
 
         # extract point and create temp files
 
@@ -1125,3 +1247,112 @@ class NORA3_(MetProduct):
         dataset = dataset.drop_vars(['x', 'y'])
         
         return dataset
+
+class NORA3OffshoreWind(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.METEOROLOGICAL
+
+    def get_default_variables(self):
+        raise NotImplementedError("This method should not be called")
+
+    def _get_url_info(self, date: str):
+        raise NotImplementedError("This method should not be called")
+
+    def _get_near_coord(self, url: str, lon: float, lat: float):
+        raise NotImplementedError("This method should not be called")
+
+    def get_dates(self, start_date, end_date):
+        raise NotImplementedError("This method should not be called")
+
+    def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
+        product = ts.product
+
+        fpc = NORA3fp('NORA3_fpc')
+        fpc_vars = fpc.get_default_variables()
+        ts.variable = fpc_vars
+        ts.product = fpc.name
+        fpc_files, fpc_lon_near, fpc_lat_near = fpc.download_temporary_files(ts, use_cache)
+
+        atm = NORA3Atm3hrSub("NORA3_atm3hr_sub")
+        atm_vars = atm.get_default_variables()
+        ts.variable = atm_vars
+        ts.product = atm.name
+        atm_files, atm_lon_near, atm_lat_near = atm.download_temporary_files(ts, use_cache)
+
+        ts.variable = wave_vars + wind_vars
+        ts.product = product
+
+        tempfiles = fpc_files + atm_files
+
+        with xr.open_mfdataset(fpc_files) as ds_fpc, xr.open_mfdataset(atm_files) as ds_atm:
+            same_coords = fpc_lon_near == atm_lon_near and fpc_lat_near == atm_lat_near
+            if not same_coords:
+                print(
+                    f"Coordinates for NORA3_fpc Raw Forecast ({fpc_lat_near},{fpc_lon_near}) and NORA3_atm3hr_sub ({atm_lat_near},{atm_lon_near}) are not the same. Using NORA3_fpc Raw Forecast coordinates. "
+                )
+                ds_atm = ds_atm.drop_vars(["latitude", "longitude"], errors="ignore")
+
+        # wave = Nora3Wave("NORA3_wave_sub")
+        # wave_vars = wave.get_default_variables()
+        # ts.variable = wave_vars
+        # ts.product = wave.name
+        # wave_files, wave_lon_near, wave_lat_near = wave.download_temporary_files(ts, use_cache)
+        # lon_near = wave_lon_near
+        # lat_near = wave_lat_near
+
+        # wind = NORA3WindSub("NORA3_wind_sub")
+        # wind_vars = wind.get_default_variables()
+        # ts.variable = wind_vars
+        # ts.product = wind.name
+
+        # wind_files, wind_lon_near, wind_lat_near = wind.download_temporary_files(ts, use_cache)
+
+
+        # ts.variable = wave_vars + wind_vars
+        # ts.product = product
+
+        # tempfiles = wave_files + wind_files
+
+        # with xr.open_mfdataset(wave_files) as wave_values, xr.open_mfdataset(wind_files) as wind_values:
+        #     # The latitude and longitude are not exactly the same for both datasets, so remove this from the wind dataset to be able merge them
+        #     same_coords = wave_lon_near == wind_lon_near and wave_lat_near == wind_lat_near
+        #     if not same_coords:
+        #         print(
+        #             f"Coordinates for wave ({wave_lat_near},{wave_lon_near}) and wind ({wind_lat_near},{wind_lon_near}) are not the same. Using wave coordinates. "
+        #         )
+        #         wind_values = wind_values.drop_vars(["latitude", "longitude"], errors="ignore")
+        #     self._remove_if_datafile_exists(ts.datafile)
+        #     # merge temp files
+        #     if save_nc:
+        #         ds = xr.merge([wave_values, wind_values])
+        #         # Save the unaltered structure
+        #         ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
+        #         ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
+
+        #     flatten_dims = {"height": ts.height}
+        #     wave_ds = wave._flatten_data_structure(wave_values, **flatten_dims)
+        #     wind_ds = wind._flatten_data_structure(wind_values, **flatten_dims)
+        #     ds = xr.merge([wave_ds, wind_ds]).squeeze(drop=True)
+
+        #     df = self.create_dataframe(
+        #         ds=ds,
+        #         lon_near=lon_near,
+        #         lat_near=lat_near,
+        #         outfile=ts.datafile,
+        #         start_time=ts.start_time,
+        #         end_time=ts.end_time,
+        #         save_csv=save_csv,
+        #         **flatten_dims
+        #     )
+
+
+        # if not use_cache:
+        #     # remove temp/cache files
+        #     self._clean_cache(tempfiles)
+
+        # return df
+
+    def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
+        raise NotImplementedError(f"Not implemented for product {self.name}")
