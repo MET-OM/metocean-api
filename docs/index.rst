@@ -159,6 +159,14 @@ Several options for **product** are available. Please check the data catalog for
 
   Dataset: https://thredds.met.no/thredds/projects/nora3.html (fc<YYYYMMDDHH>_<leadtime>.nc files using [3,6] time lead to avoid time overlap)
 
+* For wind data and Obukhov length over the NORA3 domain. This product is computed from the hourly raw data from the NORA3 atmospheric hindcast developed by MET Norway and a subset of atmospheric parameters. The available variables are wind speed and direction at 10, 20, 50, 100, 250, 500, and 750 meters with an hourly time step. The Obukhov length, friction velocity, surface pressure, 2-meter air temperature, relative humidity, and specific humidity are also included. In adition the turbulent kinetic energy at 50, 100, 150, 200 and 300m are provided with 3 hourly time step without resampling.
+  
+  .. code-block:: python
+
+    product='NORA3_offshore_wind'
+
+  Dataset: The original dataset are https://thredds.met.no/thredds/projects/nora3.html and https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html. The workflow to create this dataset have been created by SINTEF Energy Research (Louis Pauchet, Valentin Chabaud) for the purpose of the `Willow Project <https://www.sintef.no/en/projects/2023/willow/>`_ .
+
 * For coastal wave NORA3 data developed by MET Norway: 
 
   .. code-block:: python
