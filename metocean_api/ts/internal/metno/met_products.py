@@ -1257,6 +1257,23 @@ class NORA3_(MetProduct):
         return dataset
 
 class NORA3OffshoreWind(MetProduct):
+    """
+    A class for handling wind data and Obukhov length over the NORA3 domain.
+
+    This product includes:
+    - Wind speed and direction at various heights (10m to 750m) with an hourly time step.
+    - Obukhov length, friction velocity, surface pressure, air temperature, and humidity with an hourly time step.
+    - Turbulent kinetic energy at specific heights with a 3-hourly time step.
+
+    Original datasets:
+    - https://thredds.met.no/thredds/projects/nora3.html
+    - https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html
+
+    Developed by SINTEF Energy Research (Louis Pauchet, Valentin Chabaud) for the Willow Project.
+
+    Example:
+        product = 'NORA3_offshore_wind'
+    """
 
     @property
     def convention(self) -> Convention:
