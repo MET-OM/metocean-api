@@ -95,9 +95,13 @@ def create_dataframe(product, ds: xr.Dataset, lon_near, lat_near, outfile, start
         with open(outfile, "w", encoding="utf8", newline="") as f:
             f.write(header)
             df.to_csv(f, header=False, encoding=f.encoding, index_label="time")
-            print(f"Dataframe saved at {outfile}")
+            print(f"CSV file created at {outfile}")
 
     return df
+
+def save_to_netcdf(ds, outfile):
+    ds.to_netcdf(outfile)
+    print(f"NetCDF file created at {outfile}")
 
 
 def read_commented_lines(datafile):
