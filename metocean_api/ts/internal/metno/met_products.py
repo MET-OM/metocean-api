@@ -1070,7 +1070,7 @@ class NORA3fp(MetProduct):
                 'standard_name' : 'surface_snow_sublimation_amount',
                 'units' : 'kg m-2',
                 '_multiplier' : 1,
-                '_rename' : None #Conflict fix
+                '_rename' : 'surface_snow_sublimation_amount' #None #Conflict fix
             },
             'water_evaporation_amount_acc': {
                 'long_name': 'Accumulated Water Evaporation Mass per Unit Area',
@@ -1091,7 +1091,7 @@ class NORA3fp(MetProduct):
             attr = ds[flux].attrs
             
 
-            ds[flux] = ds[flux].diff('time') / 3600
+            ds[flux] = ds[flux].diff('time') * working_dict[flux]['_multiplier']
             for key in working_dict[flux].keys():
                 if not key[0] == "_":
                     attr[key] = working_dict[flux][key]
@@ -1099,8 +1099,10 @@ class NORA3fp(MetProduct):
                 attr.pop('metno_name', None)
             except:
                 pass
-        
-        rename_dict= { key : working_dict[flux]['_rename'] for key in working_dict.keys() if key in fluxes and working_dict[flux]['_rename'] is not None}
+                
+            ds[flux].attrs = attr
+            
+        rename_dict= { key : working_dict[key]['_rename'] for key in working_dict.keys() if key in fluxes and working_dict[key]['_rename'] is not None}
        
         return ds.rename_vars(rename_dict).isel(time=slice(1, None))
 
