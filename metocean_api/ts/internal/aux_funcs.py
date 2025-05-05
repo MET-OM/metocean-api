@@ -95,6 +95,7 @@ def create_dataframe(product, ds: xr.Dataset, lon_near, lat_near, outfile, start
         with open(outfile, "w", encoding="utf8", newline="") as f:
             f.write(header)
             df.to_csv(f, header=False, encoding=f.encoding, index_label="time")
+            print(f"Dataframe saved at {outfile}")
 
     return df
 
