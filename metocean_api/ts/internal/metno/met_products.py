@@ -1145,7 +1145,7 @@ class NORA3fp(MetProduct):
             forecast_files = []
             for lead_time in range(3, 10):
                 url = self._get_url_info(forecast, lead_time)
-                file = Path("cache/nora_"+ url.split('/')[-1])
+                file = Path(f"cache/nora_{lon_near:.3f}_{lat_near:.3f}"+ url.split('/')[-1])
 
 
                 if use_cache and os.path.exists(file):
