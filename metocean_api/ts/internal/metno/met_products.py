@@ -1269,7 +1269,7 @@ class NORA3OffshoreWind(MetProduct):
     - https://thredds.met.no/thredds/projects/nora3.html
     - https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html
 
-    Developed by SINTEF Energy Research (Louis Pauchet, Valentin Chabaud) for the Willow Project.
+    This work was done at SINTEF within the Horizon Europe project WILLOW.
 
     Example:
         product = 'NORA3_offshore_wind'

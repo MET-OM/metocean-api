@@ -165,7 +165,7 @@ Several options for **product** are available. Please check the data catalog for
 
     product='NORA3_offshore_wind'
 
-  Dataset: The original dataset are https://thredds.met.no/thredds/projects/nora3.html and https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html. The workflow to create this dataset have been created by SINTEF Energy Research (Louis Pauchet, Valentin Chabaud) for the purpose of the `Willow Project <https://www.sintef.no/en/projects/2023/willow/>`_ .
+  Dataset: The original dataset are https://thredds.met.no/thredds/projects/nora3.html and https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html. This work was done at SINTEF within the Horizon Europe `project WILLOW <https://www.sintef.no/en/projects/2023/willow/>`_ .
 
 * For coastal wave NORA3 data developed by MET Norway: 
 
