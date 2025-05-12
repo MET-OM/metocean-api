@@ -1158,7 +1158,8 @@ class NORA3fp(MetProduct):
                     tqdm.write(f"Downloading {url}.")
                     dataset.attrs["url"] = url
                     # Reduce to the wanted variables and coordinates
-                    dataset = dataset[ts.variable]
+                    vars = set(ts.variable).intersection(set(dataset.variables.keys()))
+                    dataset = dataset[vars]
                     dataset = dataset.sel(selection)
                     dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
                     dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
