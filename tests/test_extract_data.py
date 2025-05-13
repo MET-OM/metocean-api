@@ -81,7 +81,7 @@ def __compare_loaded_data(df_ts: ts.TimeSeries):
     pd.testing.assert_frame_equal(df_ts.data, df_ts2.data)
 
 def test_extract_nora3_fp():
-    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-02', product='NORA3_fp')
+    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-02', product='NORA3_fpc')
     # Import data from thredds.met.no
     df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
     assert (df_ts.lat_data, df_ts.lon_data) == (53.32374838481946, 1.3199893172215793)
