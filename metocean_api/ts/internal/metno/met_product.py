@@ -4,6 +4,7 @@ import os
 from abc import abstractmethod
 from tqdm import tqdm
 import xarray as xr
+from dask.diagnostics import ProgressBar
 import pandas as pd
 from .. import aux_funcs
 from ..product import Product
@@ -93,9 +94,11 @@ class MetProduct(Product):
     def _combine_temporary_files(
         self, ts: TimeSeries, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, **flatten_dims
     ):
+        print('Merging temporary files...')
         self._remove_if_datafile_exists(ts.datafile)
         # merge temp files
-        with xr.open_mfdataset(tempfiles) as ds:
+        with xr.open_mfdataset(tempfiles, chunks='auto', parallel=True, engine="netcdf4") as ds, ProgressBar():
+            ds.load()
             if save_nc:
                 # Save the unaltered structure
                 ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
