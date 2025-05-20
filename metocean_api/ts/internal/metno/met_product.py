@@ -41,9 +41,43 @@ class MetProduct(Product):
         """Returns the necessary files to download to support the given date range"""
         return [self._get_url_info(date) for date in self.get_dates(start_date, end_date)]
 
-    def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
-        tempfiles, lon_near, lat_near = self.download_temporary_files(ts, use_cache)
-        return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height, depth=ts.depth)
+    def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False, max_retries = 5):
+        retry_count = 0
+
+        while retry_count < max_retries:
+            try:
+                if retry_count > 0:
+                    tempfiles, lon_near, lat_near = self.download_temporary_files(ts, use_cache=True)
+                else:
+                    tempfiles, lon_near, lat_near = self.download_temporary_files(ts, use_cache)
+                return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height, depth=ts.depth)
+            except KeyError as e:
+                # Handle error of a non complete or corrupted or reoponned netcdf file
+                key = e.args[0]
+                if isinstance(key, list) and len(key) > 1:
+                    file_path = key[1][0]
+
+                    # If the problematic file exist, remove it.
+                    if file_path.endswith('.nc'):
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                            print(f"Removed NetCDF file: {file_path}")
+                        else:
+                            print(f"NetCDF file not found: {file_path}")
+
+                        retry_count += 1
+                        print(f"Retrying... Attempt {retry_count}/{max_retries}")
+                    else:
+                        print(f"KeyError not related to a NetCDF file: {e}")
+                        raise
+                else:
+                    print(f"KeyError not related to a file: {e}")
+                    raise
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                raise
+
+        raise Exception("Max retries reached. Operation failed.")
 
     def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
         if ts.variable == [] or ts.variable is None:
