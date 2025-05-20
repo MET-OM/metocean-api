@@ -208,7 +208,7 @@ class NORA3WindWaveCombined(MetProduct):
                     f"Coordinates for wave ({wave_lat_near},{wave_lon_near}) and wind ({wind_lat_near},{wind_lon_near}) are not the same. Using wave coordinates. "
                 )
                 wind_values = wind_values.drop_vars(["latitude", "longitude"], errors="ignore")
-            self._remove_if_datafile_exists(ts.datafile)
+            aux_funcs.remove_if_datafile_exists(ts.datafile)
             # merge temp files
             if save_nc:
                 ds = xr.merge([wave_values, wind_values])
@@ -389,7 +389,7 @@ class NORA3StormSurge(MetProduct):
         ts.variable = self.get_default_variables()
         tempfiles, lon_near, lat_near = self.download_temporary_files(ts, use_cache)
 
-        self._remove_if_datafile_exists(ts.datafile)
+        aux_funcs.remove_if_datafile_exists(ts.datafile)
 
         # merge temp files
         with xr.open_mfdataset(tempfiles) as ds:
@@ -1415,7 +1415,7 @@ class NORA3OffshoreWind(MetProduct):
 
                 print("\n     Processing dataset...\n     (Can take some time for long time series)\n")
 
-                with xr.open_mfdataset(fpc_files, parallel=True, engine="netcdf4") as ds_fpc, xr.open_mfdataset(atm_files, chunks='auto', parallel=True, engine="netcdf4") as ds_atm, ProgressBar():
+                with xr.open_mfdataset(fpc_files, parallel=True, engine="netcdf4") as ds_fpc, xr.open_mfdataset(atm_files, parallel=True, engine="netcdf4") as ds_atm, ProgressBar():
                     ds_fpc = ds_fpc.load()
                     ds_atm = ds_atm.load()
 

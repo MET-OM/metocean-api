@@ -100,8 +100,17 @@ def create_dataframe(product, ds: xr.Dataset, lon_near, lat_near, outfile, start
     return df
 
 def save_to_netcdf(ds, outfile):
+    remove_if_datafile_exists(outfile)
     ds.to_netcdf(outfile)
     print(f"NetCDF file created at {outfile}")
+
+
+def remove_if_datafile_exists(datafile):
+    if os.path.exists(datafile):
+        try:
+            os.remove(datafile)
+        except OSError as e:
+            print(f"Error removing file {datafile}: {e}")
 
 
 def read_commented_lines(datafile):

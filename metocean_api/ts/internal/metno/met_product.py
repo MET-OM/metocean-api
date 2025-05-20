@@ -9,6 +9,8 @@ import pandas as pd
 from .. import aux_funcs
 from ..product import Product
 
+from ..aux_funcs import remove_if_datafile_exists, save_to_netcdf
+
 
 if TYPE_CHECKING:
     from ts.ts_mod import TimeSeries  # Only imported for type checking
@@ -129,14 +131,15 @@ class MetProduct(Product):
         self, ts: TimeSeries, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, **flatten_dims
     ):
         print('Merging temporary files...')
-        self._remove_if_datafile_exists(ts.datafile)
+        remove_if_datafile_exists(ts.datafile)
         # merge temp files
-        with xr.open_mfdataset(tempfiles, chunks='auto', parallel=True, engine="netcdf4") as ds, ProgressBar():
+        with xr.open_mfdataset(tempfiles, parallel=True, engine="netcdf4") as ds, ProgressBar():
             ds.load()
             if save_nc:
+                
                 # Save the unaltered structure
                 ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
-                ds.to_netcdf(ts.datafile.replace(".csv", ".nc"))
+                save_to_netcdf(ds, ts.datafile.replace(".csv", ".nc"))
 
             df = self.create_dataframe(
                 ds=ds,
@@ -202,7 +205,3 @@ class MetProduct(Product):
                 os.remove(tmpfile)
             except PermissionError:
                 print(f"Skipping deletion of {tmpfile} due to PermissionError")
-
-    def _remove_if_datafile_exists(self, datafile):
-        if os.path.exists(datafile):
-            os.remove(datafile)
