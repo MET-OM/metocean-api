@@ -4,7 +4,6 @@ import os
 from abc import abstractmethod
 from tqdm import tqdm
 import xarray as xr
-from dask.diagnostics import ProgressBar
 import pandas as pd
 from .. import aux_funcs
 from ..product import Product
@@ -133,7 +132,7 @@ class MetProduct(Product):
         print('Merging temporary files...')
         remove_if_datafile_exists(ts.datafile)
         # merge temp files
-        with xr.open_mfdataset(tempfiles, parallel=True, engine="netcdf4") as ds, ProgressBar():
+        with xr.open_mfdataset(tempfiles, parallel=False, engine="netcdf4") as ds, aux_funcs.Spinner():
             ds.load()
             if save_nc:
                 

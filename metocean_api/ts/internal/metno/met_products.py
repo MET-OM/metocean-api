@@ -9,9 +9,8 @@ import cartopy.crs as ccrs
 from tqdm import tqdm
 from pathlib import Path
 import metpy.calc as mpcalc
-from metpy import units
+from metpy.units import units
 import getpass
-from dask.diagnostics import ProgressBar
 
 from .met_product import MetProduct
 
@@ -1134,6 +1133,24 @@ class NORA3fp(MetProduct):
         selection, lon_near, lat_near = self._get_near_coord(self._get_url_info(dates[0], 3), lon, lat)
         tqdm.write(f"Nearest point to lat.={lat:.3f},lon.={lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}")
 
+        header = "|{:^20}|{:^25}|{:^20}|{:^25}|".format(
+            "Nb forecast",
+            "Nb file to download",
+            "Time per forecast",
+            "Estimated time"
+        )
+
+        row = "|{:^20}|{:^25}|{:^20}|{:^25}|".format(
+            len(tempfiles),
+            len(tempfiles) * 7,
+            "95 s/forecast",
+            aux_funcs.format_seconds_to_dhms(len(tempfiles) * 95)
+        )
+
+        separator = "-" * len(header)
+
+        tqdm.write("\n".join(["", separator, header, separator, row, separator, ""]))
+
         pbar = tqdm(total=len(dates), desc="Downloading NORA3 raw hindcast")
         for i, forecast in enumerate(dates):
             if use_cache and os.path.exists(tempfiles[i]):
@@ -1320,9 +1337,6 @@ class NORA3OffshoreWind(MetProduct):
 
         This function calculates the Obukhov length (L) using various atmospheric parameters. It ensures that all input values have the correct units, computes necessary intermediate values such as mixing ratio, virtual potential temperature, and density, and then calculates the Obukhov length.
         """
-        import metpy.calc as mpcalc
-        from metpy.units import units
-
         attrs = downward_northward_momentum_flux.attrs
 
         # Ensure input values have the correct units
@@ -1415,7 +1429,7 @@ class NORA3OffshoreWind(MetProduct):
 
                 print("\n     Processing dataset...\n     (Can take some time for long time series)\n")
 
-                with xr.open_mfdataset(fpc_files, parallel=True, engine="netcdf4") as ds_fpc, xr.open_mfdataset(atm_files, parallel=True, engine="netcdf4") as ds_atm, ProgressBar():
+                with xr.open_mfdataset(fpc_files, parallel=False, engine="netcdf4") as ds_fpc, xr.open_mfdataset(atm_files, parallel=False, engine="netcdf4") as ds_atm, aux_funcs.Spinner():
                     ds_fpc = ds_fpc.load()
                     ds_atm = ds_atm.load()
 
