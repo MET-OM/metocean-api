@@ -5,7 +5,7 @@ from metocean_api.ts.internal import products
 from metocean_api.ts.internal.convention import Convention
 
 # Switches useful for local testing
-USE_CACHE = True
+USE_CACHE = False
 SAVE_CSV = True
 SAVE_NC = True
 
