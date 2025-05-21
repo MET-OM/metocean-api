@@ -120,7 +120,7 @@ def test_extract_nora3_atm3hr():
     df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
     print(f"product: {df_ts.product}: {df_ts.lat_data}, {df_ts.lon_data}")
     assert (df_ts.lat_data, df_ts.lon_data) == (53.32374838481946, 1.3199893172215793)
-    assert df_ts.data.shape == (248,30)
+    assert df_ts.data.shape == (248,31)
     __compare_loaded_data(df_ts)
 
 def test_extract_obs():
