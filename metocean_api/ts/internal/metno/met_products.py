@@ -334,6 +334,7 @@ class NORA3Atm3hrSub(MetProduct):
             "relative_humidity",
             "density",
             "tke",
+            "sea_surface_temperature"
         ]
 
     def get_dates(self, start_date, end_date):
