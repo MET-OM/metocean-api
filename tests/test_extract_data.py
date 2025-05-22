@@ -3,6 +3,7 @@ import pandas as pd
 from metocean_api import ts
 from metocean_api.ts.internal import products
 from metocean_api.ts.internal.convention import Convention
+import os
 
 # Switches useful for local testing
 USE_CACHE = False
@@ -35,6 +36,18 @@ def test_download_of_temporary_files():
         # Slice the time series to the requested time
         hs = hs.sel(time=slice(df_ts.start_time, df_ts.end_time))
         assert len(hs) == 768
+
+def test_extract_nora3_cached_wave():
+    df_ts_dummy = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-31', product='NORA3_wave_sub')
+    # Import data from thredds.met.no
+    df_ts_dummy.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=True)
+
+    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-02-15', product='NORA3_wave_sub')
+    # Import data from thredds.met.no
+    df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=True)
+    assert (df_ts.lat_data, df_ts.lon_data) == (53.32494354248047, 1.3358169794082642)
+    assert df_ts.data.shape == (1104,14)
+    __compare_loaded_data(df_ts)
 
 def test_extract_nora3_wave():
     df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-31', product='NORA3_wave_sub')
@@ -80,21 +93,35 @@ def __compare_loaded_data(df_ts: ts.TimeSeries):
     __inferr_frequency(df_ts2.data)
     pd.testing.assert_frame_equal(df_ts.data, df_ts2.data)
 
-def test_extract_nora3_fp():
-    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-02', product='NORA3_fpc')
+def test_extract_nora3_fpc():
+    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-01', product='NORA3_fpc')
     # Import data from thredds.met.no
     df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
     assert (df_ts.lat_data, df_ts.lon_data) == (53.32374838481946, 1.3199893172215793)
-    assert df_ts.data.shape == (48, 206) 
+    assert df_ts.data.shape == (24, 206)
     __compare_loaded_data(df_ts)
 
 
+def test_extract_nora3_fpc_cache():
+    df_ts_dummy = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-01', product='NORA3_fpc')
+    # Import data from thredds.met.no
+    df_ts_dummy.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=True)
+
+    if os.path.exists('./cache/NORA3_fpc_lon1.32lat53.324_200001011000.nc'):
+        os.remove('./cache/NORA3_fpc_lon1.32lat53.324_200001011000.nc')
+
+    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-01', product='NORA3_fpc')
+    df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=True)
+    assert (df_ts.lat_data, df_ts.lon_data) == (53.32374838481946, 1.3199893172215793)
+    assert df_ts.data.shape == (24, 206)
+    __compare_loaded_data(df_ts)
+
 def test_extract_nora3_offshorewind():
-    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-02', product='NORA3_offshore_wind')
+    df_ts = ts.TimeSeries(lon=1.320, lat=53.324,start_time='2000-01-01', end_time='2000-01-01', product='NORA3_offshore_wind')
     # Import data from thredds.met.no
     df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
     assert (df_ts.lat_data, df_ts.lon_data) == (53.32374838481946, 1.3199893172215793)
-    assert df_ts.data.shape == (48, 25) 
+    assert df_ts.data.shape == (24, 25) 
     __compare_loaded_data(df_ts)
 
 
