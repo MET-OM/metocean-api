@@ -9,9 +9,8 @@ import cartopy.crs as ccrs
 from tqdm import tqdm
 from pathlib import Path
 import metpy.calc as mpcalc
-from metpy import units
+from metpy.units import units
 import getpass
-from dask.diagnostics import ProgressBar
 
 from .met_product import MetProduct
 
@@ -208,7 +207,7 @@ class NORA3WindWaveCombined(MetProduct):
                     f"Coordinates for wave ({wave_lat_near},{wave_lon_near}) and wind ({wind_lat_near},{wind_lon_near}) are not the same. Using wave coordinates. "
                 )
                 wind_values = wind_values.drop_vars(["latitude", "longitude"], errors="ignore")
-            self._remove_if_datafile_exists(ts.datafile)
+            aux_funcs.remove_if_datafile_exists(ts.datafile)
             # merge temp files
             if save_nc:
                 ds = xr.merge([wave_values, wind_values])
@@ -335,6 +334,7 @@ class NORA3Atm3hrSub(MetProduct):
             "relative_humidity",
             "density",
             "tke",
+            "sea_surface_temperature"
         ]
 
     def get_dates(self, start_date, end_date):
@@ -389,7 +389,7 @@ class NORA3StormSurge(MetProduct):
         ts.variable = self.get_default_variables()
         tempfiles, lon_near, lat_near = self.download_temporary_files(ts, use_cache)
 
-        self._remove_if_datafile_exists(ts.datafile)
+        aux_funcs.remove_if_datafile_exists(ts.datafile)
 
         # merge temp files
         with xr.open_mfdataset(tempfiles) as ds:
@@ -893,43 +893,57 @@ class NORA3fp(MetProduct):
             lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
             lat_near = ds.latitude.sel(y=y, x=x).values[0][0]
             return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
-    
+
     def _alter_temporary_dataset_if_needed(self, dataset: xr.Dataset):
         # Override this method in subclasses to alter the dataset before saving it to a temporary file
         # Renaming variables that does not follow the standard names should also be done here
-        
-        dataset = dataset.rename({'height2' : 'height', 'height3':'height_clouds', 'pressure0':'pressure_level'})
-        dataset['wind_speed'] = np.sqrt(dataset['x_wind_z']**2 + dataset['y_wind_z']**2)
-        dataset['wind_from_direction'] = (270 - np.arctan2(dataset['y_wind_z'], dataset['x_wind_z']) * 180 / np.pi) % 360
 
+        # Renaming variables if they exist
+        rename_dict = {'height2': 'height', 'height3': 'height_clouds', 'pressure0': 'pressure_level'}
+        for old_name, new_name in rename_dict.items():
+            if old_name in dataset:
+                dataset = dataset.rename({old_name: new_name})
 
-        air_temperature_0m = dataset['air_temperature_0m'].expand_dims({'standard_height': [0]})
-        air_temperature_2m = dataset['air_temperature_2m'].expand_dims({'standard_height': [2]})
-        relative_humidity_2m = dataset['relative_humidity_2m'].expand_dims({'standard_height': [2]})
-        specific_humidity_2m = dataset['specific_humidity_2m'].expand_dims({'standard_height': [2]})
-        x_wind_10m = dataset['x_wind_10m'].expand_dims({'standard_height': [10]})
-        y_wind_10m = dataset['y_wind_10m'].expand_dims({'standard_height': [10]})
-        x_wind_gust_10m = dataset['x_wind_gust_10m'].expand_dims({'standard_height': [10]})
-        y_wind_gust_10m = dataset['y_wind_gust_10m'].expand_dims({'standard_height': [10]})
+        # Calculate wind speed and direction if necessary variables exist
+        if 'x_wind_z' in dataset and 'y_wind_z' in dataset:
+            dataset['wind_speed'] = np.sqrt(dataset['x_wind_z']**2 + dataset['y_wind_z']**2)
+            dataset['wind_from_direction'] = (270 - np.arctan2(dataset['y_wind_z'], dataset['x_wind_z']) * 180 / np.pi) % 360
 
-        air_temperature = xr.concat([air_temperature_0m, air_temperature_2m], dim='standard_height')
-        relative_humidity = relative_humidity_2m
-        specific_humidity = specific_humidity_2m
-        x_wind = x_wind_10m
-        y_wind = y_wind_10m
-        x_wind_gust = x_wind_gust_10m
-        y_wind_gust = y_wind_gust_10m
+        # Expand dimensions for variables if they exist
+        variables_to_expand = [
+            ('air_temperature_0m', 0),
+            ('air_temperature_2m', 2),
+            ('relative_humidity_2m', 2),
+            ('specific_humidity_2m', 2),
+            ('x_wind_10m', 10),
+            ('y_wind_10m', 10),
+            ('x_wind_gust_10m', 10),
+            ('y_wind_gust_10m', 10)
+        ]
 
-        dataset = dataset.drop_vars(['air_temperature_0m', 'air_temperature_2m', 'relative_humidity_2m', 'specific_humidity_2m',
-                        'x_wind_10m', 'y_wind_10m', 'x_wind_gust_10m', 'y_wind_gust_10m'])
+        expanded_vars = {}
+        for var_name, height in variables_to_expand:
+            if var_name in dataset:
+                expanded_vars[var_name] = dataset[var_name].expand_dims({'standard_height': [height]})
 
-        dataset = xr.merge([dataset, air_temperature.rename('air_temperature'), relative_humidity.rename('relative_humidity'),
-                    specific_humidity.rename('specific_humidity'), x_wind.rename('x_wind'), y_wind.rename('y_wind'),
-                    x_wind_gust.rename('x_wind_gust'), y_wind_gust.rename('y_wind_gust')])
-        
-        dataset = dataset.drop_vars(['x', 'y'])
-        
+        # Concatenate and merge variables if they exist
+        if 'air_temperature_0m' in expanded_vars and 'air_temperature_2m' in expanded_vars:
+            air_temperature = xr.concat([expanded_vars['air_temperature_0m'], expanded_vars['air_temperature_2m']], dim='standard_height')
+            dataset = xr.merge([dataset, air_temperature.rename('air_temperature')])
+
+        for var_name in ['relative_humidity_2m', 'specific_humidity_2m', 'x_wind_10m', 'y_wind_10m', 'x_wind_gust_10m', 'y_wind_gust_10m']:
+            if var_name in expanded_vars:
+                dataset = xr.merge([dataset, expanded_vars[var_name].rename(var_name.replace('_2m', '').replace('_10m', ''))])
+
+        # Drop variables if they exist
+        vars_to_drop = ['air_temperature_0m', 'air_temperature_2m', 'relative_humidity_2m', 'specific_humidity_2m',
+                        'x_wind_10m', 'y_wind_10m', 'x_wind_gust_10m', 'y_wind_gust_10m', 'x', 'y']
+        for var_name in vars_to_drop:
+            if var_name in dataset:
+                dataset = dataset.drop_vars(var_name)
+
         return dataset
+
 
     def _is_same_forecast(self, date1, date2):
         def generate_modified_url(date):
@@ -1134,6 +1148,24 @@ class NORA3fp(MetProduct):
         selection, lon_near, lat_near = self._get_near_coord(self._get_url_info(dates[0], 3), lon, lat)
         tqdm.write(f"Nearest point to lat.={lat:.3f},lon.={lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}")
 
+        header = "|{:^20}|{:^25}|{:^20}|{:^25}|".format(
+            "Nb forecast",
+            "Nb file to download",
+            "Time per forecast",
+            "Estimated time"
+        )
+
+        row = "|{:^20}|{:^25}|{:^20}|{:^25}|".format(
+            len(tempfiles),
+            len(tempfiles) * 7,
+            "95 s/forecast",
+            aux_funcs.format_seconds_to_dhms(len(tempfiles) * 95)
+        )
+
+        separator = "-" * len(header)
+
+        tqdm.write("\n".join(["", separator, header, separator, row, separator, ""]))
+
         pbar = tqdm(total=len(dates), desc="Downloading NORA3 raw hindcast")
         for i, forecast in enumerate(dates):
             if use_cache and os.path.exists(tempfiles[i]):
@@ -1320,9 +1352,6 @@ class NORA3OffshoreWind(MetProduct):
 
         This function calculates the Obukhov length (L) using various atmospheric parameters. It ensures that all input values have the correct units, computes necessary intermediate values such as mixing ratio, virtual potential temperature, and density, and then calculates the Obukhov length.
         """
-        import metpy.calc as mpcalc
-        from metpy.units import units
-
         attrs = downward_northward_momentum_flux.attrs
 
         # Ensure input values have the correct units
@@ -1382,197 +1411,231 @@ class NORA3OffshoreWind(MetProduct):
         r = 6371  # Radius of Earth in kilometers. Use 3956 for miles. Determines return value units.
         return c * r
 
-    def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
-        product = ts.product
+    def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False, max_retries = 5):
+        retry_count = 0
 
-        print("\n     Gathering 'NORA3_fpc' data...\n")
+        while retry_count < max_retries:
+                
+            try:
 
-        fpc = NORA3fp('NORA3_fpc')
-        fpc_vars = fpc.get_default_variables()
-        ts.variable = fpc_vars
-        ts.product = fpc.name
-        fpc_files, fpc_lon_near, fpc_lat_near = fpc.download_temporary_files(ts, use_cache)
+                product = ts.product
 
-        print("\n     Gathering 'NORA3_atm3hr_sub' data...\n")
-        atm = NORA3Atm3hrSub("NORA3_atm3hr_sub")
-        atm_vars = atm.get_default_variables()
-        ts.variable = atm_vars
-        ts.product = atm.name
-        atm_files, atm_lon_near, atm_lat_near = atm.download_temporary_files(ts, use_cache)
-        ts.variable = fpc_vars + atm_vars
-        ts.product = product
+                print("\n     Gathering 'NORA3_fpc' data...\n")
 
-        distance = self._haversine(fpc_lon_near, fpc_lat_near, atm_lon_near, atm_lat_near)
-        print(f"The distance between 'NORA3_fpc' grid point ({fpc_lat_near:.4f},{fpc_lon_near:.4f}) and 'NORA3_atm3hr_sub' grid point ({atm_lat_near:.4f},{atm_lon_near:.4f}) is {distance:.3f}km")
+                fpc = NORA3fp('NORA3_fpc')
+                fpc_vars = fpc.get_default_variables()
+                ts.variable = fpc_vars
+                ts.product = fpc.name
+                fpc_files, fpc_lon_near, fpc_lat_near = fpc.download_temporary_files(ts, use_cache)
 
-        tempfiles = fpc_files + atm_files
+                print("\n     Gathering 'NORA3_atm3hr_sub' data...\n")
+                atm = NORA3Atm3hrSub("NORA3_atm3hr_sub")
+                atm_vars = atm.get_default_variables()
+                ts.variable = atm_vars
+                ts.product = atm.name
+                atm_files, atm_lon_near, atm_lat_near = atm.download_temporary_files(ts, use_cache)
+                ts.variable = fpc_vars + atm_vars
+                ts.product = product
 
-        print("\n     Processing dataset...\n     (Can take some time for long time series)\n")
+                distance = self._haversine(fpc_lon_near, fpc_lat_near, atm_lon_near, atm_lat_near)
+                print(f"The distance between 'NORA3_fpc' grid point ({fpc_lat_near:.4f},{fpc_lon_near:.4f}) and 'NORA3_atm3hr_sub' grid point ({atm_lat_near:.4f},{atm_lon_near:.4f}) is {distance:.3f}km")
 
-        with xr.open_mfdataset(fpc_files, parallel=True, engine="netcdf4") as ds_fpc, xr.open_mfdataset(atm_files, chunks='auto', parallel=True, engine="netcdf4") as ds_atm, ProgressBar():
-            ds_fpc = ds_fpc.load()
-            ds_atm = ds_atm.load()
+                tempfiles = fpc_files + atm_files
 
-            #Backup the file history
-            ds_fpc_history = ds_fpc.attrs.get('history', [])
-            ds_atm_history = ds_atm.attrs.get('history', [])
+                print("\n     Processing dataset...\n     (Can take some time for long time series)\n")
 
-            ####Adding friction velocity and Obukhov Length
-            ds_fpc['atmosphere_obukhov_length'], ds_fpc['magnitude_friction_velocity_in_air'] = self.calc_L(
-                ds_fpc.downward_northward_momentum_flux_in_air.metpy.convert_to_base_units(),
-                ds_fpc.downward_eastward_momentum_flux_in_air.metpy.convert_to_base_units(),
-                ds_fpc.specific_humidity.sel(standard_height=2).metpy.convert_to_base_units(),
-                ds_fpc.air_temperature.sel(standard_height = 2).metpy.convert_to_base_units(),
-                ds_fpc.surface_air_pressure.metpy.convert_to_base_units(),
-                ds_fpc.surface_downward_sensible_heat_flux.metpy.convert_to_base_units(),
-                ds_fpc.surface_downward_latent_heat_evaporation_flux.metpy.convert_to_base_units()
-            )
+                with xr.open_mfdataset(fpc_files, parallel=False, engine="netcdf4") as ds_fpc, xr.open_mfdataset(atm_files, parallel=False, engine="netcdf4") as ds_atm, aux_funcs.Spinner():
+                    ds_fpc = ds_fpc.load()
+                    ds_atm = ds_atm.load()
 
-            ds_fpc = ds_fpc.drop_vars(['wind_speed', 'wind_from_direction'])
+                    #Backup the file history
+                    ds_fpc_history = ds_fpc.attrs.get('history', [])
+                    ds_atm_history = ds_atm.attrs.get('history', [])
 
+                    ####Adding friction velocity and Obukhov Length
+                    ds_fpc['atmosphere_obukhov_length'], ds_fpc['magnitude_friction_velocity_in_air'] = self.calc_L(
+                        ds_fpc.downward_northward_momentum_flux_in_air.metpy.convert_to_base_units(),
+                        ds_fpc.downward_eastward_momentum_flux_in_air.metpy.convert_to_base_units(),
+                        ds_fpc.specific_humidity.sel(standard_height=2).metpy.convert_to_base_units(),
+                        ds_fpc.air_temperature.sel(standard_height = 2).metpy.convert_to_base_units(),
+                        ds_fpc.surface_air_pressure.metpy.convert_to_base_units(),
+                        ds_fpc.surface_downward_sensible_heat_flux.metpy.convert_to_base_units(),
+                        ds_fpc.surface_downward_latent_heat_evaporation_flux.metpy.convert_to_base_units()
+                    )
 
-            ####Update Wind Speed and Direction Distribution
-
-            ds_fpc['wind_speed'] = mpcalc.wind_speed(ds_fpc.x_wind_z, ds_fpc.y_wind_z).metpy.convert_units('m/s').metpy.dequantify()
-            ds_fpc['wind_from_direction'] = mpcalc.wind_direction(ds_fpc.x_wind_z, ds_fpc.y_wind_z).metpy.convert_units('degree').metpy.dequantify()
-
-            # Copy attributes from x_wind_z to wind_speed and wind_from_direction, preserving MetPy attributes
-            wind_speed_attrs = {**ds_fpc.x_wind_z.attrs, **ds_fpc['wind_speed'].attrs}
-            wind_from_direction_attrs = {**ds_fpc.x_wind_z.attrs, **ds_fpc['wind_from_direction'].attrs}
-
-            # Update the specific attributes for wind_speed
-            wind_speed_attrs['long_name'] = "Wind speed"
-            wind_speed_attrs['standard_name'] = "wind_speed"
-
-            # Update the specific attributes for wind_from_direction
-            wind_from_direction_attrs['long_name'] = "Wind from direction"
-            wind_from_direction_attrs['standard_name'] = "wind_from_direction"
-
-            # Assign the merged attributes back to the variables
-            ds_fpc['wind_speed'].attrs = wind_speed_attrs
-            ds_fpc['wind_from_direction'].attrs = wind_from_direction_attrs
+                    ds_fpc = ds_fpc.drop_vars(['wind_speed', 'wind_from_direction'])
 
 
-            #### Add the 10m wind speed to the profile
+                    ####Update Wind Speed and Direction Distribution
 
-            ws10 = mpcalc.wind_speed(ds_fpc.x_wind.sel(standard_height=10), ds_fpc.y_wind.sel(standard_height=10)).metpy.dequantify()
-            wd10 = mpcalc.wind_direction(ds_fpc.x_wind.sel(standard_height=10), ds_fpc.y_wind.sel(standard_height=10)).metpy.dequantify()
-            existing_heights = ds_fpc.coords['height'].values
-            new_heights = np.append(existing_heights, 10)
-            ds_fpc = ds_fpc.reindex(height=new_heights, fill_value=np.nan)
-            ds_fpc = ds_fpc.sortby('height')
-            ds_fpc.wind_speed.values[:, 0] = ws10.values
-            ds_fpc.wind_from_direction.values[:, 0] = wd10.values
+                    ds_fpc['wind_speed'] = mpcalc.wind_speed(ds_fpc.x_wind_z, ds_fpc.y_wind_z).metpy.convert_units('m/s').metpy.dequantify()
+                    ds_fpc['wind_from_direction'] = mpcalc.wind_direction(ds_fpc.x_wind_z, ds_fpc.y_wind_z).metpy.convert_units('degree').metpy.dequantify()
 
+                    # Copy attributes from x_wind_z to wind_speed and wind_from_direction, preserving MetPy attributes
+                    wind_speed_attrs = {**ds_fpc.x_wind_z.attrs, **ds_fpc['wind_speed'].attrs}
+                    wind_from_direction_attrs = {**ds_fpc.x_wind_z.attrs, **ds_fpc['wind_from_direction'].attrs}
 
-            #### Creation of the 2m parameters from the aggregated parameters
+                    # Update the specific attributes for wind_speed
+                    wind_speed_attrs['long_name'] = "Wind speed"
+                    wind_speed_attrs['standard_name'] = "wind_speed"
 
-            air_temperature_2m = ds_fpc.air_temperature.sel(standard_height=2)
-            relative_humidity_2m = ds_fpc.relative_humidity.sel(standard_height=2)
-            specific_humidity_2m = ds_fpc.specific_humidity.sel(standard_height=2)
+                    # Update the specific attributes for wind_from_direction
+                    wind_from_direction_attrs['long_name'] = "Wind from direction"
+                    wind_from_direction_attrs['standard_name'] = "wind_from_direction"
 
-            ds_fpc['air_temperature_2m'] = air_temperature_2m
-            ds_fpc['air_temperature_2m'].attrs['long_name'] = 'Air temperature at 2 meters'
-            ds_fpc['air_temperature_2m'].attrs['standard_name'] = 'air_temperature'
-
-            ds_fpc['relative_humidity_2m'] = relative_humidity_2m
-            ds_fpc['relative_humidity_2m'].attrs['long_name'] = 'Relative humidity at 2 meters'
-            ds_fpc['relative_humidity_2m'].attrs['standard_name'] = 'relative_humidity'
-
-            ds_fpc['specific_humidity_2m'] = specific_humidity_2m
-            ds_fpc['specific_humidity_2m'].attrs['long_name'] = 'Specific humidity at 2 meters'
-            ds_fpc['specific_humidity_2m'].attrs['standard_name'] = 'specific_humidity'
+                    # Assign the merged attributes back to the variables
+                    ds_fpc['wind_speed'].attrs = wind_speed_attrs
+                    ds_fpc['wind_from_direction'].attrs = wind_from_direction_attrs
 
 
-            ####Drop unwanted variables
-            time_attrs = ds_fpc.time.attrs
-            time = ds_fpc['time']
+                    #### Add the 10m wind speed to the profile
 
-            ds_fpc_variables = [
-                'wind_speed',
-                'wind_from_direction',
-                'atmosphere_obukhov_length',
-                'magnitude_friction_velocity_in_air',
-                'air_temperature_2m',
-                'relative_humidity_2m',
-                'specific_humidity_2m',
-                'atmosphere_boundary_layer_thickness',
-                'surface_air_pressure'
-                'time',
-                'height',
-                'longitude',
-                'latitude'
-            ]
-            ds_fpc_to_drop = [var for var in ds_fpc.variables.keys() if var not in ds_fpc_variables]
-            ds_fpc = ds_fpc.drop_vars(ds_fpc_to_drop)
+                    ws10 = mpcalc.wind_speed(ds_fpc.x_wind.sel(standard_height=10), ds_fpc.y_wind.sel(standard_height=10)).metpy.dequantify()
+                    wd10 = mpcalc.wind_direction(ds_fpc.x_wind.sel(standard_height=10), ds_fpc.y_wind.sel(standard_height=10)).metpy.dequantify()
+                    existing_heights = ds_fpc.coords['height'].values
+                    new_heights = np.append(existing_heights, 10)
+                    ds_fpc = ds_fpc.reindex(height=new_heights, fill_value=np.nan)
+                    ds_fpc = ds_fpc.sortby('height')
+                    ds_fpc.wind_speed.values[:, 0] = ws10.values
+                    ds_fpc.wind_from_direction.values[:, 0] = wd10.values
 
-            if 'time' in ds_fpc.dims and 'time' not in ds_fpc.coords:
-                ds_fpc = ds_fpc.assign_coords(time=time)
-                ds_fpc['time'].attrs = time_attrs
-                #print('ok')
+
+                    #### Creation of the 2m parameters from the aggregated parameters
+
+                    air_temperature_2m = ds_fpc.air_temperature.sel(standard_height=2)
+                    relative_humidity_2m = ds_fpc.relative_humidity.sel(standard_height=2)
+                    specific_humidity_2m = ds_fpc.specific_humidity.sel(standard_height=2)
+
+                    ds_fpc['air_temperature_2m'] = air_temperature_2m
+                    ds_fpc['air_temperature_2m'].attrs['long_name'] = 'Air temperature at 2 meters'
+                    ds_fpc['air_temperature_2m'].attrs['standard_name'] = 'air_temperature'
+
+                    ds_fpc['relative_humidity_2m'] = relative_humidity_2m
+                    ds_fpc['relative_humidity_2m'].attrs['long_name'] = 'Relative humidity at 2 meters'
+                    ds_fpc['relative_humidity_2m'].attrs['standard_name'] = 'relative_humidity'
+
+                    ds_fpc['specific_humidity_2m'] = specific_humidity_2m
+                    ds_fpc['specific_humidity_2m'].attrs['long_name'] = 'Specific humidity at 2 meters'
+                    ds_fpc['specific_humidity_2m'].attrs['standard_name'] = 'specific_humidity'
+
+
+                    ####Drop unwanted variables
+                    time_attrs = ds_fpc.time.attrs
+                    time = ds_fpc['time']
+
+                    ds_fpc_variables = [
+                        'wind_speed',
+                        'wind_from_direction',
+                        'atmosphere_obukhov_length',
+                        'magnitude_friction_velocity_in_air',
+                        'air_temperature_2m',
+                        'relative_humidity_2m',
+                        'specific_humidity_2m',
+                        'atmosphere_boundary_layer_thickness',
+                        'surface_air_pressure'
+                        'time',
+                        'height',
+                        'longitude',
+                        'latitude'
+                    ]
+                    ds_fpc_to_drop = [var for var in ds_fpc.variables.keys() if var not in ds_fpc_variables]
+                    ds_fpc = ds_fpc.drop_vars(ds_fpc_to_drop)
+
+                    if 'time' in ds_fpc.dims and 'time' not in ds_fpc.coords:
+                        ds_fpc = ds_fpc.assign_coords(time=time)
+                        ds_fpc['time'].attrs = time_attrs
+                        #print('ok')
+                    
+
+                    #### Add Tke from atmospherique:
+                    ds_atm_tke = ds_atm.tke.rename({'height' : 'height_tke'}).resample(time='1h').asfreq().drop_vars(['x','y']).reindex(time=ds_fpc.time, fill_value=np.nan)
+                    ds_fpc['specific_turbulent_kinetic_energy_of_air'] = ds_atm_tke
+                    ds_fpc['specific_turbulent_kinetic_energy_of_air'].attrs['standard_name'] = 'specific_turbulent_kinetic_energy_of_air'
+
+                    ### Update general attributes
+
+                    new_attrs = {
+                        'Conventions': 'CF-1.6',
+                        'institution': 'Norwegian Meteorological Institute, MET Norway',
+                        'creator_url': 'https://www.met.no',
+                        'source': 'NORA3 and NORA3 3-hourly atmospheric subset',
+                        'title': 'NORA3 subset for offshore wind energy evaluation',
+                        'min_time': pd.Timestamp(ds_fpc.time.values[0]).strftime('%Y-%m-%d %H:%M:%SZ'),
+                        'max_time': pd.Timestamp(ds_fpc.time.values[-1]).strftime('%Y-%m-%d %H:%M:%SZ'),
+                        'geospatial_lat_min': f"{ds_fpc.latitude.min().values:.3f}",
+                        'geospatial_lat_max': f"{ds_fpc.latitude.max().values:.3f}",
+                        'geospatial_lon_min': f"{ds_fpc.longitude.min().values:.3f}",
+                        'geospatial_lon_max': f"{ds_fpc.longitude.max().values:.3f}",
+                        'references': 'NORA3 (see DOI:10.1175/JAMC-D-21-0029.1 and DOI:10.1175/JAMC-D-22-0005.1)',
+                        'keywords': "GCMDSK:Earth Science > Atmosphere > Atmospheric Boundary Layer, GCMDSK:Earth Science > Atmosphere > Atmospheric Turbulence, GCMDSK:Earth Science > Atmosphere > Wind, GCMDSK:Earth Science > Atmosphere > Temperature, GCMDSK:Earth Science > Atmosphere > Humidity",
+                        'keywords_vocabulary': "GCMDSK",
+                        'license': 'https://www.met.no/en/free-meteorological-data/Licensing-and-crediting',
+                        'comment': 'None',
+                        'summary': "This dataset is an aggregation of the NORA3 hindcast dataset and 3-hourly subset of atmospheric data to be used for offshore wind evaluation. It has been created using the metocean-api Python toolbox. This product creation workflow using the Norwegian Meteorological Institute dataset (see reference and creator fields) has been created by SINTEF Energy Research (Louis Pauchet, Valentin Chabaud).",
+                        'DODS_EXTRA.Unlimited_Dimension': 'time',
+                        'url': 'https://thredds.met.no/thredds/projects/nora3.html',
+                        'history': f"NORA3 3-hourly atm subset history:\n{ds_atm_history}\nNORA3 hourly output history:\n{ds_fpc_history}\nCurrent dataset history:\n{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')} - {getpass.getuser()} - metocean-api: NORA3OffshoreWind.import_data",
+                        'creator_name': 'Birgitte Rugaard Furevik, Hilde Haakenstad',
+                        'creator_type': 'person, person',
+                        'creator_email': 'birgitterf@met.no, hildeh@met.no',
+                        'creator_role': 'Technical contact, Investigator',
+                        'creator_institution': 'Norwegian Meteorological Institute, Norwegian Meteorological Institute',
+                    }
+
+                    ds_fpc.attrs = new_attrs
+
+                    if save_nc:
+                        ds_fpc = ds_fpc.sel({"time": slice(ts.start_time, ts.end_time)})
+                        aux_funcs.save_to_netcdf(ds_fpc, ts.datafile.replace(".csv", ".nc"))
+
+                    flatten_dims = {"height": ts.height, "height_tke" : ts.height}
+                    ds = fpc._flatten_data_structure(ds_fpc, **flatten_dims)
+
+                    df = self.create_dataframe(
+                        ds=ds,
+                        lon_near=fpc_lon_near,
+                        lat_near=fpc_lat_near,
+                        outfile=ts.datafile,
+                        start_time=ts.start_time,
+                        end_time=ts.end_time,
+                        save_csv=save_csv,
+                        **flatten_dims
+                    )
+
+
+                if not use_cache:
+                    # remove temp/cache files
+                    self._clean_cache(tempfiles)
+
+                return df
             
+            except KeyError as e:
+                # Handle error of a non complete or corrupted or reoponned netcdf file
+                key = e.args[0]
+                if isinstance(key, list) and len(key) > 1:
+                    file_path = key[1][0]
 
-            #### Add Tke from atmospherique:
-            ds_atm_tke = ds_atm.tke.rename({'height' : 'height_tke'}).resample(time='1h').asfreq().drop_vars(['x','y']).reindex(time=ds_fpc.time, fill_value=np.nan)
-            ds_fpc['specific_turbulent_kinetic_energy_of_air'] = ds_atm_tke
-            ds_fpc['specific_turbulent_kinetic_energy_of_air'].attrs['standard_name'] = 'specific_turbulent_kinetic_energy_of_air'
+                    # If the problematic file exist, remove it.
+                    if file_path.endswith('.nc'):
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                            print(f"Removed NetCDF file: {file_path}")
+                        else:
+                            print(f"NetCDF file not found: {file_path}")
 
-            ### Update general attributes
+                        retry_count += 1
+                        print(f"Retrying... Attempt {retry_count}/{max_retries}")
+                    else:
+                        print(f"KeyError not related to a NetCDF file: {e}")
+                        raise
+                else:
+                    print(f"KeyError not related to a file: {e}")
+                    raise
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                raise
 
-            new_attrs = {
-                'Conventions': 'CF-1.6',
-                'institution': 'Norwegian Meteorological Institute, MET Norway',
-                'creator_url': 'https://www.met.no',
-                'source': 'NORA3 and NORA3 3-hourly atmospheric subset',
-                'title': 'NORA3 subset for offshore wind energy evaluation',
-                'min_time': pd.Timestamp(ds_fpc.time.values[0]).strftime('%Y-%m-%d %H:%M:%SZ'),
-                'max_time': pd.Timestamp(ds_fpc.time.values[-1]).strftime('%Y-%m-%d %H:%M:%SZ'),
-                'geospatial_lat_min': f"{ds_fpc.latitude.min().values:.3f}",
-                'geospatial_lat_max': f"{ds_fpc.latitude.max().values:.3f}",
-                'geospatial_lon_min': f"{ds_fpc.longitude.min().values:.3f}",
-                'geospatial_lon_max': f"{ds_fpc.longitude.max().values:.3f}",
-                'references': 'NORA3 (see DOI:10.1175/JAMC-D-21-0029.1 and DOI:10.1175/JAMC-D-22-0005.1)',
-                'keywords': "GCMDSK:Earth Science > Atmosphere > Atmospheric Boundary Layer, GCMDSK:Earth Science > Atmosphere > Atmospheric Turbulence, GCMDSK:Earth Science > Atmosphere > Wind, GCMDSK:Earth Science > Atmosphere > Temperature, GCMDSK:Earth Science > Atmosphere > Humidity",
-                'keywords_vocabulary': "GCMDSK",
-                'license': 'https://www.met.no/en/free-meteorological-data/Licensing-and-crediting',
-                'comment': 'None',
-                'summary': "This dataset is an aggregation of the NORA3 hindcast dataset and 3-hourly subset of atmospheric data to be used for offshore wind evaluation. It has been created using the metocean-api Python toolbox. This product creation workflow using the Norwegian Meteorological Institute dataset (see reference and creator fields) has been created by SINTEF Energy Research (Louis Pauchet, Valentin Chabaud).",
-                'DODS_EXTRA.Unlimited_Dimension': 'time',
-                'url': 'https://thredds.met.no/thredds/projects/nora3.html',
-                'history': f"NORA3 3-hourly atm subset history:\n{ds_atm_history}\nNORA3 hourly output history:\n{ds_fpc_history}\nCurrent dataset history:\n{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')} - {getpass.getuser()} - metocean-api: NORA3OffshoreWind.import_data",
-                'creator_name': 'Birgitte Rugaard Furevik, Hilde Haakenstad',
-                'creator_type': 'person, person',
-                'creator_email': 'birgitterf@met.no, hildeh@met.no',
-                'creator_role': 'Technical contact, Investigator',
-                'creator_institution': 'Norwegian Meteorological Institute, Norwegian Meteorological Institute',
-            }
-
-            ds_fpc.attrs = new_attrs
-
-            if save_nc:
-                ds_fpc = ds_fpc.sel({"time": slice(ts.start_time, ts.end_time)})
-                aux_funcs.save_to_netcdf(ds_fpc, ts.datafile.replace(".csv", ".nc"))
-
-            flatten_dims = {"height": ts.height, "height_tke" : ts.height}
-            ds = fpc._flatten_data_structure(ds_fpc, **flatten_dims)
-
-            df = self.create_dataframe(
-                ds=ds,
-                lon_near=fpc_lon_near,
-                lat_near=fpc_lat_near,
-                outfile=ts.datafile,
-                start_time=ts.start_time,
-                end_time=ts.end_time,
-                save_csv=save_csv,
-                **flatten_dims
-            )
-
-
-        if not use_cache:
-            # remove temp/cache files
-            self._clean_cache(tempfiles)
-
-        return df
+        raise Exception("Max retries reached. Operation failed.")
 
     def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
         raise NotImplementedError(f"Not implemented for product {self.name}")
