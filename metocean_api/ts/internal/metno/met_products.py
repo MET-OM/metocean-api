@@ -893,43 +893,57 @@ class NORA3fp(MetProduct):
             lon_near = ds.longitude.sel(y=y, x=x).values[0][0]
             lat_near = ds.latitude.sel(y=y, x=x).values[0][0]
             return {"x": x.values[0], "y": y.values[0]}, lon_near, lat_near
-    
+
     def _alter_temporary_dataset_if_needed(self, dataset: xr.Dataset):
         # Override this method in subclasses to alter the dataset before saving it to a temporary file
         # Renaming variables that does not follow the standard names should also be done here
-        
-        dataset = dataset.rename({'height2' : 'height', 'height3':'height_clouds', 'pressure0':'pressure_level'})
-        dataset['wind_speed'] = np.sqrt(dataset['x_wind_z']**2 + dataset['y_wind_z']**2)
-        dataset['wind_from_direction'] = (270 - np.arctan2(dataset['y_wind_z'], dataset['x_wind_z']) * 180 / np.pi) % 360
 
+        # Renaming variables if they exist
+        rename_dict = {'height2': 'height', 'height3': 'height_clouds', 'pressure0': 'pressure_level'}
+        for old_name, new_name in rename_dict.items():
+            if old_name in dataset:
+                dataset = dataset.rename({old_name: new_name})
 
-        air_temperature_0m = dataset['air_temperature_0m'].expand_dims({'standard_height': [0]})
-        air_temperature_2m = dataset['air_temperature_2m'].expand_dims({'standard_height': [2]})
-        relative_humidity_2m = dataset['relative_humidity_2m'].expand_dims({'standard_height': [2]})
-        specific_humidity_2m = dataset['specific_humidity_2m'].expand_dims({'standard_height': [2]})
-        x_wind_10m = dataset['x_wind_10m'].expand_dims({'standard_height': [10]})
-        y_wind_10m = dataset['y_wind_10m'].expand_dims({'standard_height': [10]})
-        x_wind_gust_10m = dataset['x_wind_gust_10m'].expand_dims({'standard_height': [10]})
-        y_wind_gust_10m = dataset['y_wind_gust_10m'].expand_dims({'standard_height': [10]})
+        # Calculate wind speed and direction if necessary variables exist
+        if 'x_wind_z' in dataset and 'y_wind_z' in dataset:
+            dataset['wind_speed'] = np.sqrt(dataset['x_wind_z']**2 + dataset['y_wind_z']**2)
+            dataset['wind_from_direction'] = (270 - np.arctan2(dataset['y_wind_z'], dataset['x_wind_z']) * 180 / np.pi) % 360
 
-        air_temperature = xr.concat([air_temperature_0m, air_temperature_2m], dim='standard_height')
-        relative_humidity = relative_humidity_2m
-        specific_humidity = specific_humidity_2m
-        x_wind = x_wind_10m
-        y_wind = y_wind_10m
-        x_wind_gust = x_wind_gust_10m
-        y_wind_gust = y_wind_gust_10m
+        # Expand dimensions for variables if they exist
+        variables_to_expand = [
+            ('air_temperature_0m', 0),
+            ('air_temperature_2m', 2),
+            ('relative_humidity_2m', 2),
+            ('specific_humidity_2m', 2),
+            ('x_wind_10m', 10),
+            ('y_wind_10m', 10),
+            ('x_wind_gust_10m', 10),
+            ('y_wind_gust_10m', 10)
+        ]
 
-        dataset = dataset.drop_vars(['air_temperature_0m', 'air_temperature_2m', 'relative_humidity_2m', 'specific_humidity_2m',
-                        'x_wind_10m', 'y_wind_10m', 'x_wind_gust_10m', 'y_wind_gust_10m'])
+        expanded_vars = {}
+        for var_name, height in variables_to_expand:
+            if var_name in dataset:
+                expanded_vars[var_name] = dataset[var_name].expand_dims({'standard_height': [height]})
 
-        dataset = xr.merge([dataset, air_temperature.rename('air_temperature'), relative_humidity.rename('relative_humidity'),
-                    specific_humidity.rename('specific_humidity'), x_wind.rename('x_wind'), y_wind.rename('y_wind'),
-                    x_wind_gust.rename('x_wind_gust'), y_wind_gust.rename('y_wind_gust')])
-        
-        dataset = dataset.drop_vars(['x', 'y'])
-        
+        # Concatenate and merge variables if they exist
+        if 'air_temperature_0m' in expanded_vars and 'air_temperature_2m' in expanded_vars:
+            air_temperature = xr.concat([expanded_vars['air_temperature_0m'], expanded_vars['air_temperature_2m']], dim='standard_height')
+            dataset = xr.merge([dataset, air_temperature.rename('air_temperature')])
+
+        for var_name in ['relative_humidity_2m', 'specific_humidity_2m', 'x_wind_10m', 'y_wind_10m', 'x_wind_gust_10m', 'y_wind_gust_10m']:
+            if var_name in expanded_vars:
+                dataset = xr.merge([dataset, expanded_vars[var_name].rename(var_name.replace('_2m', '').replace('_10m', ''))])
+
+        # Drop variables if they exist
+        vars_to_drop = ['air_temperature_0m', 'air_temperature_2m', 'relative_humidity_2m', 'specific_humidity_2m',
+                        'x_wind_10m', 'y_wind_10m', 'x_wind_gust_10m', 'y_wind_gust_10m', 'x', 'y']
+        for var_name in vars_to_drop:
+            if var_name in dataset:
+                dataset = dataset.drop_vars(var_name)
+
         return dataset
+
 
     def _is_same_forecast(self, date1, date2):
         def generate_modified_url(date):
