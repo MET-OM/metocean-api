@@ -3,6 +3,10 @@ from pathlib import Path
 import xarray as xr
 import numpy as np
 import cartopy.crs as ccrs
+import itertools
+import time
+import sys
+import threading
 
 def distance_2points(lat1, lon1, lat2, lon2):
     R = 6371.0
@@ -100,8 +104,17 @@ def create_dataframe(product, ds: xr.Dataset, lon_near, lat_near, outfile, start
     return df
 
 def save_to_netcdf(ds, outfile):
+    remove_if_datafile_exists(outfile)
     ds.to_netcdf(outfile)
     print(f"NetCDF file created at {outfile}")
+
+
+def remove_if_datafile_exists(datafile):
+    if os.path.exists(datafile):
+        try:
+            os.remove(datafile)
+        except OSError as e:
+            print(f"Error removing file {datafile}: {e}")
 
 
 def read_commented_lines(datafile):
@@ -128,3 +141,36 @@ def get_tempfiles(product, lon, lat, dates):
         tempfiles.append(str(Path(dir_name+"/"+product+"_"+"lon"+str(lon)+"lat"+str(lat)+"_"+date.strftime('%Y%m%d%H%M')+".nc")))
 
     return tempfiles
+
+
+class Spinner:
+    def __enter__(self):
+        self.stop_spinner = threading.Event()
+        self.spinner_thread = threading.Thread(target=self._spin)
+        self.spinner_thread.start()
+        return self
+
+    def _spin(self):
+        spinner = itertools.cycle(['-', '/', '|', '\\'])
+        while not self.stop_spinner.is_set():
+            sys.stdout.write(next(spinner))
+            sys.stdout.flush()
+            sys.stdout.write('\b')
+            time.sleep(0.1)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop_spinner.set()
+        self.spinner_thread.join()
+
+
+def format_seconds_to_dhms(seconds):
+    days = seconds // (24 * 3600)
+    seconds %= (24 * 3600)
+
+    hours = seconds // 3600
+    seconds %= 3600
+
+    minutes = seconds // 60
+    seconds %= 60
+
+    return f"{days} days, {hours}hours, {minutes}min"
