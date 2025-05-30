@@ -36,7 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report-${{ matrix.os }}-${{ matrix.python-version }}
-          path: htmlcov
+          path: htmlcov   # This is the default directory where the HTML report is generated
 
 
       - name: Build wheels
