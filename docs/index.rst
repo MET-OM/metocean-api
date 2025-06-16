@@ -281,11 +281,13 @@ Command Line Interface (CLI) - metocean-cli
 
   The ``download`` command is used to download metocean data for a specified product, location, and time range.
 
+  By default, we are using the existing cached data, if you want to ignore the cached data (product change, redownload...) please use ``--no_cache``
+
   **Usage:**
 
   .. code-block:: bash
 
-    metocean-cli download <product> <lat> <lon> <start_time> <stop_time> <file_format> [--use_cache] [--max_retry MAX_RETRY] [-o OUTPUT]
+    metocean-cli download <product> <lat> <lon> <start_time> <stop_time> <file_format> [--no_cache] [--max_retry MAX_RETRY] [-o OUTPUT]
 
   **Arguments:**
 
@@ -295,7 +297,7 @@ Command Line Interface (CLI) - metocean-cli
   - ``<start_time>``: Start time for data in ISO 8601 format (e.g., ``"2023-01-01"``).
   - ``<stop_time>``: Stop time for data in ISO 8601 format (e.g., ``"2023-01-02"``).
   - ``<file_format>``: Format of the output file: ``"csv"``, ``"netcdf"``, or ``"both"``.
-  - ``--use_cache``: Optional flag to use cached data if available. Default is ``True``.
+  - ``--no_cache``: Optional flag to removed the cached data at the end of the processing.
   - ``--max_retry MAX_RETRY``: Optional argument to specify the maximum number of retry attempts for the download. Default is ``5``.
   - ``-o OUTPUT``, ``--output OUTPUT``: Path to the output file where the downloaded data will be saved.
 

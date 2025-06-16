@@ -123,8 +123,8 @@ def main():
     download_parser.add_argument('stop_time', type=str, help='Stop time for data in ISO 8601 format')
     download_parser.add_argument('file_format', type=str, choices=['csv', 'netcdf', 'both'],
                                  help='Format of the output file: "csv", "netcdf", or "both"')
-    download_parser.add_argument('--use_cache', action='store_true', default=True,
-                                 help='Use cached data if available')
+    download_parser.add_argument('--no_cache', default=False,
+                                 help='Clear cached data at the end of the processing - not recommanded in case of faillure or large dataset')
     download_parser.add_argument('--max_retry', type=int, default=5,
                                  help='Maximum number of retry attempts for the download')
     download_parser.add_argument('-o', '--output', type=str, default=None, required=False,
@@ -141,7 +141,7 @@ def main():
 
     if args.command == 'download':
         download(args.product, args.lat, args.lon, args.start_time, args.stop_time,
-                 args.file_format, args.use_cache, args.max_retry, args.output)
+                 args.file_format, not args.clear_cache, args.max_retry, args.output)
     elif args.command == 'combine':
         combine(args.files, args.output)
     else:
