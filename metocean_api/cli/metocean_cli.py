@@ -33,17 +33,17 @@ def download(product: str, lat: float, lon: float, start_time: str, stop_time: s
     print(f"Use cache: {use_cache}, Max retry: {max_retry}")
 
     file_format_options = {
-        'csv': False,
-        'netcdf': False
+        'save_csv': False,
+        'save_nc': False
     }
 
     if file_format == 'csv':
-        file_format_options['csv'] = True
+        file_format_options['save_csv'] = True
     elif file_format == 'netcdf':
-        file_format_options['netcdf'] = True
+        file_format_options['save_nc'] = True
     elif file_format == 'both':
-        file_format_options['csv'] = True
-        file_format_options['netcdf'] = True
+        file_format_options['save_csv'] = True
+        file_format_options['save_nc'] = True
 
     retry_count = 0
     success = False
