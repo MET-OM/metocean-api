@@ -1,13 +1,23 @@
 import argparse
 import sys
+import time
+import os
+
+from typing import Optional
 
 from metocean_api import ts
 
+class FileNotCreatedError(Exception):
+    """Exception raised when a file is not created successfully."""
+    def __init__(self, message="The file was not created successfully."):
+        self.message = message
+        super().__init__(self.message)
 
 def download(product : str, 
              lat : float, lon : float,
              start_time : str, stop_time : str, file_format : str,
-             use_cache : bool =True, max_retry : int = 5):
+             use_cache : bool =True, max_retry : int = 5, 
+             output_file: Optional[str] = None):
     
     print(f"Downloading {product} data from {start_time} to {stop_time} at ({lat}, {lon}) in {file_format} format.")
     print(f"Use cache: {use_cache}, Max retry: {max_retry}")
@@ -26,12 +36,38 @@ def download(product : str,
         file_format_options['csv'] = True
         file_format_options['netcdf'] = True
 
-    try:
-        df_ts = ts.TimeSeries(lon=lon, lat=lat,
-                    start_time=start_time, end_time=start_time ,
-                    product=product, datafile=)
-        
-        df_ts.import_data(**file_format_options, use_cache=use_cache)
+    retry_count = 0
+    success = False
+
+    while retry_count < max_retry and not success:
+        try:
+            # Attempt to create TimeSeries object and import data
+            df_ts = ts.TimeSeries(lon=lon, lat=lat,
+                                  start_time=start_time, end_time=stop_time,
+                                  product=product, datafile=output_file) # type: ignore
+            
+            output_file = df_ts.datafile
+
+            df_ts.import_data(**file_format_options, use_cache=use_cache)
+
+            if os.path.exists(output_file):
+                raise FileNotCreatedError(f"Failed to create the output file: {output_file}") 
+            success = True
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            retry_count += 1
+            print(f"Retrying... Attempt {retry_count}/{max_retry}")
+            time.sleep(5)  # Wait for a moment before retrying
+
+    if not success:
+        print("Failed to download data after several attempts.")
+    else:
+        # Verify if the output file was created
+        if os.path.exists(output_file): # type: ignore
+            print(f"Data successfully downloaded to {output_file}")
+        else:
+            print("Download process completed but output file was not created.")
 
 
 
