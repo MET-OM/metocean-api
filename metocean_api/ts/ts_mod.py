@@ -3,8 +3,10 @@ import pandas as pd
 import numpy as np
 from .internal import products
 from .internal.aux_funcs import read_commented_lines
+from typing import Optional, List
 
-def combine_data(list_files, output_file=False):
+
+def combine_data(list_files: List[str], output_file: Optional[str] = None):
     for i in range(len(list_files)):
         df = pd.read_csv(list_files[i], comment="#", index_col=0, parse_dates=True)
         top_header = read_commented_lines(list_files[i])
