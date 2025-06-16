@@ -30,7 +30,12 @@ setuptools.setup(
     include_package_data = True,
     setup_requires = ['setuptools_scm'],
     tests_require = ['pytest','pytest-cov'],
-    scripts = []
+    scripts = [],
+    entry_points={
+        'console_scripts': [
+            'metocean-cli=metocean_api.cli.metocean_cli:main',
+        ],
+    },
 )
 
 
