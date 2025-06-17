@@ -141,7 +141,7 @@ def main():
 
     if args.command == 'download':
         download(args.product, args.lat, args.lon, args.start_time, args.stop_time,
-                 args.file_format, not args.clear_cache, args.max_retry, args.output)
+                 args.file_format, not args.no_cache, args.max_retry, args.output)
     elif args.command == 'combine':
         combine(args.files, args.output)
     else:
