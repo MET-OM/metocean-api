@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to metocean-api's documentation!
-=====================================
+========================================
 
 **metocean-api**  is a Python tool designed to extract time series of metocean (meteorological and oceanographic) data from various sources, including global, regional, and coastal hindcasts and reanalysis.
 The extracted data can be saved in CSV format or NetCDF for further analysis and usage.
@@ -270,6 +270,65 @@ To combine several csv-files produced by **metocean-api**:
    df = ts.ts_mod.combine_data(list_files=['NORA3_wind_sub_lon1.32_lat53.324_20210101_20210131.csv',
                                            'NORA3_atm_sub_lon1.32_lat53.324_20210101_20210331.csv'],
                                    output_file='combined_NORA3_lon1.32_lat53.324.csv')  
+
+
+
+Command Line Interface (CLI) - metocean-cli
+===========================================
+
+**Download Command**
+
+
+  The ``download`` command is used to download metocean data for a specified product, location, and time range.
+
+  By default, we are using the existing cached data, if you want to ignore the cached data (product change, redownload...) please use ``--no_cache``
+
+  **Usage:**
+
+  .. code-block:: bash
+
+    metocean-cli download <product> <lat> <lon> <start_time> <stop_time> <file_format> [--no_cache] [--max_retry MAX_RETRY] [-o OUTPUT]
+
+  **Arguments:**
+
+  - ``<product>``: Name of the product to download.
+  - ``<lat>``: Latitude of the location.
+  - ``<lon>``: Longitude of the location.
+  - ``<start_time>``: Start time for data in ISO 8601 format (e.g., ``"2023-01-01"``).
+  - ``<stop_time>``: Stop time for data in ISO 8601 format (e.g., ``"2023-01-02"``).
+  - ``<file_format>``: Format of the output file: ``"csv"``, ``"netcdf"``, or ``"both"``.
+  - ``--no_cache``: Optional flag to removed the cached data at the end of the processing.
+  - ``--max_retry MAX_RETRY``: Optional argument to specify the maximum number of retry attempts for the download. Default is ``5``.
+  - ``-o OUTPUT``, ``--output OUTPUT``: Path to the output file where the downloaded data will be saved.
+
+  **Example:**
+
+  .. code-block:: bash
+
+    metocean-cli download NORA3_offshore_wind 54.01 6.58 "2023-01-01" "2023-01-02" csv
+
+**Combine Command**
+
+  The ``combine`` command is used to combine multiple metocean data files into a single output file.
+
+  **Usage:**
+
+  .. code-block:: bash
+
+    metocean-cli combine <files>... -o OUTPUT
+
+  **Arguments:**
+
+  - ``<files>...``: List of file paths to combine. You can specify multiple files separated by spaces.
+  - ``-o OUTPUT``, ``--output OUTPUT``: Path to the output file where the combined data will be saved.
+
+  **Example:**
+
+  .. code-block:: bash
+
+    metocean-cli combine 'NORA3_wind_sub_lon1.32_lat53.324_20210101_20210131.csv' 'NORA3_atm_sub_lon1.32_lat53.324_20210101_20210331.csv' -o combined.csv
+
+
 
 .. toctree::
    :maxdepth: 2
