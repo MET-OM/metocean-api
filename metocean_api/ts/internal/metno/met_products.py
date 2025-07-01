@@ -1352,7 +1352,7 @@ class NORA3OffshoreWind(MetProduct):
 
         This function calculates the Obukhov length (L) using various atmospheric parameters. It ensures that all input values have the correct units, computes necessary intermediate values such as mixing ratio, virtual potential temperature, and density, and then calculates the Obukhov length.
         """
-        attrs = downward_northward_momentum_flux.attrs
+        nora_attrs = downward_northward_momentum_flux.attrs
 
         # Ensure input values have the correct units
         downward_northward_momentum_flux = downward_northward_momentum_flux.metpy.quantify()
@@ -1385,8 +1385,7 @@ class NORA3OffshoreWind(MetProduct):
 
         L, friction_velocity = L.metpy.convert_units('m').metpy.dequantify(), friction_velocity.metpy.convert_units('m/s').metpy.dequantify()
 
-        if 'units' in attrs:
-            del attrs['units']
+        attrs = {key : value for key,value in nora_attrs.items() if key not in 'units'}
 
         attrs['long_name'] = "Atmospheric Stability Obukhov Length Calculated Using Stulls 2009 Formula"
         attrs['standard_name'] = 'atmosphere_obukhov_length'
