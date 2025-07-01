@@ -1385,7 +1385,7 @@ class NORA3OffshoreWind(MetProduct):
 
         L, friction_velocity = L.metpy.convert_units('m').metpy.dequantify(), friction_velocity.metpy.convert_units('m/s').metpy.dequantify()
 
-        attrs = {key : value for key,value in nora_attrs.items() if key is not 'units'}
+        attrs = {key : value for key,value in nora_attrs.items() if key not in 'units'}
 
         attrs['long_name'] = "Atmospheric Stability Obukhov Length Calculated Using Stulls 2009 Formula"
         attrs['standard_name'] = 'atmosphere_obukhov_length'
