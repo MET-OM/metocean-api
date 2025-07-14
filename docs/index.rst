@@ -88,7 +88,7 @@ Several options for **product** are available. Please check the data catalog for
     
     product='NORA3_wind_sub'
 
-  Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly/catalog.html
+  Dataset: https://thredds.met.no/thredds/catalog/nora3_subset_atmos/wind_hourly_v2/catalog.html
 
 * For atmospheric (pressure,temperature,precipitation,humidity, radiation) NORA3 hourly surface data (Nordic Area) developed by MET Norway:
 
