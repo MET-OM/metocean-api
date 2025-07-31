@@ -467,8 +467,11 @@ class Norkyst800(MetProduct):
         lat_near = None
 
         # extract point and create temp files
+        any_sucessful_download = False
+        failures = []
         for i in range(len(dates)):
             url = self._get_url_info(dates[i])
+            print(f"Downloading {url}")
 
             # '2019-02-27' change to new model set up
             if i == 0 or dates[i].strftime("%Y-%m-%d %H:%M:%S") == "2019-02-27 00:00:00":
@@ -477,15 +480,24 @@ class Norkyst800(MetProduct):
             if use_cache and os.path.exists(tempfiles[i]):
                 print(f"Found cached file {tempfiles[i]}. Using this instead")
             else:
-                with xr.open_dataset(url) as dataset:
-                    # Reduce to the wanted variables and coordinates
-                    dataset = dataset[ts.variable]
-                    dataset = dataset.sel(selection).squeeze(drop=True)
-                    dataset.to_netcdf(tempfiles[i])
+                try:
+                    dataset = xr.open_dataset(url)
+                except Exception as e:
+                    print(f"Could not open {url} due to {e}")
+                    failures.append(i)
+                    if (i>10) and not any_sucessful_download:
+                        raise ValueError("Unable to access any files. This typically means the server is down.")
+                    continue
+                # Reduce to the wanted variables and coordinates
+                dataset = dataset[ts.variable]
+                dataset = dataset.sel(selection).squeeze(drop=True)
+                dataset.to_netcdf(tempfiles[i])
+                any_sucessful_download = True
                     
         ts.lat_data = lat_near
         ts.lon_data = lon_near
 
+        tempfiles = [tempfiles[i] for i in range(len(dates)) if i not in failures]
         return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height)
 
     def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
