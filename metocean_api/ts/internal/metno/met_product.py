@@ -40,18 +40,41 @@ class MetProduct(Product):
 
     def get_url_for_dates(self, start_date, end_date) -> List[str]:
         """Returns the necessary files to download to support the given date range"""
-        return [self._get_url_info(date) for date in self.get_dates(start_date, end_date)]
+        return [
+            self._get_url_info(date) for date in self.get_dates(start_date, end_date)
+        ]
 
-    def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False, max_retries = 5):
+    def import_data(
+        self,
+        ts: TimeSeries,
+        save_csv=True,
+        save_nc=False,
+        use_cache=False,
+        max_retries=5,
+    ):
         retry_count = 0
 
         while retry_count < max_retries:
             try:
                 if retry_count > 0:
-                    tempfiles, lon_near, lat_near = self.download_temporary_files(ts, use_cache=True)
+                    tempfiles, lon_near, lat_near = self.download_temporary_files(
+                        ts, use_cache=True
+                    )
                 else:
-                    tempfiles, lon_near, lat_near = self.download_temporary_files(ts, use_cache)
-                return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height, depth=ts.depth)
+                    tempfiles, lon_near, lat_near = self.download_temporary_files(
+                        ts, use_cache
+                    )
+                return self._combine_temporary_files(
+                    ts,
+                    save_csv,
+                    save_nc,
+                    use_cache,
+                    tempfiles,
+                    lon_near,
+                    lat_near,
+                    height=ts.height,
+                    depth=ts.depth,
+                )
             except KeyError as e:
                 # Handle error of a non complete or corrupted or reoponned netcdf file
                 key = e.args[0]
@@ -59,7 +82,7 @@ class MetProduct(Product):
                     file_path = key[1][0]
 
                     # If the problematic file exist, remove it.
-                    if file_path.endswith('.nc'):
+                    if file_path.endswith(".nc"):
                         if os.path.exists(file_path):
                             os.remove(file_path)
                             print(f"Removed NetCDF file: {file_path}")
@@ -80,7 +103,9 @@ class MetProduct(Product):
 
         raise Exception("Max retries reached. Operation failed.")
 
-    def download_temporary_files(self, ts: TimeSeries, use_cache: bool = False) -> Tuple[List[str], float, float]:
+    def download_temporary_files(
+        self, ts: TimeSeries, use_cache: bool = False
+    ) -> Tuple[List[str], float, float]:
         if ts.variable == [] or ts.variable is None:
             ts.variable = self.get_default_variables()
         start_time = ts.start_time
@@ -101,7 +126,9 @@ class MetProduct(Product):
 
             if i == 0:
                 selection, lon_near, lat_near = self._get_near_coord(url, lon, lat)
-                tqdm.write(f"Nearest point to lat.={lat:.3f},lon.={lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}")
+                tqdm.write(
+                    f"Nearest point to lat.={lat:.3f},lon.={lon:.3f} was found at lat.={lat_near:.3f},lon.={lon_near:.3f}"
+                )
 
             if use_cache and os.path.exists(tempfiles[i]):
                 tqdm.write(f"Found cached file {tempfiles[i]}. Using this instead")
@@ -112,7 +139,11 @@ class MetProduct(Product):
                     # Reduce to the wanted variables and coordinates
                     dataset = dataset[ts.variable]
                     dataset = dataset.sel(selection)
-                    dimensions_to_squeeze = [dim for dim in dataset.dims if dim != 'time' and dataset.sizes[dim] == 1]
+                    dimensions_to_squeeze = [
+                        dim
+                        for dim in dataset.dims
+                        if dim != "time" and dataset.sizes[dim] == 1
+                    ]
                     dataset = dataset.squeeze(dim=dimensions_to_squeeze, drop=True)
                     dataset = self._alter_temporary_dataset_if_needed(dataset)
                     dataset.to_netcdf(tempfiles[i])
@@ -127,29 +158,38 @@ class MetProduct(Product):
         return dataset
 
     def _combine_temporary_files(
-        self, ts: TimeSeries, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, **flatten_dims
+        self,
+        ts: TimeSeries,
+        save_csv,
+        save_nc,
+        use_cache,
+        tempfiles,
+        lon_near,
+        lat_near,
+        **flatten_dims,
     ):
-        print('Merging temporary files...')
+        print("Merging temporary files...")
         remove_if_datafile_exists(ts.datafile)
-        # merge temp files
-        with xr.open_mfdataset(tempfiles, parallel=False, engine="netcdf4") as ds, aux_funcs.Spinner():
-            ds.load()
-            if save_nc:
-                
-                # Save the unaltered structure
-                ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
-                save_to_netcdf(ds, ts.datafile.replace(".csv", ".nc"))
 
-            df = self.create_dataframe(
-                ds=ds,
-                lon_near=lon_near,
-                lat_near=lat_near,
-                outfile=ts.datafile,
-                start_time=ts.start_time,
-                end_time=ts.end_time,
-                save_csv=save_csv,
-                **flatten_dims,
-            )
+        ds_all = [xr.open_dataset(file, engine="h5netcdf") for file in tqdm(tempfiles)]
+
+        # Merge temp files along time axis
+        ds = xr.concat(ds_all, dim="time")
+        if save_nc:
+            # Save the unaltered structure
+            ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
+            save_to_netcdf(ds, ts.datafile.replace(".csv", ".nc"))
+
+        df = self.create_dataframe(
+            ds=ds,
+            lon_near=lon_near,
+            lat_near=lat_near,
+            outfile=ts.datafile,
+            start_time=ts.start_time,
+            end_time=ts.end_time,
+            save_csv=save_csv,
+            **flatten_dims,
+        )
 
         if not use_cache:
             # remove temp/cache files
@@ -157,9 +197,21 @@ class MetProduct(Product):
 
         return df
 
-    def create_dataframe(self, ds: xr.Dataset, lon_near, lat_near, outfile, start_time, end_time, save_csv=True, **flatten_dims) -> pd.DataFrame:
+    def create_dataframe(
+        self,
+        ds: xr.Dataset,
+        lon_near,
+        lat_near,
+        outfile,
+        start_time,
+        end_time,
+        save_csv=True,
+        **flatten_dims,
+    ) -> pd.DataFrame:
         ds = self._flatten_data_structure(ds, **flatten_dims)
-        return aux_funcs.create_dataframe(self.name, ds, lon_near, lat_near, outfile, start_time, end_time, save_csv)
+        return aux_funcs.create_dataframe(
+            self.name, ds, lon_near, lat_near, outfile, start_time, end_time, save_csv
+        )
 
     def _get_values_for_dimension(self, ds: xr.Dataset, flatten_dims, dim):
         if dim in ds.dims:
@@ -169,7 +221,9 @@ class MetProduct(Product):
                 for value in values:
                     if value not in levels:
                         flevels = [f"{x:.2f}" for x in levels]
-                        raise ValueError(f"Value {value} not found in dimension {dim}. Available values are {flevels}")
+                        raise ValueError(
+                            f"Value {value} not found in dimension {dim}. Available values are {flevels}"
+                        )
                 return values
             return levels
         return []
@@ -183,12 +237,16 @@ class MetProduct(Product):
             if len(var.dims) == 0:
                 # Drop all scalars
                 drop_vars.add(var_name)
-            dims_to_flatten = [dim for dim in var.dims if dim != "time" and dim !=var_name]
+            dims_to_flatten = [
+                dim for dim in var.dims if dim != "time" and dim != var_name
+            ]
             if len(dims_to_flatten) > 0:
                 for dim in dims_to_flatten:
                     values = self._get_values_for_dimension(ds, flatten_dims, dim)
                     for i in range(len(values)):
-                        ds[var_name + "_" + str(values[i]) + "m"] = ds[var_name].sel({dim: values[i]})
+                        ds[var_name + "_" + str(values[i]) + "m"] = ds[var_name].sel(
+                            {dim: values[i]}
+                        )
                     drop_vars.add(dim)
                 drop_vars.add(var_name)
 
@@ -196,7 +254,6 @@ class MetProduct(Product):
 
     def _drop_variables(self):
         return ["longitude", "latitude"]
-
 
     def _clean_cache(self, tempfiles):
         for tmpfile in tempfiles:
