@@ -17,3 +17,5 @@ dependencies:
   - setuptools
   - metpy
   - tqdm
+  - h5netcdf
+  - h5py
