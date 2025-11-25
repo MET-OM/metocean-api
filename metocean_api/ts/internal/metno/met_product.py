@@ -9,7 +9,7 @@ from .. import aux_funcs
 from ..product import Product
 
 from ..aux_funcs import remove_if_datafile_exists, save_to_netcdf
-
+import gc
 
 if TYPE_CHECKING:
     from ts.ts_mod import TimeSeries  # Only imported for type checking
@@ -175,6 +175,9 @@ class MetProduct(Product):
 
         # Merge temp files along time axis
         ds = xr.concat(ds_all, dim="time")
+        del ds_all
+        gc.collect()
+
         if save_nc:
             # Save the unaltered structure
             ds = ds.sel({"time": slice(ts.start_time, ts.end_time)})
