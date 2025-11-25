@@ -1,4 +1,4 @@
-__version__ = "1.1.13"
+__version__ = "1.1.14"
 
 
 def git_describe():
@@ -10,8 +10,14 @@ def git_describe():
 
     path = os.path.dirname(__file__)
     args = [
-        "git", "-C", path, "describe", "--tags", "--abbrev=7", "--dirty",
-        "--broken"
+        "git",
+        "-C",
+        path,
+        "describe",
+        "--tags",
+        "--abbrev=7",
+        "--dirty",
+        "--broken",
     ]
 
     try:
@@ -19,6 +25,7 @@ def git_describe():
         return version
     except:
         return None
+
 
 def version_or_git():
     v = git_describe()
