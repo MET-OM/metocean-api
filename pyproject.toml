@@ -8,7 +8,7 @@ name = "metocean-api"
 description = "metocean-api - Tool to extract time series of metocean data from hindcasts/reanalysis"
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 authors = [{ name = "Konstantinos Christakos" }]
 
@@ -39,5 +39,6 @@ write_to = "metocean_api/_version.py"
 
 [tool.black]
 line-length = 150
+
 
 
