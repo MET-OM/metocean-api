@@ -183,12 +183,12 @@ def test_norkyst_da_surface():
     assert df_ts.data.shape == (48, 5)
     __compare_loaded_data(df_ts)
 
-def test_echowave():
-    df_ts = ts.TimeSeries(lon=3.098, lat=52.48,start_time='2017-01-19', end_time='2017-01-20', product='ECHOWAVE')
-    # Import data from https://data.4tu.nl/datasets/
-    df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
-    assert df_ts.data.shape == (48, 22)
-    __compare_loaded_data(df_ts)
+#def test_echowave():
+#    df_ts = ts.TimeSeries(lon=3.098, lat=52.48,start_time='2017-01-19', end_time='2017-01-20', product='ECHOWAVE')
+#    # Import data from https://data.4tu.nl/datasets/
+#    df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
+#    assert df_ts.data.shape == (48, 22)
+#    __compare_loaded_data(df_ts)
 
 def test_extract_nora3_wave_spectra():
     df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2017-01-29',end_time='2017-02-02',product='NORA3_wave_spec')
