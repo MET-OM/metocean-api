@@ -1,2 +1,44 @@
+[build-system]
+requires = ["setuptools>=80", "wheel", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "metocean-api"
+description = "metocean-api - Tool to extract time series of metocean data from hindcasts/reanalysis"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.11"
+
+authors = [{ name = "Konstantinos Christakos" }]
+
+version = "1.1.13"
+
+dependencies = [
+    "matplotlib>=3.1",
+    "numpy>=1.17",
+    "pandas",
+    "xarray",
+    "dask",
+    "pip",
+    "netcdf4",
+    "cartopy",
+    "metpy",
+    "tqdm"
+]
+
+[project.urls]
+Homepage = "https://github.com/MET-OM/metocean-api"
+Repository = "https://github.com/MET-OM/metocean-api"
+
+[tool.setuptools]
+license-files = []
+
+[tool.setuptools_scm]
+write_to = "metocean_api/_version.py"
+
 [tool.black]
 line-length = 150
+
+
+
