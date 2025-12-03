@@ -526,7 +526,7 @@ class Norkyst800_v3(MetProduct):
         return pd.date_range(start=start_date, end=end_date, freq="D")
 
     def _get_url_info(self, date: str):
-        if date >= pd.Timestamp("2016-09-14 00:00:00") and date <= pd.Timestamp("2019-02-26 00:00:00"):
+        if date >= pd.Timestamp("2012-01-05 00:00:00") and date < pd.Timestamp("2026-01-01 00:00:00"):
             return "https://thredds.met.no/thredds/dodsC/romshindcast/norkyst_v3/zdepth/"+date.strftime("%Y")+"/"+date.strftime("%m")
             + "/norkyst800-" + date.strftime("%Y%m%d%H") + ".nc"
         else:
