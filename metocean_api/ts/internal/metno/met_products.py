@@ -527,6 +527,7 @@ class Norkyst800_v3(MetProduct):
 
     def _get_url_info(self, date: str):
         if date >= pd.Timestamp("2012-01-05 00:00:00") and date < pd.Timestamp("2026-01-01 00:00:00"):
+            print("https://thredds.met.no/thredds/dodsC/romshindcast/norkyst_v3/zdepth/"+date.strftime("%Y")+"/"+date.strftime("%m")+"/norkyst800-"+date.strftime("%Y%m%d%H")+".nc")
             return "https://thredds.met.no/thredds/dodsC/romshindcast/norkyst_v3/zdepth/"+date.strftime("%Y")+"/"+date.strftime("%m")+"/norkyst800-"+date.strftime("%Y%m%d%H")+".nc"
         else:
             raise ValueError(f"Unhandled date {str(date)} for product {self.name}. Data only valid from 2012-01-05 onwards.")
@@ -548,9 +549,9 @@ class Norkyst800_v3(MetProduct):
         ts.variable.append("lon")  # keep info of regular lon
         ts.variable.append("lat")  # keep info of regular lat
         dates = self.get_dates(start_date=ts.start_time, end_date=ts.end_time)
-
+        print('dates done')
         tempfiles = aux_funcs.get_tempfiles(ts.product, ts.lon, ts.lat, dates)
-
+        print('tempfiles done')
         selection = None
         lon_near = None
         lat_near = None
@@ -560,6 +561,7 @@ class Norkyst800_v3(MetProduct):
         failures = []
         for i in range(len(dates)):
             url = self._get_url_info(dates[i])
+            print(url)
             print(f"Downloading {url}")
             if use_cache and os.path.exists(tempfiles[i]):
                 print(f"Found cached file {tempfiles[i]}. Using this instead")
