@@ -509,6 +509,91 @@ class Norkyst800(MetProduct):
         return super()._flatten_data_structure(ds, **flatten_dims)
 
 
+
+class Norkyst800_v3(MetProduct):
+
+    @property
+    def convention(self) -> Convention:
+        return Convention.OCEANIC
+
+    
+    def get_default_variables(self):
+        return ["salinity", "temperature", "u_eastward", "v_northward", "zeta"]
+
+    def get_dates(self, start_date, end_date):
+        return pd.date_range(start=start_date, end=end_date, freq="D")
+
+    def _get_url_info(self, date: str):
+        if date >= pd.Timestamp("2016-09-14 00:00:00") and date <= pd.Timestamp("2019-02-26 00:00:00"):
+            return "https://thredds.met.no/thredds/dodsC/romshindcast/norkyst_v3/zdepth/+ date.strftime("%Y")
+            + "/"
+            + date.strftime("%m")
+            + "/norkyst800-" + date.strftime("%Y%m%d%H") + ".nc"
+        else:
+            raise ValueError(f"Unhandled date {str(date)} for product {self.name}. Data only valid from 2012-01-05 onwards.")
+
+    def _get_near_coord(self, url: str, lon: float, lat: float):
+        with xr.open_dataset(url) as ds:
+            x, y = aux_funcs.find_nearest_cart_coord(ds.lon, ds.lat, lon, lat)
+            lon_near = ds.lon.sel(Y=y, X=x).values[0][0]
+            lat_near = ds.lat.sel(Y=y, X=x).values[0][0]
+            return {"X": x, "Y": y}, lon_near, lat_near
+
+    def import_data(self, ts: TimeSeries, save_csv=True, save_nc=False, use_cache=False):
+        """
+        Extract times series of  the nearest gird point (lon,lat) from
+        Norkyst800_v3.
+        """
+        if ts.variable == [] or ts.variable is None:
+            ts.variable = self.get_default_variables()
+        ts.variable.append("lon")  # keep info of regular lon
+        ts.variable.append("lat")  # keep info of regular lat
+        dates = self.get_dates(start_date=ts.start_time, end_date=ts.end_time)
+
+        tempfiles = aux_funcs.get_tempfiles(ts.product, ts.lon, ts.lat, dates)
+
+        selection = None
+        lon_near = None
+        lat_near = None
+
+        # extract point and create temp files
+        any_sucessful_download = False
+        failures = []
+        for i in range(len(dates)):
+            url = self._get_url_info(dates[i])
+            print(f"Downloading {url}")
+            if use_cache and os.path.exists(tempfiles[i]):
+                print(f"Found cached file {tempfiles[i]}. Using this instead")
+            else:
+                try:
+                    dataset = xr.open_dataset(url)
+                except Exception as e:
+                    print(f"Could not open {url} due to {e}")
+                    failures.append(i)
+                    if (i>10) and not any_sucessful_download:
+                        raise ValueError("Unable to access any files. This typically means the server is down.")
+                    continue
+                # Reduce to the wanted variables and coordinates
+                dataset = dataset[ts.variable]
+                dataset = dataset.sel(selection).squeeze(drop=True)
+                dataset.to_netcdf(tempfiles[i])
+                any_sucessful_download = True
+                    
+        ts.lat_data = lat_near
+        ts.lon_data = lon_near
+
+        tempfiles = [tempfiles[i] for i in range(len(dates)) if i not in failures]
+        return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height)
+
+    def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
+        if "zeta" in ds.variables:
+            # Just use the surface value
+            if "depth" in ds["zeta"].dims:
+                ds["zeta"] = ds.zeta.sel(depth=0)
+
+        return super()._flatten_data_structure(ds, **flatten_dims)
+
+
 class NorkystDASurface(MetProduct):
 
     @property
