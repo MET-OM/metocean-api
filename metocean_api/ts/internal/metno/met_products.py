@@ -42,6 +42,8 @@ def find_product(name: str) -> Product:
             return NORA3Atm3hrSub(name)
         case "NORKYST800":
             return Norkyst800(name)
+        case "NORKYST800_V3":
+            return Norkyst800_v3(name)
         case "NorkystDA_surface":
             return NorkystDASurface(name)
         case "NorkystDA_zdepth":
