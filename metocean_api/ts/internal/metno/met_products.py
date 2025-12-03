@@ -527,9 +527,7 @@ class Norkyst800_v3(MetProduct):
 
     def _get_url_info(self, date: str):
         if date >= pd.Timestamp("2016-09-14 00:00:00") and date <= pd.Timestamp("2019-02-26 00:00:00"):
-            return "https://thredds.met.no/thredds/dodsC/romshindcast/norkyst_v3/zdepth/+ date.strftime("%Y")
-            + "/"
-            + date.strftime("%m")
+            return "https://thredds.met.no/thredds/dodsC/romshindcast/norkyst_v3/zdepth/"+date.strftime("%Y")+"/"+date.strftime("%m")
             + "/norkyst800-" + date.strftime("%Y%m%d%H") + ".nc"
         else:
             raise ValueError(f"Unhandled date {str(date)} for product {self.name}. Data only valid from 2012-01-05 onwards.")
