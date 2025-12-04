@@ -563,6 +563,9 @@ class Norkyst800_v3(MetProduct):
             url = self._get_url_info(dates[i])
             print(url)
             print(f"Downloading {url}")
+
+            selection, lon_near, lat_near = self._get_near_coord(url, ts.lon, ts.lat)
+            
             if use_cache and os.path.exists(tempfiles[i]):
                 print(f"Found cached file {tempfiles[i]}. Using this instead")
             else:
