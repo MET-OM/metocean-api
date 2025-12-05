@@ -171,7 +171,7 @@ def test_norkyst_800_v3():
     df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
     print(df_ts.lat_data, df_ts.lon_data,df_ts.data.shape)
     assert (df_ts.lat_data, df_ts.lon_data) == (64.5983217588851, 3.7289053730237156)
-    assert df_ts.data.shape == (24, 125)
+    assert df_ts.data.shape == (24, 101)
     __compare_loaded_data(df_ts)
 
 def test_norkyst_da_zdepth():
