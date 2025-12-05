@@ -526,7 +526,7 @@ class Norkyst800_v3(MetProduct):
         return pd.date_range(start=start_date, end=end_date, freq="D")
 
     def _get_url_info(self, date: str):
-        if date >= pd.Timestamp("2012-01-05 00:00:00") and date < pd.Timestamp("2026-01-01 00:00:00"):
+        if ((date >= pd.Timestamp("2012-01-05 00:00:00")) & (date < pd.Timestamp("2026-01-01 00:00:00"))):
             print("https://thredds.met.no/thredds/dodsC/romshindcast/norkyst_v3/zdepth/"+date.strftime("%Y")+"/"+date.strftime("%m")+"/norkyst800-"+date.strftime("%Y%m%d")+".nc")
             return "https://thredds.met.no/thredds/dodsC/romshindcast/norkyst_v3/zdepth/"+date.strftime("%Y")+"/"+date.strftime("%m")+"/norkyst800-"+date.strftime("%Y%m%d")+".nc"
         else:
@@ -578,8 +578,7 @@ class Norkyst800_v3(MetProduct):
                         raise ValueError("Unable to access any files. This typically means the server is down.")
                     continue
                 # Reduce to the wanted variables and coordinates
-                dataset = dataset[ts.variable]
-                dataset = dataset.sel(selection).squeeze(drop=True)
+                dataset = dataset[ts.variable].sel(selection).squeeze(drop=True)
                 dataset.to_netcdf(tempfiles[i])
                 any_sucessful_download = True
                     
@@ -589,13 +588,6 @@ class Norkyst800_v3(MetProduct):
         tempfiles = [tempfiles[i] for i in range(len(dates)) if i not in failures]
         return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height)
 
-    def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
-        if "zeta" in ds.variables:
-            # Just use the surface value
-            if "depth" in ds["zeta"].dims:
-                ds["zeta"] = ds.zeta.sel(depth=0)
-
-        return super()._flatten_data_structure(ds, **flatten_dims)
 
 
 class NorkystDASurface(MetProduct):
