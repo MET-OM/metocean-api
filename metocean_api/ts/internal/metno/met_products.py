@@ -588,6 +588,14 @@ class Norkyst800_v3(MetProduct):
         tempfiles = [tempfiles[i] for i in range(len(dates)) if i not in failures]
         return self._combine_temporary_files(ts, save_csv, save_nc, use_cache, tempfiles, lon_near, lat_near, height=ts.height)
 
+    def _flatten_data_structure(self, ds: xr.Dataset, **flatten_dims):
+        if "zeta" in ds.variables:
+            # Just use the surface value
+            if "depth" in ds["zeta"].dims:
+                ds["zeta"] = ds.zeta.sel(depth=0)
+
+        return super()._flatten_data_structure(ds, **flatten_dims)
+
 
 
 class NorkystDASurface(MetProduct):
