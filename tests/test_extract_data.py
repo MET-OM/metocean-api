@@ -165,6 +165,15 @@ def test_norkyst_800():
     assert df_ts.data.shape == (48, 65)
     __compare_loaded_data(df_ts)
 
+def test_norkyst_800_v3():
+    df_ts = ts.TimeSeries(lon=3.73, lat=64.60,start_time='2020-09-14', end_time='2020-09-14', product='NORKYST800_V3')
+    # Import data from thredds.met.no
+    df_ts.import_data(save_csv=SAVE_CSV,save_nc=SAVE_NC, use_cache=USE_CACHE)
+    print(df_ts.lat_data, df_ts.lon_data,df_ts.data.shape)
+    assert (df_ts.lat_data, df_ts.lon_data) == (64.5983217588851, 3.7289053730237156)
+    assert df_ts.data.shape == (24, 101)
+    __compare_loaded_data(df_ts)
+
 def test_norkyst_da_zdepth():
     # We want to collect a subset
     depth = [0.0, 500.0, 2500.00]
