@@ -8,6 +8,8 @@ import time
 import sys
 import threading
 
+print('Cartopy loaded')
+
 def distance_2points(lat1, lon1, lat2, lon2):
     R = 6371.0
     lat1 = np.radians(lat1)
