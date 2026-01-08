@@ -205,8 +205,10 @@ class ERA5_ts(Product):
         ds2.close()
         del ds1,ds2
         # Add wind speed to dataset
-        ds=ds.assign(ws10=np.sqrt((ds["u10"]**2+ds["v10"]**2)))
-        ds=ds.assign(ws100=np.sqrt((ds["u100"]**2+ds["v100"]**2)))
+        ds=ds.assign(wind_speed_10m=np.sqrt((ds["u10"]**2+ds["v10"]**2)))
+        ds=ds.assign(wind_speed_100m=np.sqrt((ds["u100"]**2+ds["v100"]**2)))
+        ds=ds.assign(wind_direction_10m=(180+180/np.pi*np.arctan2(ds["u10"],ds["v10"]))%360)
+        ds=ds.assign(wind_direction_100m=(180+180/np.pi*np.arctan2(ds["u100"],ds["v100"]))%360)
         
         str_lon=f'{lon_near:0.2f}'
         str_lat=f'{lat_near:0.2f}'
