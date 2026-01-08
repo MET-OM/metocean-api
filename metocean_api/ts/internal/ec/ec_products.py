@@ -59,14 +59,17 @@ class ERA5(Product):
         ds_res = None
 
         for filename in filenames:
-            with xr.open_mfdataset(filename) as ds:
+            with xr.load_dataset(filename, engine='cfgrib') as ds:
                 # Rename the dimensions and variables to match the required format
-                ds = ds.rename_dims({"valid_time": "time"}).rename_vars({"valid_time": "time"})
+                if 'valid_time' in ds.dims:
+                    ds = ds.rename_dims({"valid_time": "time"}).rename_vars({"valid_time": "time"})
+                # if 'time' in ds.variables and 'valid_time' in ds.variables:
+                #     ds = ds.drop_vars(['valid_time'], errors="ignore")
                 lon_near=ds.longitude.values[0]
                 lat_near=ds.latitude.values[0]
                 ds = ds.drop_vars(['longitude','latitude'], errors="ignore")
                 df = aux_funcs.create_dataframe(self.name, ds, lon_near, lat_near, ts.datafile, ts.start_time, ts.end_time, save_csv=False)
-                df.drop(columns=['number', 'expver'], inplace=True, errors='ignore')
+                df.drop(columns=['number', 'expver', 'valid_time', 'step', 'surface'], inplace=True, errors='ignore')
                 if df_res is None:
                     df_res = df
                     ds_res = ds
@@ -125,11 +128,11 @@ class ERA5(Product):
         dates = '/'.join(dates)
         filename_list = []
         for i in range(len(variable)):
-            filename = f'{folder}/ERA5_'+"lon"+str(lon)+"lat"+str(lat)+"_"+days[0].strftime('%Y%m%d')+'_'+days[-1].strftime('%Y%m%d')+'_'+variable[i]+".nc"
+            filename = f'{folder}/ERA5_'+"lon"+str(lon)+"lat"+str(lat)+"_"+days[0].strftime('%Y%m%d')+'_'+days[-1].strftime('%Y%m%d')+'_'+variable[i]+".grib"
             filename_list = np.append(filename_list,filename)
             cds_command = {
                 'product_type': 'reanalysis',
-                'format': 'netcdf',
+                'format': 'grib',
                 'variable': variable[i],
                 'date': dates,
                 'time': [
