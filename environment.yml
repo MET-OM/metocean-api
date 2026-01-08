@@ -15,6 +15,6 @@ dependencies:
   - cdsapi
   - cartopy
   - setuptools
-  - copernicusmarine
   - metpy
   - tqdm
+  - cfgrib

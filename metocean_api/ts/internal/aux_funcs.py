@@ -81,7 +81,7 @@ def create_dataframe(product, ds: xr.Dataset, lon_near, lat_near, outfile, start
     if len(ds.dims) > 1:
         raise ValueError(f"The dataset has more than one dimension: {ds.dims}. Please flatten the dataset before creating a dataframe.")
     df = ds.to_dataframe()
-    df = df.astype(float).round(2)
+    df = df.astype(float, errors='ignore').round(2)
 
     header_lines = ["#" + product + ";LONGITUDE:" + str(lon_near.round(4)) + ";LATITUDE:" + str(lat_near.round(4))]
     header_lines.append("#Variable_name;standard_name;long_name;units")
