@@ -288,7 +288,7 @@ class ERA5_ts(Product):
             'description': ['surface','wave']
         }
         print('Download timeseries')
-            c.retrieve('reanalysis-era5-single-levels-timeseries', cds_command, filename+'.zip')
+        c.retrieve('reanalysis-era5-single-levels-timeseries', cds_command, filename+'.zip')
         return filename
 
 
