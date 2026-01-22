@@ -311,7 +311,7 @@ class NORA3AtmSub(MetProduct):
         )
 
     def _get_url_info(self, date: str):
-        return "https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_hourly/arome3km_1hr_" + date.strftime("%Y%m") + ".nc"
+        return "https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_hourly_v2/arome3km_1hr_" + date.strftime("%Y%m") + ".nc"
 
     def _get_near_coord(self, url: str, lon: float, lat: float):
         with xr.open_dataset(url) as ds:
@@ -347,7 +347,7 @@ class NORA3Atm3hrSub(MetProduct):
         )
 
     def _get_url_info(self, date: str):
-        return "https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_3hourly/arome3km_3hr_" + date.strftime("%Y%m") + ".nc"
+        return "https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_3hourly_v2/arome3km_3hr_" + date.strftime("%Y%m") + ".nc"
 
     def _get_near_coord(self, url: str, lon: float, lat: float):
         with xr.open_dataset(url) as ds:
@@ -1401,7 +1401,7 @@ class NORA3OffshoreWind(MetProduct):
 
     Original datasets:
     - https://thredds.met.no/thredds/projects/nora3.html
-    - https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly/catalog.html
+    - https://thredds.met.no/thredds/catalog/nora3_subset_atmos/atm_3hourly_v2/catalog.html
 
     This work was done at SINTEF within the Horizon Europe project WILLOW.
 
