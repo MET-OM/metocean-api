@@ -205,10 +205,17 @@ Several options for **product** are available. Please check the data catalog for
 
   .. code-block:: python
   
-    product='ERA5' 
+    product='ERA5'
 
   The user needs to install the *CDS API key* according to https://cds.climate.copernicus.eu/how-to-api ,
   Dataset: https://doi.org/10.24381/cds.adbb2d47
+
+  .. code-block:: python
+  
+    product='ERA5_ts'
+
+  Similar to 'ERA5' but uses "reanalysis-era5-single-levels-timeseries" as dataset and downloads a predefined set of variables (very fast),
+  Dataset: https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-timeseries
 
 * For Global Tide and Surge Model (storm surge, tidal elevation, total water level) developed by Deltares : 
 

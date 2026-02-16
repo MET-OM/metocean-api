@@ -222,4 +222,4 @@ def test_url_by_date():
             month = f"0{i}"
         else:
             month = i
-        assert urls[i-1] == f"https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_hourly/arome3km_1hr_2020{month}.nc"
+        assert urls[i-1] == f"https://thredds.met.no/thredds/dodsC/nora3_subset_atmos/atm_hourly_v2/arome3km_1hr_2020{month}.nc"
