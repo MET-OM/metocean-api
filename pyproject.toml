@@ -29,9 +29,5 @@ dependencies = [
 Homepage = "https://github.com/MET-OM/metocean-api"
 Repository = "https://github.com/MET-OM/metocean-api"
 
-[tool.setuptools.packages.find]
-include = ["metocean_api*"]
-exclude = ["cache*"]
-
 [tool.black]
 line-length = 150
