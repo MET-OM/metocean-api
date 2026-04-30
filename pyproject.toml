@@ -1,17 +1,15 @@
 [build-system]
-requires = ["setuptools>=80", "wheel", "setuptools_scm>=8"]
+requires = ["setuptools>=80", "wheel"]
 build-backend = "setuptools.build_meta"
-
 
 [project]
 name = "metocean-api"
 description = "metocean-api - Tool to extract time series of metocean data from hindcasts/reanalysis"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
-
 authors = [{ name = "Konstantinos Christakos" }]
-
 version = "1.1.14"
 
 dependencies = [
@@ -31,14 +29,9 @@ dependencies = [
 Homepage = "https://github.com/MET-OM/metocean-api"
 Repository = "https://github.com/MET-OM/metocean-api"
 
-[tool.setuptools]
-license-files = []
-
-[tool.setuptools_scm]
-write_to = "metocean_api/_version.py"
+[tool.setuptools.packages.find]
+include = ["metocean_api*"]
+exclude = ["cache*"]
 
 [tool.black]
 line-length = 150
-
-
-
