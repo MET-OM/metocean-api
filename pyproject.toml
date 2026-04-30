@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "metocean-api"
 description = "metocean-api - Tool to extract time series of metocean data from hindcasts/reanalysis"
 readme = "README.md"
-license = "MIT"
+license = "LGPL-2.1-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 authors = [{ name = "Konstantinos Christakos" }]
@@ -28,6 +28,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/MET-OM/metocean-api"
 Repository = "https://github.com/MET-OM/metocean-api"
+
 
 [tool.black]
 line-length = 150
